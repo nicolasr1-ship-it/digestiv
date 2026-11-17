@@ -50,13 +50,15 @@
             animation: breathePulse 10s ease-in-out infinite;
         }
 
+        /* Masquer le badge flottant Netlify s'il est injecté */
+        iframe[src*="netlify"], div[class*="netlify"], #netlify-identity-widget { display: none !important; visibility: hidden !important; }
+
         @media print {
             .no-print { display: none !important; }
             body { background: white !important; }
             #medical-modal { position: static !important; background: white !important; padding: 0 !important; display: block !important; }
             #medical-modal > div { box-shadow: none !important; max-height: none !important; width: 100% !important; max-width: 100% !important; }
         }
-        
     </style>
 </head>
 <body class="bg-cream text-slate-800 h-full flex flex-col items-center justify-start m-0 p-0 selection:bg-primary/20">
@@ -115,7 +117,7 @@
                         </div>
                     </div>
                     <p class="text-blue-50 text-xs leading-relaxed mb-4">
-                        Consignez vos symptômes, votre transit (Bristol) et vos facteurs du jour à tout moment pour éclairer vos corrélations.
+                        Enregistrez vos ressentis, votre transit et vos repas chaque jour pour repérer facilement ce qui vous fait du bien ou vous irrite.
                     </p>
                     <div class="space-y-2.5">
                         <button onclick="openCheckinModal()" class="w-full bg-white text-primary hover:bg-blue-50 font-bold py-3 px-4 rounded-2xl shadow-md transition flex items-center justify-center gap-2 text-sm active:scale-[0.99]">
@@ -294,6 +296,21 @@
                     <div id="combos-radar-container"></div>
                 </div>
 
+                <!-- RADAR DES COMBOS GUÉRISSEURS (SYNERGIE APAISANTE) -->
+                <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-base">💚</span>
+                            <h3 class="font-bold text-slate-800 text-sm">Radar des Combos Guérisseurs</h3>
+                        </div>
+                        <span class="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">Synergie apaisante</span>
+                    </div>
+                    <p class="text-[11px] text-slate-500 leading-relaxed">
+                        Détecte les associations de 2 habitudes ou facteurs protecteurs présents ensemble lors des journées calmes (douleur ≤ 3 et ballonnements ≤ 3).
+                    </p>
+                    <div id="healing-combos-radar-container"></div>
+                </div>
+
                 <!-- Module Défis Personnalisés -->
                 <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-3">
                     <div class="flex items-center justify-between">
@@ -467,6 +484,73 @@
     </div>
 
     <!-- ===================================================================== -->
+    <!-- MODALE : BIENVENUE & INITIALISATION (1ÈRE OUVERTURE)                  -->
+    <!-- ===================================================================== -->
+    <div id="welcome-onboarding-modal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-5 relative overflow-hidden">
+            <!-- Indicateur d'étape -->
+            <div class="flex items-center justify-between">
+                <span id="welcome-step-badge" class="text-[11px] font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">Bienvenue • 1 / 2</span>
+                <button onclick="finishWelcomeOnboarding(true)" class="text-[11px] font-semibold text-slate-400 hover:text-slate-600 transition">Passer</button>
+            </div>
+
+            <!-- Étape 1 : But de l'application -->
+            <div id="welcome-step-1" class="space-y-4">
+                <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mx-auto">
+                    <svg class="w-8 h-8 text-primary" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 6C12 4.5 14 4 16 4C18 4 19 5.5 18.5 7.5C18 9.5 10 9 10 12.5C10 16 26 11.5 26 15.5C26 19.5 10 16.5 10 20.5C10 24.5 25 21.5 25 25.5C25 29 12 27 12 30.5C12 32.5 14.5 33 17 33"/>
+                    </svg>
+                </div>
+                <div class="text-center space-y-1.5">
+                    <h2 class="font-brand font-bold text-2xl text-slate-900">Bienvenue sur Digestiv</h2>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        Votre compagnon quotidien pour apaiser et comprendre le Syndrome de l'Intestin Irritable (SII).
+                    </p>
+                </div>
+                <div class="bg-softGray/80 rounded-2xl p-3.5 space-y-2.5 text-xs text-slate-700">
+                    <div class="flex items-start gap-2.5">
+                        <span class="text-base shrink-0">✍️</span>
+                        <span><strong>Suivez vos journées :</strong> notez vos ressentis, votre transit (Bristol) et vos habitudes en quelques secondes.</span>
+                    </div>
+                    <div class="flex items-start gap-2.5">
+                        <span class="text-base shrink-0">📡</span>
+                        <span><strong>Repérez vos déclencheurs & alliés :</strong> l'application croise vos données pour isoler ce qui vous irrite et ce qui vous soulage.</span>
+                    </div>
+                    <div class="flex items-start gap-2.5">
+                        <span class="text-base shrink-0">🔒</span>
+                        <span><strong>100 % privé et hors-ligne :</strong> vos données restent uniquement sur votre téléphone, exportables en PDF pour votre médecin.</span>
+                    </div>
+                </div>
+                <button onclick="nextWelcomeStep()" class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-2xl text-xs shadow-md shadow-primary/20 transition">
+                    Continuer →
+                </button>
+            </div>
+
+            <!-- Étape 2 : Choisir son prénom -->
+            <div id="welcome-step-2" class="space-y-4 hidden">
+                <div class="text-center space-y-1.5">
+                    <span class="text-3xl block">👋</span>
+                    <h3 class="font-bold text-base text-slate-900">Comment souhaitez-vous être appelé(e) ?</h3>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        Votre prénom personnalisera votre accueil et l'en-tête de vos bilans PDF médecin (modifiable à tout moment).
+                    </p>
+                </div>
+                <div>
+                    <input type="text" id="welcome-user-name-input" maxlength="35" placeholder="Ex : Nicolas, Camille..." onkeydown="if(event.key==='Enter') finishWelcomeOnboarding(false)" class="w-full bg-softGray border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-900 text-center font-medium focus:outline-none focus:border-primary">
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="prevWelcomeStep()" class="px-4 py-3 rounded-2xl bg-softGray text-slate-600 text-xs font-semibold hover:bg-slate-200/70 transition">
+                        ← Retour
+                    </button>
+                    <button onclick="finishWelcomeOnboarding(false)" class="flex-1 bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-2xl text-xs shadow-md shadow-primary/20 transition">
+                        Commencer mon suivi ✨
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
     <!-- MODALE : QU'EST-CE QUE LA PAIX DIGESTIVE ?                            -->
     <!-- ===================================================================== -->
     <div id="peace-info-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
@@ -552,15 +636,15 @@
     </div>
 
     <!-- ===================================================================== -->
-    <!-- MODALE : BILAN DU JOUR EN 3 ÉTAPES (AVEC ÉCHELLE DE BRISTOL 1-7)      -->
+    <!-- MODALE : BILAN DU JOUR EN 2 ÉTAPES (AVEC ÉCHELLE DE BRISTOL 1-7)      -->
     <!-- ===================================================================== -->
     <div id="checkin-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden no-print">
         <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
             
             <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
                 <div class="flex items-center space-x-2">
-                    <span class="px-2.5 py-1 rounded-xl bg-primary/10 text-primary font-bold text-xs" id="checkin-step-badge">Étape 1 / 3</span>
-                    <h3 class="font-bold text-slate-900 text-sm" id="checkin-step-title">Bilan du jour — Symptômes</h3>
+                    <span class="px-2.5 py-1 rounded-xl bg-primary/10 text-primary font-bold text-xs" id="checkin-step-badge">Étape 1 / 2</span>
+                    <h3 class="font-bold text-slate-900 text-sm" id="checkin-step-title">Bilan du jour — Symptômes & Bristol</h3>
                 </div>
                 <button onclick="closeCheckinModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center text-xs font-bold">✕</button>
             </div>
@@ -621,10 +705,24 @@
                     </div>
                 </div>
 
-                <!-- ÉTAPE 2 : FACTEURS MÉDICAUX STANDARDS & PROTECTEURS -->
+                <!-- ÉTAPE 2 : FACTEURS DÉCLENCHEURS (STANDARDS + FINS + MANUELS) & PROTECTEURS (STANDARDS + MANUELS) -->
                 <div id="step-2" class="space-y-5 hidden">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-2">⚠️ Facteurs déclencheurs médicaux standards</label>
+                    <!-- Section A : Facteurs déclencheurs potentiels -->
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-800">⚠️ Facteurs déclencheurs / irritants</label>
+                                <p class="text-[10px] text-slate-500">Aliments, écarts, émotions ou contexte du jour.</p>
+                            </div>
+                            <button type="button" onclick="openFactorCreatorModal('trigger')" class="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 px-2.5 py-1.5 rounded-xl text-[11px] font-bold shrink-0 transition">
+                                + Ajouter un facteur
+                            </button>
+                        </div>
+
+                        <!-- Facteurs déclencheurs créés manuellement -->
+                        <div id="survey-user-trigger-factors" class="space-y-2"></div>
+
+                        <!-- Facteurs médicaux standards -->
                         <div class="grid grid-cols-2 gap-2">
                             <label class="cursor-pointer flex items-center gap-2 p-2.5 rounded-2xl border border-slate-200 text-xs font-medium has-[:checked]:border-warning has-[:checked]:bg-warning/10">
                                 <input type="checkbox" class="std-factor accent-warning" value="Sommeil < 6h"> 😴 Sommeil &lt; 6h
@@ -648,10 +746,28 @@
                                 <input type="checkbox" class="std-factor accent-warning" value="Repas pris vite"> ⏱️ Repas pris vite / sur le pouce
                             </label>
                         </div>
+
+                        <!-- Déclencheurs fins (incorporés depuis l'ancienne étape 3) -->
+                        <div id="survey-library-factors" class="space-y-3 pt-1"></div>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-2">💚 Facteurs protecteurs (« Ce qui m'a fait du bien »)</label>
+                    <hr class="border-slate-100">
+
+                    <!-- Section B : Facteurs protecteurs -->
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-800">💚 Facteurs protecteurs (« Ce qui m'a fait du bien »)</label>
+                                <p class="text-[10px] text-slate-500">Habitudes, soins ou aliments apaisants du jour.</p>
+                            </div>
+                            <button type="button" onclick="openFactorCreatorModal('protective')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-2.5 py-1.5 rounded-xl text-[11px] font-bold shrink-0 transition">
+                                + Ajouter un protecteur
+                            </button>
+                        </div>
+
+                        <!-- Facteurs protecteurs créés manuellement -->
+                        <div id="survey-user-protective-factors" class="space-y-2"></div>
+
                         <div class="grid grid-cols-2 gap-2">
                             <label class="cursor-pointer flex items-center gap-2 p-2.5 rounded-2xl border border-slate-200 text-xs font-medium has-[:checked]:border-success has-[:checked]:bg-success/10">
                                 <input type="checkbox" class="protective-factor accent-success" value="Bouillotte"> 🔥 Bouillotte
@@ -667,25 +783,6 @@
                             </label>
                         </div>
                     </div>
-                </div>
-
-                <!-- ÉTAPE 3 : DÉCLENCHEURS FINS & AJOUT MANUEL INTELLIGENT -->
-                <div id="step-3" class="space-y-4 hidden">
-                    <div class="flex items-start justify-between gap-2">
-                        <div>
-                            <h4 class="font-bold text-slate-900 text-xs">Affiner avec des facteurs précis</h4>
-                            <p class="text-[11px] text-slate-500 mt-0.5">Sélectionnez dans la bibliothèque ou créez votre propre facteur.</p>
-                        </div>
-                        <button type="button" onclick="openFactorCreatorModal()" class="bg-slate-900 hover:bg-slate-800 text-white px-3 py-1.5 rounded-xl text-[11px] font-bold shrink-0 shadow-xs transition">
-                            + Créer un facteur
-                        </button>
-                    </div>
-
-                    <!-- Vos facteurs créés manuellement (s'il en existe) -->
-                    <div id="survey-user-custom-factors" class="space-y-3"></div>
-
-                    <!-- Bibliothèque de déclencheurs fins classés par catégories -->
-                    <div id="survey-library-factors" class="space-y-3.5"></div>
                 </div>
 
             </div>
@@ -705,14 +802,35 @@
             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
                 <div>
                     <h3 class="font-bold text-slate-900 text-sm">🧩 Créer un facteur personnalisé</h3>
-                    <p class="text-[11px] text-slate-500">Classement automatique par mots-clés & choix de mesure</p>
+                    <p class="text-[11px] text-slate-500">Déclencheur irritant ou facteur protecteur apaisant</p>
                 </div>
                 <button onclick="document.getElementById('factor-creator-modal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 text-xs font-bold">✕</button>
             </div>
 
+            <!-- Choix Déclencheur vs Protecteur -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1.5">Nature du facteur</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <label class="cursor-pointer border border-slate-200 rounded-2xl p-2.5 flex items-center gap-2 has-[:checked]:border-warning has-[:checked]:bg-warning/10">
+                        <input type="radio" name="fc-role" value="trigger" class="accent-warning" checked onchange="onFactorRoleChange(this.value)">
+                        <div>
+                            <span class="text-xs font-bold text-slate-800 block">⚠️ Déclencheur</span>
+                            <span class="text-[10px] text-slate-500">Suspect / Irritant</span>
+                        </div>
+                    </label>
+                    <label class="cursor-pointer border border-slate-200 rounded-2xl p-2.5 flex items-center gap-2 has-[:checked]:border-success has-[:checked]:bg-success/10">
+                        <input type="radio" name="fc-role" value="protective" class="accent-success" onchange="onFactorRoleChange(this.value)">
+                        <div>
+                            <span class="text-xs font-bold text-slate-800 block">💚 Protecteur</span>
+                            <span class="text-[10px] text-slate-500">Apaise / Fait du bien</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1">Nom du facteur</label>
-                <input type="text" id="fc-name" oninput="autoClassifyFactorInput(this.value)" placeholder="Ex: Probiotiques, Épices, Message ex, Nutella..." class="w-full bg-softGray border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-primary">
+                <input type="text" id="fc-name" oninput="autoClassifyFactorInput(this.value)" placeholder="Ex: Probiotiques, Épices, Tisane menthe, Nutella..." class="w-full bg-softGray border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-primary">
                 <p id="fc-auto-hint" class="text-[10px] text-primary font-medium mt-1 hidden">✨ Catégorie détectée automatiquement</p>
             </div>
 
@@ -723,6 +841,7 @@
                         <option value="Alimentation & Écarts">🍫 Alimentation & Écarts</option>
                         <option value="Émotions & Stress">🧠 Émotions & Stress</option>
                         <option value="Corps & Mode de vie">🏃‍♂️ Corps & Mode de vie</option>
+                        <option value="Soin & Bien-être">💚 Soin & Bien-être</option>
                     </select>
                 </div>
                 <div>
@@ -740,6 +859,8 @@
                         <option value="💧">💧</option>
                         <option value="✈️">✈️</option>
                         <option value="🧘">🧘</option>
+                        <option value="🌿">🌿</option>
+                        <option value="🔥">🔥</option>
                     </select>
                 </div>
             </div>
@@ -965,6 +1086,10 @@
                     <h5 class="font-bold text-slate-900 mb-1.5">Combos déclencheurs identifiés (duos) :</h5>
                     <ul id="rep-combos-list" class="space-y-1.5 list-disc pl-4 text-slate-700"></ul>
                 </div>
+                <div>
+                    <h5 class="font-bold text-slate-900 mb-1.5">Combos guérisseurs identifiés (duos apaisants) :</h5>
+                    <ul id="rep-healing-combos-list" class="space-y-1.5 list-disc pl-4 text-slate-700"></ul>
+                </div>
                 <p class="text-[10px] text-slate-400 italic pt-2 border-t border-slate-100">
                     Document généré automatiquement à partir de l'auto-évaluation quotidienne du patient pour faciliter la consultation gastro-entérologique.
                 </p>
@@ -1048,6 +1173,7 @@
         const INSTALL_DATE_KEY = 'digestiv_install_date';
         const CHALLENGE_KEY = 'digestiv_active_challenge_v4';
         const USER_NAME_KEY = 'digestiv_user_name_v4';
+        const ONBOARDED_KEY = 'digestiv_onboarded_v4';
 
         // Échelle de Bristol complète (Types 1 à 7)
         const bristolScaleData = [
@@ -1248,7 +1374,48 @@
             currentQuoteIndex = now.getDate() % positiveQuotes.length;
             renderPositiveQuote();
             refreshAllViews();
+            checkFirstLaunchOnboarding();
         });
+
+        // --- POP-UP D'INITIALISATION (1ÈRE OUVERTURE) ---
+        function checkFirstLaunchOnboarding() {
+            const isOnboarded = localStorage.getItem(ONBOARDED_KEY);
+            if (!isOnboarded) {
+                document.getElementById('welcome-step-1').classList.remove('hidden');
+                document.getElementById('welcome-step-2').classList.add('hidden');
+                document.getElementById('welcome-step-badge').innerText = 'Bienvenue • 1 / 2';
+                document.getElementById('welcome-onboarding-modal').classList.remove('hidden');
+            }
+        }
+
+        function nextWelcomeStep() {
+            document.getElementById('welcome-step-1').classList.add('hidden');
+            document.getElementById('welcome-step-2').classList.remove('hidden');
+            document.getElementById('welcome-step-badge').innerText = 'Votre profil • 2 / 2';
+            setTimeout(() => document.getElementById('welcome-user-name-input').focus(), 50);
+        }
+
+        function prevWelcomeStep() {
+            document.getElementById('welcome-step-2').classList.add('hidden');
+            document.getElementById('welcome-step-1').classList.remove('hidden');
+            document.getElementById('welcome-step-badge').innerText = 'Bienvenue • 1 / 2';
+        }
+
+        function finishWelcomeOnboarding(skipped) {
+            if (!skipped) {
+                const enteredName = document.getElementById('welcome-user-name-input').value.trim();
+                if (enteredName) {
+                    userName = enteredName;
+                    localStorage.setItem(USER_NAME_KEY, userName);
+                    renderUserGreeting();
+                }
+            }
+            localStorage.setItem(ONBOARDED_KEY, 'true');
+            document.getElementById('welcome-onboarding-modal').classList.add('hidden');
+            if (userName) {
+                showToast(`Bienvenue ${userName} sur Digestiv ! 🌿`);
+            }
+        }
 
         function saveState() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
@@ -1268,6 +1435,7 @@
             renderChallengesUI();
             renderStatsViews();
             renderCombosRadar();
+            renderHealingCombosRadar();
             renderResourcesFeed('all');
             renderCommunityFeed('all');
             renderProfileFactorsManager();
@@ -1300,6 +1468,7 @@
                 localStorage.setItem(USER_NAME_KEY, userName);
             } else {
                 localStorage.removeItem(USER_NAME_KEY);
+            localStorage.removeItem(ONBOARDED_KEY);
             }
             renderUserGreeting();
             document.getElementById('username-modal').classList.add('hidden');
@@ -1638,6 +1807,82 @@
             `;
         }
 
+
+
+        // --- RADAR DES COMBOS GUÉRISSEURS (SYNERGIE APAISANTE) ---
+        function computeHealingCombos() {
+            // Journées calmes (douleur <= 3 et ballonnements <= 3)
+            const calmEntries = entries.filter(e => e.pain <= 3 && (e.bloating ?? 0) <= 3);
+            if (calmEntries.length < 2) return [];
+
+            const pairCounts = {};
+            calmEntries.forEach(entry => {
+                // Combine facteurs protecteurs et éventuels facteurs positifs/habitudes du jour
+                const protective = (entry.protectiveFactors || []).map(f => f.replace(/\s*\(\d+\/5\)$/, '').trim()).filter(Boolean);
+                const otherFactors = (entry.factors || [])
+                    .map(f => f.replace(/\s*\(\d+\/5\)$/, '').trim())
+                    .filter(f => f && !f.includes('Crise aiguë'));
+
+                const combined = [...new Set([...protective, ...otherFactors])].sort();
+                if (combined.length < 2) return;
+
+                for (let i = 0; i < combined.length; i++) {
+                    for (let j = i + 1; j < combined.length; j++) {
+                        const key = `${combined[i]}|||${combined[j]}`;
+                        pairCounts[key] = (pairCounts[key] || 0) + 1;
+                    }
+                }
+            });
+
+            return Object.entries(pairCounts)
+                .filter(([, count]) => count >= 2)
+                .map(([key, count]) => {
+                    const [factorA, factorB] = key.split('|||');
+                    const pctOfCalm = Math.round((count / calmEntries.length) * 100);
+                    return { factorA, factorB, count, pctOfCalm, totalCalm: calmEntries.length };
+                })
+                .sort((a, b) => b.count - a.count);
+        }
+
+        function renderHealingCombosRadar() {
+            const container = document.getElementById('healing-combos-radar-container');
+            if (!container) return;
+
+            const combos = computeHealingCombos();
+            if (combos.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-softGray/90 border border-slate-200/80 rounded-2xl p-3.5 space-y-1.5">
+                        <div class="flex items-center gap-2 text-xs font-bold text-slate-700">
+                            <span>🌱</span>
+                            <span>Radar guérisseur en cours d'observation</span>
+                        </div>
+                        <p class="text-[11px] text-slate-600 leading-relaxed">
+                            Le radar des combos guérisseurs s'activera dès qu'une association de 2 facteurs protecteurs ou habitudes (ex : Tisane + Marche) aura été observée sur au moins 2 journées calmes.
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="space-y-2.5">
+                    ${combos.slice(0, 5).map(c => `
+                        <div class="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 space-y-1">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs font-bold text-slate-900">✨ ${c.factorA} + ${c.factorB}</span>
+                                <span class="text-[10px] font-bold bg-white text-emerald-800 px-2 py-0.5 rounded-lg border border-emerald-200 shrink-0">
+                                    ${c.count} jour${c.count > 1 ? 's' : ''} calme${c.count > 1 ? 's' : ''} (${c.pctOfCalm}%)
+                                </span>
+                            </div>
+                            <p class="text-[10px] text-slate-600">
+                                Synergie : ${c.count >= 4 ? '⭐️⭐️⭐️⭐️⭐️ Forte' : (c.count >= 3 ? '⭐️⭐️⭐️⭐️ Modérée' : '⭐️⭐️⭐️ Émergente')} • Associés ensemble ${c.count} fois lors de journées sans crise.
+                            </p>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
         // --- ONGLET ANALYSES ADAPTÉ AUX DÉBUTANTS (< 5 BILANS) ---
         function renderStatsViews() {
             const count = entries.length;
@@ -1832,6 +2077,7 @@
             if (tabId === 'stats') {
                 renderStatsViews();
                 renderCombosRadar();
+            renderHealingCombosRadar();
             }
             document.getElementById('main-container').scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -1867,11 +2113,28 @@
             renderBristolSelector();
         }
 
-        // --- GESTION DES FACTEURS PERSONNALISÉS (STRICTEMENT VIDES AU DÉPART DANS L'ONGLET MÉDECIN) ---
-        function openFactorCreatorModal() {
+        // --- GESTION DES FACTEURS PERSONNALISÉS (DÉCLENCHEURS & PROTECTEURS) ---
+        function openFactorCreatorModal(defaultRole = 'trigger') {
             document.getElementById('fc-name').value = '';
             document.getElementById('fc-auto-hint').classList.add('hidden');
+            const roleRadio = document.querySelector(`input[name="fc-role"][value="${defaultRole}"]`);
+            if (roleRadio) {
+                roleRadio.checked = true;
+                onFactorRoleChange(defaultRole);
+            }
             document.getElementById('factor-creator-modal').classList.remove('hidden');
+        }
+
+        function onFactorRoleChange(role) {
+            const catSelect = document.getElementById('fc-category');
+            const iconSelect = document.getElementById('fc-icon');
+            if (role === 'protective') {
+                catSelect.value = 'Soin & Bien-être';
+                iconSelect.value = '🌿';
+            } else {
+                catSelect.value = 'Alimentation & Écarts';
+                iconSelect.value = '🍫';
+            }
         }
 
         function autoClassifyFactorInput(text) {
@@ -1879,6 +2142,7 @@
             const catSelect = document.getElementById('fc-category');
             const iconSelect = document.getElementById('fc-icon');
             const hint = document.getElementById('fc-auto-hint');
+            const currentRole = document.querySelector('input[name="fc-role"]:checked')?.value || 'trigger';
 
             if (!val) {
                 hint.classList.add('hidden');
@@ -1886,7 +2150,15 @@
             }
 
             let detected = false;
-            if (/nutella|chocolat|sucre|pain|gluten|lait|fromage|lactose|épice|piment|gras|burger|pizza|café|alcool|repas|oignon|ail|soda/.test(val)) {
+            if (/tisane|bouillotte|probiotique|psyllium|menthe|camomille|fenouil|yoga|méditation|respiration|marche|repos|sieste/.test(val)) {
+                catSelect.value = 'Soin & Bien-être';
+                iconSelect.value = /tisane|menthe|camomille|fenouil/.test(val) ? '🍵' : (/probiotique|psyllium/.test(val) ? '💊' : '🌿');
+                if (currentRole === 'trigger') {
+                    const protRadio = document.querySelector('input[name="fc-role"][value="protective"]');
+                    if (protRadio) protRadio.checked = true;
+                }
+                detected = true;
+            } else if (/nutella|chocolat|sucre|pain|gluten|lait|fromage|lactose|épice|piment|gras|burger|pizza|café|alcool|repas|oignon|ail|soda/.test(val)) {
                 catSelect.value = 'Alimentation & Écarts';
                 iconSelect.value = /épice|piment/.test(val) ? '🌶️' : (/lait|fromage|lactose/.test(val) ? '🥛' : '🍫');
                 detected = true;
@@ -1894,9 +2166,9 @@
                 catSelect.value = 'Émotions & Stress';
                 iconSelect.value = /ex|dispute|conflit/.test(val) ? '💔' : '💼';
                 detected = true;
-            } else if (/eau|hydratation|sommeil|sport|marche|voyage|avion|train|fatigue|règles|cycle|probiotique|médicament|tisane/.test(val)) {
+            } else if (/eau|hydratation|sommeil|sport|voyage|avion|train|fatigue|règles|cycle|médicament/.test(val)) {
                 catSelect.value = 'Corps & Mode de vie';
-                iconSelect.value = /probiotique|médicament/.test(val) ? '💊' : (/voyage|avion/.test(val) ? '✈️' : '💧');
+                iconSelect.value = /médicament/.test(val) ? '💊' : (/voyage|avion/.test(val) ? '✈️' : '💧');
                 detected = true;
             }
 
@@ -1909,6 +2181,7 @@
                 showToast('Veuillez saisir un nom de facteur');
                 return;
             }
+            const role = document.querySelector('input[name="fc-role"]:checked')?.value || 'trigger';
             const category = document.getElementById('fc-category').value;
             const icon = document.getElementById('fc-icon').value;
             const type = document.querySelector('input[name="fc-type"]:checked').value;
@@ -1916,6 +2189,7 @@
             const newFactor = {
                 id: 'uf_' + Date.now(),
                 name,
+                role,
                 category,
                 icon,
                 type,
@@ -1927,12 +2201,12 @@
 
             if (!document.getElementById('checkin-modal').classList.contains('hidden')) {
                 currentUserFactorValues[newFactor.id] = type === 'scale' ? 3 : true;
-                renderStep3Factors();
+                renderStep2Factors();
             }
 
             renderProfileFactorsManager();
             document.getElementById('factor-creator-modal').classList.add('hidden');
-            showToast(`Facteur « ${name} » créé ✨`);
+            showToast(`${role === 'protective' ? 'Protecteur' : 'Facteur'} « ${name} » créé ✨`);
         }
 
         function toggleArchiveUserFactor(id) {
@@ -1942,7 +2216,7 @@
             saveState();
             renderProfileFactorsManager();
             if (!document.getElementById('checkin-modal').classList.contains('hidden')) {
-                renderStep3Factors();
+                renderStep2Factors();
             }
             showToast(f.archived ? 'Facteur archivé' : 'Facteur réactivé');
         }
@@ -1953,7 +2227,7 @@
             saveState();
             renderProfileFactorsManager();
             if (!document.getElementById('checkin-modal').classList.contains('hidden')) {
-                renderStep3Factors();
+                renderStep2Factors();
             }
             showToast('Facteur personnalisé supprimé');
         }
@@ -1967,109 +2241,141 @@
                 container.innerHTML = `
                     <div class="p-4 rounded-2xl bg-softGray/80 border border-dashed border-slate-200 text-center space-y-1">
                         <p class="text-xs font-medium text-slate-600">Aucun facteur personnalisé créé pour le moment.</p>
-                        <p class="text-[11px] text-slate-400">Appuyez sur <strong>« + Créer »</strong> pour ajouter vos propres déclencheurs ou suivis spécifiques.</p>
+                        <p class="text-[11px] text-slate-400">Appuyez sur <strong>« + Créer »</strong> pour ajouter vos propres déclencheurs ou protecteurs.</p>
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = userCreatedFactors.map(f => `
-                <div class="flex items-center justify-between p-2.5 rounded-2xl border ${f.archived ? 'bg-slate-50 border-slate-100 opacity-60' : 'bg-softGray/70 border-slate-200/70'}">
-                    <div class="flex items-center gap-2.5 min-w-0">
-                        <span class="text-base shrink-0">${f.icon}</span>
-                        <div class="truncate">
-                            <span class="text-xs font-bold text-slate-800 block truncate">${f.name}</span>
-                            <span class="text-[10px] text-slate-500">${f.category} • ${f.type === 'scale' ? 'Échelle 0-5' : 'Oui / Non'}</span>
+            container.innerHTML = userCreatedFactors.map(f => {
+                const isProtective = f.role === 'protective';
+                const roleBadge = isProtective
+                    ? '<span class="text-[9px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-md">Protecteur</span>'
+                    : '<span class="text-[9px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-md">Déclencheur</span>';
+                return `
+                    <div class="flex items-center justify-between p-2.5 rounded-2xl border ${f.archived ? 'bg-slate-50 border-slate-100 opacity-60' : 'bg-softGray/70 border-slate-200/70'}">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <span class="text-base shrink-0">${f.icon}</span>
+                            <div class="truncate">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-xs font-bold text-slate-800 truncate">${f.name}</span>
+                                    ${roleBadge}
+                                </div>
+                                <span class="text-[10px] text-slate-500">${f.category} • ${f.type === 'scale' ? 'Échelle 0-5' : 'Oui / Non'}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1 shrink-0 ml-2">
+                            <button onclick="toggleArchiveUserFactor('${f.id}')" class="text-[10px] font-bold px-2 py-1 rounded-xl border bg-white text-slate-600 border-slate-200 hover:text-primary">
+                                ${f.archived ? 'Activer' : 'Archiver'}
+                            </button>
+                            <button onclick="deleteUserFactor('${f.id}')" aria-label="Supprimer" class="text-[10px] font-bold px-2 py-1 rounded-xl border bg-white text-rose-500 border-rose-200 hover:bg-rose-50">
+                                ✕
+                            </button>
                         </div>
                     </div>
-                    <div class="flex items-center gap-1 shrink-0 ml-2">
-                        <button onclick="toggleArchiveUserFactor('${f.id}')" class="text-[10px] font-bold px-2 py-1 rounded-xl border bg-white text-slate-600 border-slate-200 hover:text-primary">
-                            ${f.archived ? 'Activer' : 'Archiver'}
-                        </button>
-                        <button onclick="deleteUserFactor('${f.id}')" aria-label="Supprimer" class="text-[10px] font-bold px-2 py-1 rounded-xl border bg-white text-rose-500 border-rose-200 hover:bg-rose-50">
-                            ✕
-                        </button>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
-        // Rendu Étape 3 du Bilan : facteurs créés par l'utilisateur + bibliothèque intégrée
-        function renderStep3Factors() {
-            const customContainer = document.getElementById('survey-user-custom-factors');
+        function renderCustomUserFactorCard(f, accentType) {
+            const val = currentUserFactorValues[f.id];
+            const isProt = accentType === 'protective';
+            const activeBorder = isProt ? 'border-success bg-success/10' : 'border-primary bg-primary/10';
+            const activePill = isProt ? 'bg-success text-white' : 'bg-primary text-white';
+
+            if (f.type === 'binary') {
+                const isChecked = !!val;
+                return `
+                    <button type="button" onclick="toggleBinaryUserFactor('${f.id}')" class="w-full flex items-center justify-between p-2.5 rounded-2xl border text-left transition ${isChecked ? activeBorder + ' text-slate-900' : 'border-slate-200 bg-white text-slate-700'}">
+                        <span class="text-xs font-medium flex items-center gap-2"><span>${f.icon}</span><span>${f.name}</span></span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg ${isChecked ? activePill : 'bg-slate-100 text-slate-400'}">${isChecked ? 'Oui ✓' : 'Non'}</span>
+                    </button>
+                `;
+            } else {
+                const numVal = typeof val === 'number' ? val : 0;
+                const scaleBorder = numVal > 0 ? (isProt ? 'border-success bg-success/5' : 'border-warning bg-warning/5') : 'border-slate-200 bg-white';
+                const scaleText = numVal > 0 ? (isProt ? 'text-success' : 'text-warning') : 'text-slate-400';
+                const scaleAccent = isProt ? 'accent-success' : 'accent-warning';
+                return `
+                    <div class="p-3 rounded-2xl border ${scaleBorder} space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-slate-800 flex items-center gap-2"><span>${f.icon}</span><span>${f.name}</span></span>
+                            <span class="text-[11px] font-bold ${scaleText}">${numVal} / 5</span>
+                        </div>
+                        <input type="range" min="0" max="5" value="${numVal}" oninput="setScaleUserFactor('${f.id}', this.value)" class="w-full ${scaleAccent} h-1.5 bg-slate-200 rounded-lg cursor-pointer">
+                    </div>
+                `;
+            }
+        }
+
+        // Rendu Étape 2 unifiée du Bilan : facteurs créés (déclencheurs & protecteurs) + bibliothèque intégrée
+        function renderStep2Factors() {
+            const triggerCustomContainer = document.getElementById('survey-user-trigger-factors');
+            const protectiveCustomContainer = document.getElementById('survey-user-protective-factors');
             const libContainer = document.getElementById('survey-library-factors');
 
-            const activeCustom = userCreatedFactors.filter(f => !f.archived);
-            if (activeCustom.length === 0) {
-                customContainer.innerHTML = '';
-            } else {
-                customContainer.innerHTML = `
-                    <div class="space-y-2">
-                        <span class="text-[10px] font-bold text-primary uppercase tracking-wider block">✨ Vos facteurs créés</span>
+            const activeTriggers = userCreatedFactors.filter(f => !f.archived && f.role !== 'protective');
+            const activeProtectives = userCreatedFactors.filter(f => !f.archived && f.role === 'protective');
+
+            if (triggerCustomContainer) {
+                triggerCustomContainer.innerHTML = activeTriggers.length === 0 ? '' : `
+                    <div class="space-y-1.5">
+                        <span class="text-[10px] font-bold text-amber-700 uppercase tracking-wider block">✨ Vos déclencheurs personnalisés</span>
                         <div class="space-y-2">
-                            ${activeCustom.map(f => {
-                                const val = currentUserFactorValues[f.id];
-                                if (f.type === 'binary') {
-                                    const isChecked = !!val;
-                                    return `
-                                        <button type="button" onclick="toggleBinaryUserFactor('${f.id}')" class="w-full flex items-center justify-between p-2.5 rounded-2xl border text-left transition ${isChecked ? 'border-primary bg-primary/10 text-slate-900' : 'border-slate-200 bg-white text-slate-700'}">
-                                            <span class="text-xs font-medium flex items-center gap-2"><span>${f.icon}</span><span>${f.name}</span></span>
-                                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg ${isChecked ? 'bg-primary text-white' : 'bg-slate-100 text-slate-400'}">${isChecked ? 'Oui ✓' : 'Non'}</span>
-                                        </button>
-                                    `;
-                                } else {
-                                    const numVal = typeof val === 'number' ? val : 0;
-                                    return `
-                                        <div class="p-3 rounded-2xl border ${numVal > 0 ? 'border-warning bg-warning/5' : 'border-slate-200 bg-white'} space-y-1.5">
-                                            <div class="flex items-center justify-between">
-                                                <span class="text-xs font-medium text-slate-800 flex items-center gap-2"><span>${f.icon}</span><span>${f.name}</span></span>
-                                                <span class="text-[11px] font-bold ${numVal > 0 ? 'text-warning' : 'text-slate-400'}">${numVal} / 5</span>
-                                            </div>
-                                            <input type="range" min="0" max="5" value="${numVal}" oninput="setScaleUserFactor('${f.id}', this.value)" class="w-full accent-warning h-1.5 bg-slate-200 rounded-lg cursor-pointer">
-                                        </div>
-                                    `;
-                                }
-                            }).join('')}
+                            ${activeTriggers.map(f => renderCustomUserFactorCard(f, 'trigger')).join('')}
                         </div>
                     </div>
                 `;
             }
 
-            libContainer.innerHTML = Object.entries(builtInTriggerLibrary).map(([cat, items]) => `
-                <div class="space-y-2">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">${cat}</span>
-                    <div class="flex flex-wrap gap-1.5">
-                        ${items.map(item => {
-                            const isSelected = selectedLibraryFactors.has(item.name);
-                            return `
-                                <button type="button" onclick="toggleLibraryFactor('${item.name.replace(/'/g, "\\'")}')" class="px-3 py-1.5 rounded-2xl border text-xs font-medium flex items-center gap-1.5 transition ${isSelected ? 'border-primary bg-primary text-white shadow-2xs' : 'border-slate-200 bg-white text-slate-700 hover:bg-softGray'}">
-                                    <span>${item.icon}</span>
-                                    <span>${item.name}</span>
-                                </button>
-                            `;
-                        }).join('')}
+            if (protectiveCustomContainer) {
+                protectiveCustomContainer.innerHTML = activeProtectives.length === 0 ? '' : `
+                    <div class="space-y-1.5">
+                        <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">✨ Vos protecteurs personnalisés</span>
+                        <div class="space-y-2">
+                            ${activeProtectives.map(f => renderCustomUserFactorCard(f, 'protective')).join('')}
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }
+
+            if (libContainer) {
+                libContainer.innerHTML = Object.entries(builtInTriggerLibrary).map(([cat, items]) => `
+                    <div class="space-y-1.5">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">${cat}</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            ${items.map(item => {
+                                const isSelected = selectedLibraryFactors.has(item.name);
+                                return `
+                                    <button type="button" onclick="toggleLibraryFactor('${item.name.replace(/'/g, "\'")}')" class="px-3 py-1.5 rounded-2xl border text-xs font-medium flex items-center gap-1.5 transition ${isSelected ? 'border-primary bg-primary text-white shadow-2xs' : 'border-slate-200 bg-white text-slate-700 hover:bg-softGray'}">
+                                        <span>${item.icon}</span>
+                                        <span>${item.name}</span>
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `).join('');
+            }
         }
 
         function toggleLibraryFactor(name) {
             if (selectedLibraryFactors.has(name)) selectedLibraryFactors.delete(name);
             else selectedLibraryFactors.add(name);
-            renderStep3Factors();
+            renderStep2Factors();
         }
 
         function toggleBinaryUserFactor(id) {
             if (currentUserFactorValues[id]) delete currentUserFactorValues[id];
             else currentUserFactorValues[id] = true;
-            renderStep3Factors();
+            renderStep2Factors();
         }
 
         function setScaleUserFactor(id, val) {
             const num = parseInt(val, 10);
             if (num === 0) delete currentUserFactorValues[id];
             else currentUserFactorValues[id] = num;
-            renderStep3Factors();
+            renderStep2Factors();
         }
 
         // --- BOÎTE À OUTILS URGENCE CRISE & COHÉRENCE CARDIAQUE ---
@@ -2213,7 +2519,7 @@
             renderResourcesFeed(cat);
         }
 
-        // --- NAVIGATION DANS LE BILAN DU JOUR (3 ÉTAPES) ---
+        // --- NAVIGATION DANS LE BILAN DU JOUR (2 ÉTAPES UNIFIÉES) ---
         function openCheckinModal() {
             checkinStep = 1;
             selectedBristolType = 4;
@@ -2229,7 +2535,7 @@
 
             document.querySelectorAll('.std-factor, .protective-factor').forEach(cb => cb.checked = false);
             renderBristolSelector();
-            renderStep3Factors();
+            renderStep2Factors();
             updateCheckinModalUI();
             document.getElementById('checkin-modal').classList.remove('hidden');
         }
@@ -2239,19 +2545,19 @@
         }
 
         function updateCheckinModalUI() {
-            [1, 2, 3].forEach(s => document.getElementById('step-' + s).classList.toggle('hidden', s !== checkinStep));
-            document.getElementById('checkin-step-badge').innerText = `Étape ${checkinStep} / 3`;
-            const titles = ['Bilan du jour — Symptômes & Bristol', 'Facteurs Médicaux & Protecteurs', 'Déclencheurs Fins & Personnels'];
+            [1, 2].forEach(s => document.getElementById('step-' + s).classList.toggle('hidden', s !== checkinStep));
+            document.getElementById('checkin-step-badge').innerText = `Étape ${checkinStep} / 2`;
+            const titles = ['Bilan du jour — Symptômes & Bristol', 'Facteurs Déclencheurs & Protecteurs'];
             document.getElementById('checkin-step-title').innerText = titles[checkinStep - 1];
             document.getElementById('btn-prev-step').classList.toggle('invisible', checkinStep === 1);
-            document.getElementById('btn-next-step').innerText = checkinStep === 3 ? 'Valider mon bilan ✨' : 'Suivant →';
+            document.getElementById('btn-next-step').innerText = checkinStep === 2 ? 'Valider mon bilan ✨' : 'Suivant →';
         }
 
         function changeCheckinStep(delta) {
-            if (checkinStep + delta >= 1 && checkinStep + delta <= 3) {
+            if (checkinStep + delta >= 1 && checkinStep + delta <= 2) {
                 checkinStep += delta;
                 updateCheckinModalUI();
-            } else if (checkinStep + delta > 3) {
+            } else if (checkinStep + delta > 2) {
                 submitDailyCheckin();
             }
         }
@@ -2261,20 +2567,28 @@
             const bloating = parseInt(document.getElementById('input-bloating').value, 10);
             const stress = parseInt(document.getElementById('input-stress').value, 10);
             const stdFactors = Array.from(document.querySelectorAll('.std-factor:checked')).map(cb => cb.value);
-            const protectiveFactors = Array.from(document.querySelectorAll('.protective-factor:checked')).map(cb => cb.value);
+            const stdProtectiveFactors = Array.from(document.querySelectorAll('.protective-factor:checked')).map(cb => cb.value);
 
-            const customCollected = [];
+            const customTriggersCollected = [];
+            const customProtectiveCollected = [];
+
             Object.entries(currentUserFactorValues).forEach(([id, val]) => {
                 const def = userCreatedFactors.find(f => f.id === id);
                 if (!def) return;
+                let formatted = null;
                 if (def.type === 'binary' && val === true) {
-                    customCollected.push(def.name);
+                    formatted = def.name;
                 } else if (def.type === 'scale' && val > 0) {
-                    customCollected.push(`${def.name} (${val}/5)`);
+                    formatted = `${def.name} (${val}/5)`;
+                }
+                if (formatted) {
+                    if (def.role === 'protective') customProtectiveCollected.push(formatted);
+                    else customTriggersCollected.push(formatted);
                 }
             });
 
-            const allTriggerFactors = [...new Set([...stdFactors, ...Array.from(selectedLibraryFactors), ...customCollected])];
+            const allTriggerFactors = [...new Set([...stdFactors, ...Array.from(selectedLibraryFactors), ...customTriggersCollected])];
+            const allProtectiveFactors = [...new Set([...stdProtectiveFactors, ...customProtectiveCollected])];
             const todayIso = getTodayIso();
             const todayLabel = formatIsoShort(todayIso);
 
@@ -2286,7 +2600,7 @@
                 stress,
                 bristol: selectedBristolType,
                 factors: allTriggerFactors,
-                protectiveFactors
+                protectiveFactors: allProtectiveFactors
             };
 
             const existingIdx = entries.findIndex(e => e.isoDate === todayIso);
@@ -2375,6 +2689,7 @@
                 document.getElementById('rep-bristol-summary').innerText = 'Aucun bilan enregistré pour le moment.';
                 document.getElementById('rep-triggers-list').innerHTML = '<li>Enregistrez quelques bilans quotidiens pour générer votre synthèse clinique.</li>';
                 document.getElementById('rep-combos-list').innerHTML = '<li>Aucun combo détecté pour le moment.</li>';
+                document.getElementById('rep-healing-combos-list').innerHTML = '<li>Aucun combo guérisseur détecté pour le moment.</li>';
             } else {
                 const avgPain = (entries.reduce((acc, e) => acc + e.pain, 0) / entries.length).toFixed(1);
                 const avgStress = (entries.reduce((acc, e) => acc + e.stress, 0) / entries.length).toFixed(1);
@@ -2412,6 +2727,13 @@
                     ? combos.slice(0, 5).map(c => `<li><strong>${c.factorA} + ${c.factorB}</strong> : associés ${c.count} fois lors d'un jour de crise (${c.pctOfCrises}%)</li>`).join('')
                     : '<li>Pas encore assez d’occurrences cumulées pour isoler un duo déclencheur.</li>';
                 document.getElementById('rep-combos-list').innerHTML = combosHtml;
+
+                // Combos guérisseurs
+                const healingCombos = computeHealingCombos();
+                const healingCombosHtml = healingCombos.length > 0
+                    ? healingCombos.slice(0, 5).map(c => `<li><strong>${c.factorA} + ${c.factorB}</strong> : associés ${c.count} fois lors d'une journée calme (${c.pctOfCalm}%)</li>`).join('')
+                    : '<li>Pas encore assez d’occurrences cumulées pour isoler un duo apaisant.</li>';
+                document.getElementById('rep-healing-combos-list').innerHTML = healingCombosHtml;
             }
             document.getElementById('medical-modal').classList.remove('hidden');
         }
