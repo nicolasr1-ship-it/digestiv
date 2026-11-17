@@ -490,8 +490,8 @@
         <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-5 relative overflow-hidden">
             <!-- Indicateur d'étape -->
             <div class="flex items-center justify-between">
-                <span id="welcome-step-badge" class="text-[11px] font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">Bienvenue • 1 / 2</span>
-                <button onclick="finishWelcomeOnboarding(true)" class="text-[11px] font-semibold text-slate-400 hover:text-slate-600 transition">Passer</button>
+                <span id="welcome-step-badge" class="text-[11px] font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">Bienvenue • 1 / 3</span>
+                <button id="welcome-skip-btn" onclick="goToWelcomeStep(3, true)" class="text-[11px] font-semibold text-slate-400 hover:text-slate-600 transition">Passer</button>
             </div>
 
             <!-- Étape 1 : But de l'application -->
@@ -521,7 +521,7 @@
                         <span><strong>100 % privé et hors-ligne :</strong> vos données restent uniquement sur votre téléphone, exportables en PDF pour votre médecin.</span>
                     </div>
                 </div>
-                <button onclick="nextWelcomeStep()" class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-2xl text-xs shadow-md shadow-primary/20 transition">
+                <button onclick="goToWelcomeStep(2)" class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-2xl text-xs shadow-md shadow-primary/20 transition">
                     Continuer →
                 </button>
             </div>
@@ -536,14 +536,41 @@
                     </p>
                 </div>
                 <div>
-                    <input type="text" id="welcome-user-name-input" maxlength="35" placeholder="Ex : Nicolas, Camille..." onkeydown="if(event.key==='Enter') finishWelcomeOnboarding(false)" class="w-full bg-softGray border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-900 text-center font-medium focus:outline-none focus:border-primary">
+                    <input type="text" id="welcome-user-name-input" maxlength="35" placeholder="Ex : Nicolas, Camille..." onkeydown="if(event.key==='Enter') goToWelcomeStep(3)" class="w-full bg-softGray border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-900 text-center font-medium focus:outline-none focus:border-primary">
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="prevWelcomeStep()" class="px-4 py-3 rounded-2xl bg-softGray text-slate-600 text-xs font-semibold hover:bg-slate-200/70 transition">
+                    <button onclick="goToWelcomeStep(1)" class="px-4 py-3 rounded-2xl bg-softGray text-slate-600 text-xs font-semibold hover:bg-slate-200/70 transition">
+                        ← Retour
+                    </button>
+                    <button onclick="goToWelcomeStep(3)" class="flex-1 bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-2xl text-xs shadow-md shadow-primary/20 transition">
+                        Continuer →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Étape 3 (Dernier pop-up d'initialisation) : Avertissement médical -->
+            <div id="welcome-step-3" class="space-y-4 hidden">
+                <div class="text-center space-y-1.5">
+                    <span class="text-3xl block">🩺</span>
+                    <h3 class="font-bold text-base text-slate-900">Information importante</h3>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        Avant de démarrer votre suivi quotidien :
+                    </p>
+                </div>
+                <div class="bg-amber-50/90 border border-amber-200/80 rounded-2xl p-4 space-y-2.5 text-xs text-slate-700 leading-relaxed">
+                    <p class="font-semibold text-slate-900">
+                        Digestiv ne se soustrait pas à un avis médical et n'est qu'une aide dans la vie d'un malade.
+                    </p>
+                    <p class="text-[11px] text-slate-600">
+                        Cette application est un outil personnel d'observation et d'accompagnement au quotidien. Elle ne pose aucun diagnostic et ne remplace en aucun cas la consultation, le suivi ou les prescriptions de votre médecin ou gastro-entérologue.
+                    </p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="goToWelcomeStep(2)" class="px-4 py-3 rounded-2xl bg-softGray text-slate-600 text-xs font-semibold hover:bg-slate-200/70 transition">
                         ← Retour
                     </button>
                     <button onclick="finishWelcomeOnboarding(false)" class="flex-1 bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-2xl text-xs shadow-md shadow-primary/20 transition">
-                        Commencer mon suivi ✨
+                        J'ai compris, démarrer ✨
                     </button>
                 </div>
             </div>
@@ -705,28 +732,22 @@
                     </div>
                 </div>
 
-                <!-- ÉTAPE 2 : FACTEURS DÉCLENCHEURS (STANDARDS + FINS + MANUELS) & PROTECTEURS (STANDARDS + MANUELS) -->
+                <!-- ÉTAPE 2 : FACTEURS DÉCLENCHEURS (ESSENTIELS + MANUELS) & PROTECTEURS (ESSENTIELS + MANUELS) -->
                 <div id="step-2" class="space-y-5 hidden">
                     <!-- Section A : Facteurs déclencheurs potentiels -->
                     <div class="space-y-3">
                         <div class="flex items-center justify-between gap-2">
                             <div>
                                 <label class="block text-xs font-bold text-slate-800">⚠️ Facteurs déclencheurs / irritants</label>
-                                <p class="text-[10px] text-slate-500">Aliments, écarts, émotions ou contexte du jour.</p>
+                                <p class="text-[10px] text-slate-500">Sélectionnez parmi quelques pistes ou ajoutez les vôtres.</p>
                             </div>
                             <button type="button" onclick="openFactorCreatorModal('trigger')" class="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 px-2.5 py-1.5 rounded-xl text-[11px] font-bold shrink-0 transition">
                                 + Ajouter un facteur
                             </button>
                         </div>
 
-                        <!-- Facteurs déclencheurs créés manuellement -->
-                        <div id="survey-user-trigger-factors" class="space-y-2"></div>
-
-                        <!-- Facteurs médicaux standards -->
+                        <!-- Quelques facteurs déclencheurs essentiels -->
                         <div class="grid grid-cols-2 gap-2">
-                            <label class="cursor-pointer flex items-center gap-2 p-2.5 rounded-2xl border border-slate-200 text-xs font-medium has-[:checked]:border-warning has-[:checked]:bg-warning/10">
-                                <input type="checkbox" class="std-factor accent-warning" value="Sommeil < 6h"> 😴 Sommeil &lt; 6h
-                            </label>
                             <label class="cursor-pointer flex items-center gap-2 p-2.5 rounded-2xl border border-slate-200 text-xs font-medium has-[:checked]:border-warning has-[:checked]:bg-warning/10">
                                 <input type="checkbox" class="std-factor accent-warning" value="Caféine"> ☕ Caféine
                             </label>
@@ -740,15 +761,18 @@
                                 <input type="checkbox" class="std-factor accent-warning" value="FODMAPs élevés"> 🧅 FODMAPs élevés
                             </label>
                             <label class="cursor-pointer flex items-center gap-2 p-2.5 rounded-2xl border border-slate-200 text-xs font-medium has-[:checked]:border-warning has-[:checked]:bg-warning/10">
-                                <input type="checkbox" class="std-factor accent-warning" value="Tabac"> 🚬 Tabac
+                                <input type="checkbox" class="std-factor accent-warning" value="Sommeil < 6h"> 😴 Sommeil &lt; 6h
                             </label>
-                            <label class="cursor-pointer flex items-center gap-2 p-2.5 rounded-2xl border border-slate-200 text-xs font-medium col-span-2 has-[:checked]:border-warning has-[:checked]:bg-warning/10">
-                                <input type="checkbox" class="std-factor accent-warning" value="Repas pris vite"> ⏱️ Repas pris vite / sur le pouce
+                            <label class="cursor-pointer flex items-center gap-2 p-2.5 rounded-2xl border border-slate-200 text-xs font-medium has-[:checked]:border-warning has-[:checked]:bg-warning/10">
+                                <input type="checkbox" class="std-factor accent-warning" value="Charge mentale"> 🤯 Charge mentale
                             </label>
                         </div>
 
-                        <!-- Déclencheurs fins (incorporés depuis l'ancienne étape 3) -->
-                        <div id="survey-library-factors" class="space-y-3 pt-1"></div>
+                        <!-- Facteurs déclencheurs créés manuellement par l'utilisateur -->
+                        <div id="survey-user-trigger-factors" class="space-y-2"></div>
+                        <button type="button" onclick="openFactorCreatorModal('trigger')" class="w-full py-2.5 px-3 rounded-2xl border border-dashed border-amber-300 bg-amber-50/40 hover:bg-amber-50 text-amber-800 text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                            <span>＋</span><span>Créer et ajouter mon propre déclencheur</span>
+                        </button>
                     </div>
 
                     <hr class="border-slate-100">
@@ -758,15 +782,12 @@
                         <div class="flex items-center justify-between gap-2">
                             <div>
                                 <label class="block text-xs font-bold text-slate-800">💚 Facteurs protecteurs (« Ce qui m'a fait du bien »)</label>
-                                <p class="text-[10px] text-slate-500">Habitudes, soins ou aliments apaisants du jour.</p>
+                                <p class="text-[10px] text-slate-500">Quelques alliés courants ou vos propres habitudes apaisantes.</p>
                             </div>
                             <button type="button" onclick="openFactorCreatorModal('protective')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-2.5 py-1.5 rounded-xl text-[11px] font-bold shrink-0 transition">
                                 + Ajouter un protecteur
                             </button>
                         </div>
-
-                        <!-- Facteurs protecteurs créés manuellement -->
-                        <div id="survey-user-protective-factors" class="space-y-2"></div>
 
                         <div class="grid grid-cols-2 gap-2">
                             <label class="cursor-pointer flex items-center gap-2 p-2.5 rounded-2xl border border-slate-200 text-xs font-medium has-[:checked]:border-success has-[:checked]:bg-success/10">
@@ -782,6 +803,12 @@
                                 <input type="checkbox" class="protective-factor accent-success" value="Respiration"> 🫁 Respiration
                             </label>
                         </div>
+
+                        <!-- Facteurs protecteurs créés manuellement par l'utilisateur -->
+                        <div id="survey-user-protective-factors" class="space-y-2"></div>
+                        <button type="button" onclick="openFactorCreatorModal('protective')" class="w-full py-2.5 px-3 rounded-2xl border border-dashed border-emerald-300 bg-emerald-50/40 hover:bg-emerald-50 text-emerald-800 text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                            <span>＋</span><span>Créer et ajouter mon propre facteur protecteur</span>
+                        </button>
                     </div>
                 </div>
 
@@ -1348,7 +1375,18 @@
             localStorage.setItem(INSTALL_DATE_KEY, installDate);
         }
 
-        let entries = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        function deduplicateEntriesByDay(rawEntries) {
+            const byDay = new Map();
+            (Array.isArray(rawEntries) ? rawEntries : []).forEach(entry => {
+                if (!entry || !entry.isoDate) return;
+                // Remplace systématiquement par le dernier bilan enregistré pour cette journée
+                byDay.delete(entry.isoDate);
+                byDay.set(entry.isoDate, entry);
+            });
+            return Array.from(byDay.values());
+        }
+
+        let entries = deduplicateEntriesByDay(JSON.parse(localStorage.getItem(STORAGE_KEY)) || []);
         let communityTips = JSON.parse(localStorage.getItem(TIPS_KEY)) || defaultTips;
         // Aucun facteur personnalisé pré-rempli : tableau vide par défaut
         let userCreatedFactors = JSON.parse(localStorage.getItem(USER_FACTORS_KEY)) || [];
@@ -1377,28 +1415,35 @@
             checkFirstLaunchOnboarding();
         });
 
-        // --- POP-UP D'INITIALISATION (1ÈRE OUVERTURE) ---
+        // --- POP-UP D'INITIALISATION (1ÈRE OUVERTURE EN 3 ÉTAPES) ---
         function checkFirstLaunchOnboarding() {
             const isOnboarded = localStorage.getItem(ONBOARDED_KEY);
             if (!isOnboarded) {
-                document.getElementById('welcome-step-1').classList.remove('hidden');
-                document.getElementById('welcome-step-2').classList.add('hidden');
-                document.getElementById('welcome-step-badge').innerText = 'Bienvenue • 1 / 2';
+                goToWelcomeStep(1);
                 document.getElementById('welcome-onboarding-modal').classList.remove('hidden');
             }
         }
 
-        function nextWelcomeStep() {
-            document.getElementById('welcome-step-1').classList.add('hidden');
-            document.getElementById('welcome-step-2').classList.remove('hidden');
-            document.getElementById('welcome-step-badge').innerText = 'Votre profil • 2 / 2';
-            setTimeout(() => document.getElementById('welcome-user-name-input').focus(), 50);
-        }
-
-        function prevWelcomeStep() {
-            document.getElementById('welcome-step-2').classList.add('hidden');
-            document.getElementById('welcome-step-1').classList.remove('hidden');
-            document.getElementById('welcome-step-badge').innerText = 'Bienvenue • 1 / 2';
+        function goToWelcomeStep(stepNum, skippedName = false) {
+            if (skippedName) {
+                document.getElementById('welcome-user-name-input').value = '';
+            }
+            [1, 2, 3].forEach(s => {
+                document.getElementById('welcome-step-' + s).classList.toggle('hidden', s !== stepNum);
+            });
+            const badges = {
+                1: 'Bienvenue • 1 / 3',
+                2: 'Votre profil • 2 / 3',
+                3: 'Avis important • 3 / 3'
+            };
+            document.getElementById('welcome-step-badge').innerText = badges[stepNum] || 'Bienvenue';
+            const skipBtn = document.getElementById('welcome-skip-btn');
+            if (skipBtn) {
+                skipBtn.classList.toggle('hidden', stepNum === 3);
+            }
+            if (stepNum === 2) {
+                setTimeout(() => document.getElementById('welcome-user-name-input').focus(), 50);
+            }
         }
 
         function finishWelcomeOnboarding(skipped) {
@@ -1418,6 +1463,7 @@
         }
 
         function saveState() {
+            entries = deduplicateEntriesByDay(entries);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
             localStorage.setItem(TIPS_KEY, JSON.stringify(communityTips));
             localStorage.setItem(USER_FACTORS_KEY, JSON.stringify(userCreatedFactors));
@@ -2308,11 +2354,10 @@
             }
         }
 
-        // Rendu Étape 2 unifiée du Bilan : facteurs créés (déclencheurs & protecteurs) + bibliothèque intégrée
+        // Rendu Étape 2 unifiée du Bilan : facteurs créés manuellement par l'utilisateur (déclencheurs & protecteurs)
         function renderStep2Factors() {
             const triggerCustomContainer = document.getElementById('survey-user-trigger-factors');
             const protectiveCustomContainer = document.getElementById('survey-user-protective-factors');
-            const libContainer = document.getElementById('survey-library-factors');
 
             const activeTriggers = userCreatedFactors.filter(f => !f.archived && f.role !== 'protective');
             const activeProtectives = userCreatedFactors.filter(f => !f.archived && f.role === 'protective');
@@ -2337,25 +2382,6 @@
                         </div>
                     </div>
                 `;
-            }
-
-            if (libContainer) {
-                libContainer.innerHTML = Object.entries(builtInTriggerLibrary).map(([cat, items]) => `
-                    <div class="space-y-1.5">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">${cat}</span>
-                        <div class="flex flex-wrap gap-1.5">
-                            ${items.map(item => {
-                                const isSelected = selectedLibraryFactors.has(item.name);
-                                return `
-                                    <button type="button" onclick="toggleLibraryFactor('${item.name.replace(/'/g, "\'")}')" class="px-3 py-1.5 rounded-2xl border text-xs font-medium flex items-center gap-1.5 transition ${isSelected ? 'border-primary bg-primary text-white shadow-2xs' : 'border-slate-200 bg-white text-slate-700 hover:bg-softGray'}">
-                                        <span>${item.icon}</span>
-                                        <span>${item.name}</span>
-                                    </button>
-                                `;
-                            }).join('')}
-                        </div>
-                    </div>
-                `).join('');
             }
         }
 
@@ -2457,7 +2483,7 @@
         function logAcuteCrisisNow() {
             const todayIso = getTodayIso();
             const todayLabel = formatIsoShort(todayIso);
-            entries.push({
+            const crisisEntry = {
                 isoDate: todayIso,
                 date: todayLabel,
                 pain: 8,
@@ -2466,11 +2492,17 @@
                 bristol: 6,
                 factors: ['🆘 Crise aiguë signalée'],
                 protectiveFactors: []
-            });
+            };
+            const existingIdx = entries.findIndex(e => e.isoDate === todayIso);
+            if (existingIdx !== -1) {
+                entries[existingIdx] = crisisEntry;
+            } else {
+                entries.push(crisisEntry);
+            }
             saveState();
             closeCrisisModal();
             refreshAllViews();
-            showToast('Crise aiguë consignée dans votre journal 🩺');
+            showToast('Crise aiguë consignée (bilan du jour mis à jour) 🩺');
         }
 
         // --- RESSOURCES SCIENTIFIQUES & COMMUNAUTÉ ---
@@ -2604,7 +2636,8 @@
             };
 
             const existingIdx = entries.findIndex(e => e.isoDate === todayIso);
-            if (existingIdx !== -1) {
+            const isUpdate = existingIdx !== -1;
+            if (isUpdate) {
                 entries[existingIdx] = newEntry;
             } else {
                 entries.push(newEntry);
@@ -2613,7 +2646,7 @@
             saveState();
             closeCheckinModal();
             refreshAllViews();
-            showToast('Bilan du jour enregistré ! 🎉');
+            showToast(isUpdate ? 'Bilan du jour mis à jour ! ✨' : 'Bilan du jour enregistré ! 🎉');
         }
 
         function renderCommunityFeed(filter) {
