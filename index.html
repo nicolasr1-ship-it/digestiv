@@ -184,38 +184,9 @@
                     <div id="day-detail-banner" class="mt-3 p-3 bg-softGray rounded-2xl text-xs text-slate-600 hidden"></div>
                 </div>
 
-                <!-- Carte Pensée Positive du Jour -->
-                <div class="bg-gradient-to-r from-emerald-50/90 via-teal-50/70 to-white rounded-3xl p-4 border border-emerald-200/70 shadow-sm space-y-2">
-                    <div class="flex items-center justify-between">
-                        <span class="text-[11px] font-bold text-emerald-700 bg-emerald-100/80 px-2.5 py-0.5 rounded-full">☀️ Pensée positive du jour</span>
-                        <button onclick="nextPositiveQuote()" class="text-[11px] font-semibold text-emerald-700 hover:text-emerald-900 bg-white/80 hover:bg-white px-2.5 py-1 rounded-xl border border-emerald-200/60 transition">
-                            ↻ Autre pensée
-                        </button>
-                    </div>
-                    <blockquote id="positive-quote-text" class="text-xs font-medium text-slate-700 italic leading-relaxed pt-0.5">
-                        « Une journée difficile ne définit pas tout votre parcours. Votre corps apprend, s'adapte, et chaque période de calme est une victoire. »
-                    </blockquote>
-                    <p id="positive-quote-author" class="text-[10px] text-emerald-700/80 font-semibold text-right">
-                        — Bienveillance & Résilience
-                    </p>
-                </div>
-
                 <!-- Encart Expérience / Défi (Optionnel, aucun défi pré-actif au lancement) -->
                 <div id="home-challenge-container"></div>
 
-                <!-- Encart Accès Rapide Boîte à Outils Crise -->
-                <div onclick="openCrisisModal()" class="cursor-pointer bg-white hover:bg-rose-50/40 rounded-3xl p-4 border border-rose-100 shadow-sm flex items-center justify-between transition group">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-11 h-11 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center text-xl shrink-0 group-hover:scale-105 transition">
-                            🫁
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-slate-900 text-xs">Douleur ou spasme en ce moment ?</h3>
-                            <p class="text-[11px] text-slate-500 mt-0.5">Cohérence cardiaque 5-5, postures anti-crampes, auto-massage & signes d'alerte.</p>
-                        </div>
-                    </div>
-                    <span class="text-rose-400 font-bold text-sm pl-2">→</span>
-                </div>
             </div>
 
             <!-- =============================================================== -->
@@ -251,11 +222,6 @@
                         </button>
                     </div>
 
-                    <!-- Aperçu des premiers bilans enregistrés -->
-                    <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-3">
-                        <h3 class="font-bold text-slate-800 text-sm">📝 Vos bilans enregistrés</h3>
-                        <div id="beginner-entries-list" class="space-y-2"></div>
-                    </div>
                 </div>
 
                 <!-- ÉTAT COMPLET (>= 5 bilans enregistrés) -->
@@ -306,33 +272,31 @@
                     </div>
                 </div>
 
-                <!-- RADAR DES COMBOS DÉCLENCHEURS (EFFET CUMULATIF) -->
-                <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-3">
+                <!-- RADAR DES COMBOS DÉCLENCHEURS -->
+                <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-2.5">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-1.5">
                             <span class="text-base">📡</span>
-                            <h3 class="font-bold text-slate-800 text-sm">Radar des Combos Déclencheurs</h3>
+                            <h3 class="font-bold text-slate-800 text-sm">Combos Déclencheurs</h3>
+                            <button onclick="openRadarInfoModal('trigger')" aria-label="Fonctionnement du radar des combos déclencheurs" class="w-5 h-5 rounded-full bg-amber-100/80 hover:bg-amber-200/80 text-amber-800 font-bold text-[11px] flex items-center justify-center transition">
+                                ?
+                            </button>
                         </div>
-                        <span class="text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">Effet cumulatif</span>
                     </div>
-                    <p class="text-[11px] text-slate-500 leading-relaxed">
-                        Détecte les associations de 2 facteurs présents le même jour lors d'une crise (douleur ≥ 4 ou ballonnement ≥ 4).
-                    </p>
                     <div id="combos-radar-container"></div>
                 </div>
 
-                <!-- RADAR DES COMBOS GUÉRISSEURS (SYNERGIE APAISANTE) -->
-                <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-3">
+                <!-- RADAR DES COMBOS GUÉRISSEURS -->
+                <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-2.5">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-1.5">
                             <span class="text-base">💚</span>
-                            <h3 class="font-bold text-slate-800 text-sm">Radar des Combos Guérisseurs</h3>
+                            <h3 class="font-bold text-slate-800 text-sm">Combos Guérisseurs</h3>
+                            <button onclick="openRadarInfoModal('healing')" aria-label="Fonctionnement du radar des combos guérisseurs" class="w-5 h-5 rounded-full bg-emerald-100/80 hover:bg-emerald-200/80 text-emerald-800 font-bold text-[11px] flex items-center justify-center transition">
+                                ?
+                            </button>
                         </div>
-                        <span class="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">Synergie apaisante</span>
                     </div>
-                    <p class="text-[11px] text-slate-500 leading-relaxed">
-                        Détecte les associations de 2 habitudes ou facteurs protecteurs présents ensemble lors des journées calmes (douleur ≤ 3 et ballonnements ≤ 3).
-                    </p>
                     <div id="healing-combos-radar-container"></div>
                 </div>
 
@@ -635,6 +599,25 @@
                 </div>
             </div>
             <button onclick="document.getElementById('peace-info-modal').classList.add('hidden')" class="w-full bg-primary text-white font-bold py-2.5 rounded-2xl text-xs">
+                J'ai compris ✨
+            </button>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODALE : EXPLICATION DES RADARS DE COMBOS (?)                         -->
+    <!-- ===================================================================== -->
+    <div id="radar-info-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl" id="radar-info-icon">📡</span>
+                    <h3 class="font-bold text-slate-900 text-sm" id="radar-info-title">Fonctionnement du Radar</h3>
+                </div>
+                <button onclick="document.getElementById('radar-info-modal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 text-xs font-bold">✕</button>
+            </div>
+            <div id="radar-info-body" class="space-y-2.5 text-xs text-slate-600 leading-relaxed"></div>
+            <button onclick="document.getElementById('radar-info-modal').classList.add('hidden')" class="w-full bg-primary text-white font-bold py-2.5 rounded-2xl text-xs">
                 J'ai compris ✨
             </button>
         </div>
@@ -1606,8 +1589,6 @@
             const now = new Date();
             const options = { weekday: 'long', day: 'numeric', month: 'short' };
             document.getElementById('header-date').innerText = now.toLocaleDateString('fr-FR', options);
-            currentQuoteIndex = now.getDate() % positiveQuotes.length;
-            renderPositiveQuote();
             evaluateGamificationBadges(true);
             refreshAllViews();
             startEveningReminderWatcher();
@@ -2431,6 +2412,35 @@
                 .sort((a, b) => b.count - a.count);
         }
 
+        function openRadarInfoModal(type) {
+            const iconEl = document.getElementById('radar-info-icon');
+            const titleEl = document.getElementById('radar-info-title');
+            const bodyEl = document.getElementById('radar-info-body');
+
+            if (type === 'trigger') {
+                iconEl.innerText = '📡';
+                titleEl.innerText = 'Combos Déclencheurs (Effet cumulatif)';
+                bodyEl.innerHTML = `
+                    <p>Ce radar détecte les <strong>associations de 2 facteurs</strong> présents le même jour lors d'une crise (douleur ≥ 4 ou ballonnement ≥ 4).</p>
+                    <div class="bg-amber-50/80 border border-amber-200/70 rounded-2xl p-3.5 space-y-1 text-[11px] text-slate-700">
+                        <p class="font-bold text-amber-900">Condition d'activation :</p>
+                        <p>Les duos s'affichent automatiquement dès que plusieurs associations récurrentes ont été détectées sur au moins <strong>2 jours de crise</strong> dans vos bilans.</p>
+                    </div>
+                `;
+            } else {
+                iconEl.innerText = '💚';
+                titleEl.innerText = 'Combos Guérisseurs (Synergie apaisante)';
+                bodyEl.innerHTML = `
+                    <p>Ce radar repère les <strong>associations de 2 habitudes ou facteurs protecteurs</strong> présents ensemble lors de vos journées calmes (douleur ≤ 3 et ballonnements ≤ 3).</p>
+                    <div class="bg-emerald-50/80 border border-emerald-200/70 rounded-2xl p-3.5 space-y-1 text-[11px] text-slate-700">
+                        <p class="font-bold text-emerald-900">Condition d'activation :</p>
+                        <p>Dès qu'un duo apaisant (ex. Tisane + Marche) est observé sur au moins <strong>2 journées calmes</strong>, il apparaît ici avec son taux de réussite.</p>
+                    </div>
+                `;
+            }
+            document.getElementById('radar-info-modal').classList.remove('hidden');
+        }
+
         function renderCombosRadar() {
             const container = document.getElementById('combos-radar-container');
             if (!container) return;
@@ -2438,32 +2448,22 @@
             const combos = computeTriggerCombos();
             if (combos.length < 2) {
                 container.innerHTML = `
-                    <div class="bg-softGray/90 border border-slate-200/80 rounded-2xl p-3.5 space-y-1.5">
-                        <div class="flex items-center gap-2 text-xs font-bold text-slate-700">
-                            <span>🔍</span>
-                            <span>Radar en cours de veille</span>
-                        </div>
-                        <p class="text-[11px] text-slate-600 leading-relaxed">
-                            Le radar des combos s'activera automatiquement dès que plusieurs associations de facteurs (duos présents le même jour) auront été détectées sur au moins 2 jours de crise dans vos bilans.
-                        </p>
+                    <div class="bg-softGray/80 rounded-2xl px-3.5 py-2.5 flex items-center justify-between text-xs text-slate-500">
+                        <span>🔍 En veille (min. 2 crises avec duos)</span>
+                        <span class="text-[10px] font-semibold text-slate-400">En attente</span>
                     </div>
                 `;
                 return;
             }
 
             container.innerHTML = `
-                <div class="space-y-2.5">
+                <div class="space-y-2">
                     ${combos.slice(0, 5).map(c => `
-                        <div class="p-3 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-1">
-                            <div class="flex items-center justify-between gap-2">
-                                <span class="text-xs font-bold text-slate-900">⚡ ${c.factorA} + ${c.factorB}</span>
-                                <span class="text-[10px] font-bold bg-white text-amber-800 px-2 py-0.5 rounded-lg border border-amber-200 shrink-0">
-                                    ${c.count} crise${c.count > 1 ? 's' : ''} (${c.pctOfCrises}%)
-                                </span>
-                            </div>
-                            <p class="text-[10px] text-slate-600">
-                                Confiance : ${c.count >= 4 ? '⭐️⭐️⭐️⭐️⭐️ Forte' : (c.count >= 3 ? '⭐️⭐️⭐️⭐️ Modérée' : '⭐️⭐️⭐️ Émergente')} • Observé ensemble ${c.count} fois lors d'épisodes douloureux.
-                            </p>
+                        <div class="px-3 py-2.5 rounded-2xl bg-amber-50/70 border border-amber-200/80 flex items-center justify-between gap-2">
+                            <span class="text-xs font-bold text-slate-900 truncate">⚡ ${c.factorA} + ${c.factorB}</span>
+                            <span class="text-[10px] font-bold bg-white text-amber-800 px-2 py-0.5 rounded-lg border border-amber-200 shrink-0">
+                                ${c.count}× (${c.pctOfCrises}%)
+                            </span>
                         </div>
                     `).join('')}
                 </div>
@@ -2514,32 +2514,22 @@
             const combos = computeHealingCombos();
             if (combos.length === 0) {
                 container.innerHTML = `
-                    <div class="bg-softGray/90 border border-slate-200/80 rounded-2xl p-3.5 space-y-1.5">
-                        <div class="flex items-center gap-2 text-xs font-bold text-slate-700">
-                            <span>🌱</span>
-                            <span>Radar guérisseur en cours d'observation</span>
-                        </div>
-                        <p class="text-[11px] text-slate-600 leading-relaxed">
-                            Le radar des combos guérisseurs s'activera dès qu'une association de 2 facteurs protecteurs ou habitudes (ex : Tisane + Marche) aura été observée sur au moins 2 journées calmes.
-                        </p>
+                    <div class="bg-softGray/80 rounded-2xl px-3.5 py-2.5 flex items-center justify-between text-xs text-slate-500">
+                        <span>🌱 En veille (min. 2 jours calmes avec duos)</span>
+                        <span class="text-[10px] font-semibold text-slate-400">En attente</span>
                     </div>
                 `;
                 return;
             }
 
             container.innerHTML = `
-                <div class="space-y-2.5">
+                <div class="space-y-2">
                     ${combos.slice(0, 5).map(c => `
-                        <div class="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 space-y-1">
-                            <div class="flex items-center justify-between gap-2">
-                                <span class="text-xs font-bold text-slate-900">✨ ${c.factorA} + ${c.factorB}</span>
-                                <span class="text-[10px] font-bold bg-white text-emerald-800 px-2 py-0.5 rounded-lg border border-emerald-200 shrink-0">
-                                    ${c.count} jour${c.count > 1 ? 's' : ''} calme${c.count > 1 ? 's' : ''} (${c.pctOfCalm}%)
-                                </span>
-                            </div>
-                            <p class="text-[10px] text-slate-600">
-                                Synergie : ${c.count >= 4 ? '⭐️⭐️⭐️⭐️⭐️ Forte' : (c.count >= 3 ? '⭐️⭐️⭐️⭐️ Modérée' : '⭐️⭐️⭐️ Émergente')} • Associés ensemble ${c.count} fois lors de journées sans crise.
-                            </p>
+                        <div class="px-3 py-2.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between gap-2">
+                            <span class="text-xs font-bold text-slate-900 truncate">✨ ${c.factorA} + ${c.factorB}</span>
+                            <span class="text-[10px] font-bold bg-white text-emerald-800 px-2 py-0.5 rounded-lg border border-emerald-200 shrink-0">
+                                ${c.count}× (${c.pctOfCalm}%)
+                            </span>
                         </div>
                     `).join('')}
                 </div>
@@ -2563,22 +2553,6 @@
                 const remaining = minRequired - count;
                 document.getElementById('onboarding-remaining-text').innerText = `Encore ${remaining} bilan${remaining > 1 ? 's' : ''} pour débloquer l'analyse complète`;
 
-                const listEl = document.getElementById('beginner-entries-list');
-                if (count === 0) {
-                    listEl.innerHTML = `<p class="text-xs text-slate-400 italic">Aucun bilan enregistré pour le moment. Utilisez « Enregistrer mon bilan » ou « Journée calme » sur l'accueil.</p>`;
-                } else {
-                    listEl.innerHTML = entries.slice().reverse().map(e => `
-                        <div class="p-3 rounded-2xl bg-softGray border border-slate-200/60 flex items-center justify-between text-xs">
-                            <div class="pr-2">
-                                <span class="font-bold text-slate-800 block">${e.date} • Bristol Type ${e.bristol || 4}</span>
-                                <span class="text-[11px] text-slate-500">${e.factors.length ? e.factors.join(', ') : (e.note || 'Aucun facteur particulier')}</span>
-                            </div>
-                            <span class="font-bold px-2.5 py-1 rounded-xl shrink-0 ${e.pain <= 3 ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'}">
-                                Douleur ${e.pain}/10
-                            </span>
-                        </div>
-                    `).join('');
-                }
             } else {
                 onboardingView.classList.add('hidden');
                 fullView.classList.remove('hidden');
@@ -2763,18 +2737,6 @@
                     scales: { y: { min: 0, max: 10, ticks: { stepSize: 2 } } }
                 }
             });
-        }
-
-        // --- CITATIONS POSITIVES ---
-        function renderPositiveQuote() {
-            const q = positiveQuotes[currentQuoteIndex];
-            document.getElementById('positive-quote-text').innerText = q.text;
-            document.getElementById('positive-quote-author').innerText = '— ' + q.author;
-        }
-
-        function nextPositiveQuote() {
-            currentQuoteIndex = (currentQuoteIndex + 1) % positiveQuotes.length;
-            renderPositiveQuote();
         }
 
         // --- NAVIGATION ---
