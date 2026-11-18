@@ -89,9 +89,6 @@
                 <button onclick="openCrisisModal()" aria-label="Urgence Crise" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/80 px-2.5 py-1.5 rounded-2xl text-[11px] font-bold flex items-center gap-1 transition active:scale-95">
                     <span>🆘</span><span>Urgence Crise</span>
                 </button>
-                <button onclick="openMedicalReportModal()" aria-label="Rapport PDF" class="bg-blue-50 hover:bg-blue-100 text-primary border border-blue-200/80 px-2.5 py-1.5 rounded-2xl text-[11px] font-bold flex items-center gap-1 transition active:scale-95">
-                    <span>📄</span><span>PDF</span>
-                </button>
             </div>
         </header>
 
@@ -152,6 +149,9 @@
                         <span class="text-[10px] text-success font-semibold block" id="kpi-peace-tag">Jours calmes</span>
                     </div>
                 </div>
+
+                <!-- Carte Série, Multiplicateur & Progression XP (Rétention quotidienne) -->
+                <div id="home-xp-streak-card" class="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white p-4 rounded-3xl shadow-md space-y-2.5"></div>
 
                 <!-- Météo Intestinale (Uniquement à partir de digestiv_install_date) -->
                 <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100">
@@ -245,7 +245,7 @@
                     <!-- Graphique Courbe -->
                     <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100">
                         <div class="flex items-center justify-between mb-2">
-                            <h3 class="font-bold text-slate-800 text-sm">📈 Douleur vs Ballonnements</h3>
+                            <h3 class="font-bold text-slate-800 text-sm">📈 Douleur, Ballonnements & Gaz</h3>
                             <span class="text-[10px] text-slate-400">Échelle 0-10</span>
                         </div>
                         <div class="chart-container">
@@ -339,11 +339,14 @@
                     <!-- Liste des défis actifs (max 5) -->
                     <div id="stats-challenge-status" class="space-y-2.5"></div>
 
-                    <!-- Vitrine des Badges & Récompenses -->
-                    <div class="pt-2 border-t border-slate-100 space-y-2">
+                    <!-- Vitrine des Badges & Récompenses (12 badges par paliers) -->
+                    <div class="pt-2.5 border-t border-slate-100 space-y-2.5">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold text-slate-800">🏆 Badges & Récompenses</span>
-                            <span id="badges-unlocked-count" class="text-[10px] font-semibold text-slate-400">0 débloqué</span>
+                            <div>
+                                <span class="text-xs font-bold text-slate-800 block">🏆 Collection de Badges</span>
+                                <span class="text-[10px] text-slate-400">Revenez chaque jour pour débloquer les paliers supérieurs</span>
+                            </div>
+                            <span id="badges-unlocked-count" class="text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-2.5 py-0.5 rounded-full">0 / 12</span>
                         </div>
                         <div id="badges-showcase-grid" class="grid grid-cols-3 gap-2"></div>
                     </div>
@@ -435,20 +438,6 @@
                         <p class="text-xs text-slate-500" id="profile-first-use-label">Suivi personnel SII • 100% Hors-ligne</p>
                         <span class="inline-block mt-1 text-[10px] bg-success/15 text-success font-semibold px-2 py-0.5 rounded-full" id="total-entries-badge">0 bilan enregistré</span>
                     </div>
-                </div>
-
-                <!-- Gestionnaire des Facteurs Personnalisés (STRICTEMENT VIDE AU DÉPART) -->
-                <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-3">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h3 class="font-bold text-slate-900 text-sm">🧩 Mes Facteurs Personnalisés</h3>
-                            <p class="text-[11px] text-slate-500">Uniquement les facteurs que vous avez créés manuellement.</p>
-                        </div>
-                        <button onclick="openFactorCreatorModal()" class="bg-primary/10 hover:bg-primary/20 text-primary font-bold text-xs px-3 py-2 rounded-xl transition shrink-0">
-                            + Créer
-                        </button>
-                    </div>
-                    <div id="profile-factors-manager" class="space-y-2 max-h-64 overflow-y-auto pr-1 hide-scrollbar"></div>
                 </div>
 
                 <!-- Rapport PDF Médecin -->
@@ -742,6 +731,20 @@
                             <span>0 (Ventre plat)</span>
                             <span>5 (Gêne)</span>
                             <span>10 (Très tendu)</span>
+                        </div>
+                    </div>
+
+                    <!-- Flatulences / Gaz 0-10 -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="text-xs font-bold text-slate-700">💨 Flatulences / Gaz</label>
+                            <span id="flatulence-display" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-lg">0 / 10</span>
+                        </div>
+                        <input type="range" id="input-flatulence" min="0" max="10" value="0" oninput="document.getElementById('flatulence-display').innerText = this.value + ' / 10'" class="w-full accent-indigo-500 cursor-pointer h-2 bg-slate-200 rounded-lg">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                            <span>0 (Aucun)</span>
+                            <span>5 (Modérés)</span>
+                            <span>10 (Fréquents / gênants)</span>
                         </div>
                     </div>
 
@@ -1124,10 +1127,14 @@
                     </div>
                     <span class="bg-primary/10 text-primary font-bold px-2.5 py-1 rounded-lg">Synthèse</span>
                 </div>
-                <div class="grid grid-cols-3 gap-2.5 bg-softGray p-3.5 rounded-2xl text-center">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-softGray p-3 rounded-2xl text-center">
                     <div>
                         <span class="text-[10px] text-slate-400 block">Douleur moy.</span>
                         <strong class="text-sm text-slate-900" id="rep-avg-pain">—</strong>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-400 block">Gaz moy.</span>
+                        <strong class="text-sm text-indigo-600" id="rep-avg-flatulence">—</strong>
                     </div>
                     <div>
                         <span class="text-[10px] text-slate-400 block">Paix Digestive</span>
@@ -1254,13 +1261,10 @@
                 <input type="time" id="reminder-time-input" value="20:30" class="w-full bg-softGray border border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm font-bold text-slate-900 focus:outline-none focus:border-primary">
             </div>
 
-            <div class="bg-blue-50/70 border border-blue-100 rounded-2xl p-3 space-y-2">
+            <div class="bg-blue-50/70 border border-blue-100 rounded-2xl p-3">
                 <p class="text-[11px] text-slate-600 leading-relaxed">
-                    💡 <strong>Astuce mobile :</strong> Sur smartphone, vous pouvez aussi ajouter un rappel récurrent directement dans votre agenda (.ics) pour être notifié même lorsque le navigateur est fermé.
+                    💡 <strong>Astuce :</strong> Autorisez les notifications de votre navigateur pour recevoir votre alerte du soir, ou retrouvez le rappel directement sur l'accueil de l'application dès l'heure choisie.
                 </p>
-                <button type="button" onclick="downloadReminderIcs()" class="w-full bg-white hover:bg-blue-50 text-primary border border-blue-200 font-bold py-2 rounded-xl text-[11px] transition">
-                    📅 Ajouter le rappel quotidien à mon agenda (.ics)
-                </button>
             </div>
 
             <div class="flex gap-2">
@@ -1516,13 +1520,18 @@
                 completed: false
             }] : [];
         }
-        let gamification = JSON.parse(localStorage.getItem(GAMIFICATION_KEY)) || {
+        let gamification = Object.assign({
             points: 0,
             completedChallenges: 0,
             missedDaysCount: 0,
             unlockedBadges: [],
-            activeGages: []
-        };
+            activeGages: [],
+            rewardedEntryDates: [],
+            rewardedStreakMilestones: [],
+            streakShields: 0,
+            shieldUsedDates: [],
+            bestStreak: 0
+        }, JSON.parse(localStorage.getItem(GAMIFICATION_KEY)) || {});
         let reminderSettings = JSON.parse(localStorage.getItem(REMINDER_KEY)) || {
             enabled: false,
             time: '20:30',
@@ -1675,6 +1684,7 @@
                 date: todayLabel,
                 pain: 0,
                 bloating: 0,
+                flatulence: 0,
                 stress: 1,
                 bristol: 4,
                 factors: [],
@@ -1690,38 +1700,98 @@
                 entries.push(calmEntry);
             }
 
+            const xpGain = awardDailyCheckinPoints(todayIso, false);
             evaluateGamificationBadges(true);
             saveState();
             refreshAllViews();
-            showToast('✨ Journée calme enregistrée ! (Modifiable via le bilan)');
+            if (xpGain && xpGain.milestoneHit) {
+                showToast(`🔥 Palier ${xpGain.milestoneHit.label} ! +${xpGain.earned + xpGain.milestoneHit.bonus} XP`);
+            } else if (xpGain) {
+                showToast(`✨ Journée calme enregistrée ! +${xpGain.earned} XP (×${xpGain.mult.toFixed(1)})`);
+            } else {
+                showToast('✨ Journée calme mise à jour !');
+            }
         }
 
-        // --- CALCUL RÉEL DE LA SÉRIE & DE LA PAIX DIGESTIVE ---
+        // --- CALCUL RÉEL DE LA SÉRIE (AVEC BOUCLIER DE SÉRIE) & DE LA PAIX DIGESTIVE ---
+        function shiftIsoDate(isoStr, deltaDays) {
+            const [y, m, d] = isoStr.split('-').map(Number);
+            const dt = new Date(y, m - 1, d);
+            dt.setDate(dt.getDate() + deltaDays);
+            return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+        }
+
         function computeRealStreak() {
             if (entries.length === 0) return 0;
-            const uniqueDates = [...new Set(entries.map(e => e.isoDate).filter(Boolean))].sort().reverse();
-            if (uniqueDates.length === 0) return 0;
+            const dateSet = new Set(entries.map(e => e.isoDate).filter(Boolean));
+            const shieldSet = new Set(gamification.shieldUsedDates || []);
+            if (dateSet.size === 0) return 0;
 
             const today = getTodayIso();
-            const yesterdayDate = new Date();
-            yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-            const yesterdayIso = `${yesterdayDate.getFullYear()}-${String(yesterdayDate.getMonth() + 1).padStart(2, '0')}-${String(yesterdayDate.getDate()).padStart(2, '0')}`;
+            const yesterday = shiftIsoDate(today, -1);
+            const twoDaysAgo = shiftIsoDate(today, -2);
 
-            if (uniqueDates[0] !== today && uniqueDates[0] !== yesterdayIso) {
-                return 0;
+            // Si un seul jour (hier) a été sauté et qu'un bouclier est disponible, on protège automatiquement la série
+            if (!dateSet.has(today) && !dateSet.has(yesterday) && dateSet.has(twoDaysAgo) && !shieldSet.has(yesterday) && (gamification.streakShields || 0) > 0) {
+                gamification.streakShields -= 1;
+                gamification.shieldUsedDates = [...shieldSet, yesterday];
+                shieldSet.add(yesterday);
             }
 
-            let streak = 1;
-            for (let i = 0; i < uniqueDates.length - 1; i++) {
-                const [cy, cm, cd] = uniqueDates[i].split('-').map(Number);
-                const [py, pm, pd] = uniqueDates[i + 1].split('-').map(Number);
-                const curr = new Date(cy, cm - 1, cd);
-                const prev = new Date(py, pm - 1, pd);
-                const diffDays = Math.round((curr - prev) / (1000 * 60 * 60 * 24));
-                if (diffDays === 1) streak++;
-                else break;
+            let cursor = dateSet.has(today) ? today : (dateSet.has(yesterday) || shieldSet.has(yesterday) ? yesterday : null);
+            if (!cursor) return 0;
+
+            let streak = 0;
+            while (dateSet.has(cursor) || shieldSet.has(cursor)) {
+                if (dateSet.has(cursor)) streak += 1;
+                cursor = shiftIsoDate(cursor, -1);
+            }
+            if (streak > (gamification.bestStreak || 0)) {
+                gamification.bestStreak = streak;
             }
             return streak;
+        }
+
+        function getStreakMultiplier(streak) {
+            if (streak >= 30) return 2.5;
+            if (streak >= 14) return 2.0;
+            if (streak >= 7) return 1.5;
+            if (streak >= 3) return 1.2;
+            return 1.0;
+        }
+
+        function awardDailyCheckinPoints(isoDate, isFullCheckin = true) {
+            gamification.rewardedEntryDates = gamification.rewardedEntryDates || [];
+            if (gamification.rewardedEntryDates.includes(isoDate)) return null;
+
+            gamification.rewardedEntryDates.push(isoDate);
+            const streak = computeRealStreak();
+            const mult = getStreakMultiplier(streak);
+            const basePts = isFullCheckin ? 15 : 10;
+            const earned = Math.round(basePts * mult);
+            gamification.points += earned;
+
+            // Paliers de série récompensés + attribution d'un Bouclier de Série tous les 7 jours
+            const milestones = [
+                { days: 3, bonus: 25, shield: 0, label: '3 jours consécutifs' },
+                { days: 7, bonus: 60, shield: 1, label: '7 jours consécutifs (+1 Bouclier 🛡️)' },
+                { days: 14, bonus: 120, shield: 1, label: '14 jours consécutifs (+1 Bouclier 🛡️)' },
+                { days: 21, bonus: 200, shield: 1, label: '21 jours consécutifs (+1 Bouclier 🛡️)' },
+                { days: 30, bonus: 350, shield: 2, label: '30 jours consécutifs (+2 Boucliers 🛡️)' }
+            ];
+
+            gamification.rewardedStreakMilestones = gamification.rewardedStreakMilestones || [];
+            let milestoneHit = null;
+            milestones.forEach(m => {
+                if (streak >= m.days && !gamification.rewardedStreakMilestones.includes(m.days)) {
+                    gamification.rewardedStreakMilestones.push(m.days);
+                    gamification.points += m.bonus;
+                    gamification.streakShields = (gamification.streakShields || 0) + m.shield;
+                    milestoneHit = m;
+                }
+            });
+
+            return { earned, mult, streak, milestoneHit };
         }
 
         function computePeaceDigestivePct() {
@@ -1824,7 +1894,7 @@
             banner.innerHTML = `
                 <div class="flex justify-between font-bold text-slate-800 mb-1">
                     <span>📅 Bilan du ${e.date} • Bristol Type ${e.bristol || 4}</span>
-                    <span>Douleur ${e.pain}/10 • Ball. ${e.bloating ?? 0}/10</span>
+                    <span>Douleur ${e.pain}/10 • Ball. ${e.bloating ?? 0}/10 • Gaz ${e.flatulence ?? 0}/10</span>
                 </div>
                 <p class="text-[11px] text-slate-600">Détails : <span class="font-medium text-slate-800">${factorsText}</span></p>
             `;
@@ -1877,51 +1947,6 @@
                 }
             }
             showToast('🔔 Aperçu : ' + msg);
-        }
-
-        function downloadReminderIcs() {
-            const timeVal = document.getElementById('reminder-time-input').value || reminderSettings.time || '20:30';
-            const [hh, mm] = timeVal.split(':').map(Number);
-            const today = new Date();
-            const yyyy = today.getFullYear();
-            const mo = String(today.getMonth() + 1).padStart(2, '0');
-            const dd = String(today.getDate()).padStart(2, '0');
-            const startStr = `${yyyy}${mo}${dd}T${String(hh).padStart(2, '0')}${String(mm).padStart(2, '0')}00`;
-            const endMin = (mm + 10) % 60;
-            const endHour = (hh + Math.floor((mm + 10) / 60)) % 24;
-            const endStr = `${yyyy}${mo}${dd}T${String(endHour).padStart(2, '0')}${String(endMin).padStart(2, '0')}00`;
-
-            const icsContent = [
-                'BEGIN:VCALENDAR',
-                'VERSION:2.0',
-                'PRODID:-//Digestiv//Rappel Bilan SII//FR',
-                'BEGIN:VEVENT',
-                `UID:digestiv-reminder-${Date.now()}@digestiv.app`,
-                `DTSTAMP:${startStr}`,
-                `DTSTART:${startStr}`,
-                `DTEND:${endStr}`,
-                'RRULE:FREQ=DAILY',
-                'SUMMARY:✍️ Bilan digestif du soir (Digestiv)',
-                'DESCRIPTION:Prenez 30 secondes pour noter vos ressentis, votre transit Bristol et vos facteurs du jour.',
-                'BEGIN:VALARM',
-                'TRIGGER:-PT0M',
-                'ACTION:DISPLAY',
-                'DESCRIPTION:Rappel bilan digestif Digestiv',
-                'END:VALARM',
-                'END:VEVENT',
-                'END:VCALENDAR'
-            ].join('\r\n');
-
-            const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'rappel_bilan_digestiv.ics';
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            URL.revokeObjectURL(url);
-            showToast('Fichier agenda .ics téléchargé 📅');
         }
 
         function startEveningReminderWatcher() {
@@ -2000,14 +2025,23 @@
             }
         }
 
-        // --- SYSTÈME DE BADGES, RÉCOMPENSES & PUNITIONS (DÉFIS) ---
+        // --- SYSTÈME DE BADGES (12 PALIERS), SÉRIES MULTIPLICATRICES & PUNITIONS ---
         const BADGES_CATALOG = [
-            { id: 'first_step', icon: '🌱', title: 'Premier Pas', desc: '1er bilan enregistré', check: () => entries.length >= 1 },
-            { id: 'challenger', icon: '🧪', title: 'Explorateur', desc: '1er défi lancé', check: () => challenges.length >= 1 || gamification.completedChallenges >= 1 },
-            { id: 'multitasker', icon: '⚡', title: 'Multi-Défis', desc: '3 défis actifs en parallèle', check: () => challenges.filter(c => !c.completed).length >= 3 },
-            { id: 'finisher_1', icon: '🏅', title: 'Finisseur', desc: '1er défi réussi à 100 %', check: () => gamification.completedChallenges >= 1 },
-            { id: 'master_3', icon: '👑', title: 'Maître Zen', desc: '3 défis terminés avec succès', check: () => gamification.completedChallenges >= 3 },
-            { id: 'streak_7', icon: '🔥', title: 'Régularité 7j', desc: '7 jours consécutifs de suivi', check: () => computeRealStreak() >= 7 }
+            // Série & Assiduité
+            { id: 'first_step', tier: 'Bronze', icon: '🌱', title: 'Premier Pas', desc: '1er bilan enregistré', reward: 20, check: () => entries.length >= 1 },
+            { id: 'streak_3', tier: 'Bronze', icon: '🕯️', title: 'Flamme Naissante', desc: 'Série de 3 jours', reward: 30, check: () => Math.max(computeRealStreak(), gamification.bestStreak || 0) >= 3 },
+            { id: 'streak_7', tier: 'Argent', icon: '🔥', title: 'Semaine de Fer', desc: 'Série de 7 jours', reward: 60, check: () => Math.max(computeRealStreak(), gamification.bestStreak || 0) >= 7 },
+            { id: 'streak_14', tier: 'Or', icon: '⚡', title: 'Rythme Solide', desc: 'Série de 14 jours', reward: 100, check: () => Math.max(computeRealStreak(), gamification.bestStreak || 0) >= 14 },
+            { id: 'streak_30', tier: 'Platine', icon: '💎', title: 'Inébranlable', desc: 'Série de 30 jours', reward: 200, check: () => Math.max(computeRealStreak(), gamification.bestStreak || 0) >= 30 },
+            // Défis & Discipline
+            { id: 'challenger', tier: 'Bronze', icon: '🧪', title: 'Explorateur', desc: '1er défi lancé', reward: 25, check: () => challenges.length >= 1 || gamification.completedChallenges >= 1 },
+            { id: 'multitasker', tier: 'Argent', icon: '🎯', title: 'Multi-Défis', desc: '3 défis en parallèle', reward: 50, check: () => challenges.filter(c => !c.completed).length >= 3 },
+            { id: 'finisher_1', tier: 'Argent', icon: '🏅', title: 'Finisseur', desc: '1 défi réussi à 100 %', reward: 60, check: () => gamification.completedChallenges >= 1 },
+            { id: 'master_3', tier: 'Or', icon: '👑', title: 'Maître Zen', desc: '3 défis réussis', reward: 120, check: () => gamification.completedChallenges >= 3 },
+            // Analyse & Paix Digestive
+            { id: 'analyst_5', tier: 'Bronze', icon: '🧠', title: 'Profil Calibré', desc: '5 bilans complétés', reward: 40, check: () => entries.length >= 5 },
+            { id: 'custom_maker', tier: 'Argent', icon: '🧩', title: 'Sur-Mesure', desc: '2 facteurs créés', reward: 35, check: () => userCreatedFactors.length >= 2 },
+            { id: 'peace_keeper', tier: 'Or', icon: '💚', title: 'Havre de Paix', desc: '≥ 70% de Paix (min 7j)', reward: 100, check: () => { const p = computePeaceDigestivePct(); return entries.length >= 7 && p && p.pct >= 70; } }
         ];
 
         const WELLNESS_PUNISHMENTS = [
@@ -2023,20 +2057,62 @@
             BADGES_CATALOG.forEach(b => {
                 if (!gamification.unlockedBadges.includes(b.id) && b.check()) {
                     gamification.unlockedBadges.push(b.id);
-                    gamification.points += 25;
+                    gamification.points += (b.reward || 25);
                     newlyUnlocked.push(b);
                 }
             });
             if (newlyUnlocked.length > 0 && !silent) {
-                showToast(`🏆 Badge débloqué : ${newlyUnlocked[0].title} (+25 pts) !`);
+                showToast(`🏆 Badge « ${newlyUnlocked[0].title} » débloqué (+${newlyUnlocked[0].reward} pts) !`);
             }
         }
 
         function getUserRankTitle(points) {
-            if (points >= 300) return { label: 'Gardien de l’Équilibre', icon: '👑' };
-            if (points >= 150) return { label: 'Stratège Digestif', icon: '🥇' };
-            if (points >= 60) return { label: 'Explorateur Régulier', icon: '🥈' };
-            return { label: 'Apprenti Serein', icon: '🌱' };
+            if (points >= 800) return { label: 'Légende de la Sérénité', icon: '💎', nextPts: null };
+            if (points >= 450) return { label: 'Gardien de l’Équilibre', icon: '👑', nextPts: 800 };
+            if (points >= 220) return { label: 'Stratège Digestif', icon: '🥇', nextPts: 450 };
+            if (points >= 90) return { label: 'Explorateur Régulier', icon: '🥈', nextPts: 220 };
+            return { label: 'Apprenti Serein', icon: '🌱', nextPts: 90 };
+        }
+
+        function renderHomeXpAndStreakCard() {
+            const container = document.getElementById('home-xp-streak-card');
+            if (!container) return;
+
+            const streak = computeRealStreak();
+            const mult = getStreakMultiplier(streak);
+            const rank = getUserRankTitle(gamification.points);
+            const shields = gamification.streakShields || 0;
+            const todayDone = entries.some(e => e.isoDate === getTodayIso());
+
+            // Prochain palier de série
+            const nextMilestones = [3, 7, 14, 21, 30];
+            const nextGoal = nextMilestones.find(m => streak < m) || 30;
+            const streakPct = Math.min(100, Math.round((streak / nextGoal) * 100));
+
+            container.innerHTML = `
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-base">${rank.icon}</span>
+                        <div>
+                            <span class="text-xs font-bold text-white block">${rank.label}</span>
+                            <span class="text-[10px] text-slate-300">Multiplicateur série : <strong class="text-amber-300">×${mult.toFixed(1)}</strong></span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs font-bold text-amber-300 block">${gamification.points} XP</span>
+                        <span class="text-[10px] text-slate-300" title="Protège votre série en cas d'oubli d'1 jour">🛡️ ${shields} bouclier${shields > 1 ? 's' : ''}</span>
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <div class="flex justify-between text-[10px] text-slate-300">
+                        <span>${todayDone ? '✅ Bilan du jour validé !' : '⏳ Bilan du jour à valider pour garder la série'}</span>
+                        <span>Palier ${streak}/${nextGoal}j</span>
+                    </div>
+                    <div class="w-full bg-white/15 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-gradient-to-r from-amber-400 to-emerald-400 h-full rounded-full transition-all" style="width: ${streakPct}%"></div>
+                    </div>
+                </div>
+            `;
         }
 
         // --- DÉFIS PERSONNALISÉS (JUSQU'À 5 SIMULTANÉMENT + VALIDATION / SANCTION) ---
@@ -2082,13 +2158,26 @@
                 `;
             }
 
-            // Rendu des badges
+            renderHomeXpAndStreakCard();
+
+            // Rendu des 12 badges avec paliers (Bronze, Argent, Or, Platine)
             if (badgesGrid && badgesCountEl) {
-                badgesCountEl.innerText = `${gamification.unlockedBadges.length} / ${BADGES_CATALOG.length} débloqués`;
+                badgesCountEl.innerText = `${gamification.unlockedBadges.length} / ${BADGES_CATALOG.length}`;
+                const tierStyles = {
+                    Bronze: 'bg-orange-50/80 border-orange-200 text-orange-900',
+                    Argent: 'bg-slate-100/90 border-slate-300 text-slate-900',
+                    Or: 'bg-amber-50/90 border-amber-300 text-amber-950',
+                    Platine: 'bg-indigo-50/90 border-indigo-300 text-indigo-950'
+                };
                 badgesGrid.innerHTML = BADGES_CATALOG.map(b => {
                     const unlocked = gamification.unlockedBadges.includes(b.id);
+                    const cardCls = unlocked ? (tierStyles[b.tier] || 'bg-amber-50 border-amber-200 text-slate-900') : 'bg-slate-50 border-slate-100 text-slate-400 opacity-60';
                     return `
-                        <div class="p-2 rounded-2xl border text-center space-y-0.5 ${unlocked ? 'bg-amber-50/70 border-amber-200 text-slate-900' : 'bg-slate-50 border-slate-100 text-slate-400 opacity-60'}">
+                        <div class="p-2 rounded-2xl border text-center space-y-0.5 ${cardCls}">
+                            <div class="flex items-center justify-between text-[8px] font-bold opacity-75">
+                                <span>${b.tier}</span>
+                                <span>+${b.reward}</span>
+                            </div>
                             <span class="text-lg block">${unlocked ? b.icon : '🔒'}</span>
                             <span class="text-[10px] font-bold block truncate">${b.title}</span>
                             <span class="text-[9px] block leading-tight">${b.desc}</span>
@@ -2644,6 +2733,14 @@
                             backgroundColor: 'transparent',
                             borderDash: [4, 4],
                             tension: 0.35
+                        },
+                        {
+                            label: 'Flatulences',
+                            data: recent.map(e => e.flatulence ?? 0),
+                            borderColor: '#6366F1',
+                            backgroundColor: 'transparent',
+                            borderDash: [2, 3],
+                            tension: 0.35
                         }
                     ]
                 },
@@ -3044,6 +3141,7 @@
                 date: todayLabel,
                 pain: 8,
                 bloating: 7,
+                flatulence: 6,
                 stress: 4,
                 bristol: 6,
                 factors: ['🆘 Crise aiguë signalée'],
@@ -3118,6 +3216,8 @@
             document.getElementById('pain-display').innerText = '0 / 10';
             document.getElementById('input-bloating').value = 0;
             document.getElementById('bloating-display').innerText = '0 / 10';
+            document.getElementById('input-flatulence').value = 0;
+            document.getElementById('flatulence-display').innerText = '0 / 10';
             document.getElementById('input-stress').value = 2;
             document.getElementById('stress-display').innerText = '2 / 5';
 
@@ -3153,6 +3253,7 @@
         function submitDailyCheckin() {
             const pain = parseInt(document.getElementById('input-pain').value, 10);
             const bloating = parseInt(document.getElementById('input-bloating').value, 10);
+            const flatulence = parseInt(document.getElementById('input-flatulence').value, 10);
             const stress = parseInt(document.getElementById('input-stress').value, 10);
             const stdFactors = Array.from(document.querySelectorAll('.std-factor:checked')).map(cb => cb.value);
             const stdProtectiveFactors = Array.from(document.querySelectorAll('.protective-factor:checked')).map(cb => cb.value);
@@ -3185,6 +3286,7 @@
                 date: todayLabel,
                 pain,
                 bloating,
+                flatulence,
                 stress,
                 bristol: selectedBristolType,
                 factors: allTriggerFactors,
@@ -3199,11 +3301,18 @@
                 entries.push(newEntry);
             }
             
+            const xpGain = awardDailyCheckinPoints(todayIso, true);
             evaluateGamificationBadges(true);
             saveState();
             closeCheckinModal();
             refreshAllViews();
-            showToast(isUpdate ? 'Bilan du jour mis à jour ! ✨' : 'Bilan du jour enregistré ! 🎉');
+            if (xpGain && xpGain.milestoneHit) {
+                showToast(`🔥 Palier ${xpGain.milestoneHit.label} ! +${xpGain.earned + xpGain.milestoneHit.bonus} XP`);
+            } else if (xpGain) {
+                showToast(`🎉 Bilan validé ! +${xpGain.earned} XP (série ×${xpGain.mult.toFixed(1)})`);
+            } else {
+                showToast(isUpdate ? 'Bilan du jour mis à jour ! ✨' : 'Bilan du jour enregistré ! 🎉');
+            }
         }
 
         function renderCommunityFeed(filter) {
@@ -3274,6 +3383,7 @@
 
             if (entries.length === 0) {
                 document.getElementById('rep-avg-pain').innerText = '—';
+                document.getElementById('rep-avg-flatulence').innerText = '—';
                 document.getElementById('rep-peace-score').innerText = '—';
                 document.getElementById('rep-avg-stress').innerText = '—';
                 document.getElementById('rep-bristol-summary').innerText = 'Aucun bilan enregistré pour le moment.';
@@ -3282,8 +3392,10 @@
                 document.getElementById('rep-healing-combos-list').innerHTML = '<li>Aucun combo guérisseur détecté pour le moment.</li>';
             } else {
                 const avgPain = (entries.reduce((acc, e) => acc + e.pain, 0) / entries.length).toFixed(1);
+                const avgFlatulence = (entries.reduce((acc, e) => acc + (e.flatulence ?? 0), 0) / entries.length).toFixed(1);
                 const avgStress = (entries.reduce((acc, e) => acc + e.stress, 0) / entries.length).toFixed(1);
                 document.getElementById('rep-avg-pain').innerText = avgPain + ' / 10';
+                document.getElementById('rep-avg-flatulence').innerText = avgFlatulence + ' / 10';
                 document.getElementById('rep-peace-score').innerText = peaceData ? peaceData.pct + '%' : '—';
                 document.getElementById('rep-avg-stress').innerText = avgStress + ' / 5';
 
@@ -3382,7 +3494,7 @@
             entries = [];
             userCreatedFactors = [];
             challenges = [];
-            gamification = { points: 0, completedChallenges: 0, missedDaysCount: 0, unlockedBadges: [], activeGages: [] };
+            gamification = { points: 0, completedChallenges: 0, missedDaysCount: 0, unlockedBadges: [], activeGages: [], rewardedEntryDates: [], rewardedStreakMilestones: [], streakShields: 0, shieldUsedDates: [], bestStreak: 0 };
             reminderSettings = { enabled: false, time: '20:30', lastNotifiedDate: '' };
             userName = '';
             localStorage.removeItem(USER_NAME_KEY);
