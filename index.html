@@ -115,10 +115,10 @@
                                 </button>
                             </h2>
                         </div>
-                        <div class="text-right">
-                            <span class="text-[11px] text-blue-100 block">Série en cours</span>
-                            <span class="font-bold text-base" id="streak-badge">🌱 0 jour</span>
-                        </div>
+                        <button type="button" onclick="openStreakModal()" class="text-right bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-2xl transition active:scale-95">
+                            <span class="text-[10px] text-blue-100 block">Série en cours</span>
+                            <span class="font-bold text-base flex items-center justify-end gap-1" id="streak-badge">🔥 0 j</span>
+                        </button>
                     </div>
                     <p class="text-blue-50 text-xs leading-relaxed mb-4">
                         Enregistrez vos ressentis, votre transit et vos repas chaque jour pour repérer facilement ce qui vous fait du bien ou vous irrite.
@@ -150,8 +150,26 @@
                     </div>
                 </div>
 
-                <!-- Carte Série, Multiplicateur & Progression XP (Rétention quotidienne) -->
-                <div id="home-xp-streak-card" class="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white p-4 rounded-3xl shadow-md space-y-2.5"></div>
+                <!-- Carte Série Quotidienne (Style Duolingo : 7 jours de la semaine + flamme + gel de série) -->
+                <div onclick="openStreakModal()" class="cursor-pointer bg-white hover:bg-amber-50/30 p-4 rounded-3xl border border-slate-100 shadow-sm space-y-3 transition">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div id="duo-flame-box" class="w-10 h-10 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center text-xl font-bold transition">
+                                🔥
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-sm font-bold text-slate-900" id="duo-streak-title">0 jour de série</span>
+                                    <span id="duo-shield-pill" class="text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200 px-2 py-0.5 rounded-full">❄️ 0 gel</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500" id="duo-streak-subtitle">Faites votre bilan aujourd'hui pour allumer la flamme !</p>
+                            </div>
+                        </div>
+                        <span class="text-slate-300 text-xs font-bold">›</span>
+                    </div>
+                    <!-- 7 jours de la semaine (Lun -> Dim) -->
+                    <div id="duo-week-days" class="grid grid-cols-7 gap-1.5 text-center pt-0.5"></div>
+                </div>
 
                 <!-- Météo Intestinale (Uniquement à partir de digestiv_install_date) -->
                 <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100">
@@ -318,7 +336,7 @@
                     <div id="healing-combos-radar-container"></div>
                 </div>
 
-                <!-- Module Défis Personnalisés (jusqu'à 5 simultanés) & Badges -->
+                <!-- Module Défis Personnalisés (jusqu'à 5 simultanés) -->
                 <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-3.5">
                     <div class="flex items-center justify-between gap-2">
                         <div>
@@ -326,30 +344,18 @@
                                 <h3 class="font-bold text-slate-800 text-sm">🧪 Défis Personnels</h3>
                                 <span id="active-challenges-counter" class="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">0 / 5</span>
                             </div>
-                            <p class="text-[11px] text-slate-500">Jusqu'à 5 expériences simultanées avec validation quotidienne.</p>
+                            <p class="text-[11px] text-slate-500">Jusqu'à 5 expériences simultanées avec suivi quotidien.</p>
                         </div>
                         <button id="btn-create-challenge-stats" onclick="openChallengeCreatorModal()" class="bg-primary text-white text-xs font-bold px-3.5 py-2 rounded-2xl hover:bg-blue-600 shadow-xs transition shrink-0">
                             + Créer un défi
                         </button>
                     </div>
 
-                    <!-- Barre de niveau, points & pénalités -->
+                    <!-- Encart gage actif éventuel -->
                     <div id="gamification-summary-bar"></div>
 
                     <!-- Liste des défis actifs (max 5) -->
                     <div id="stats-challenge-status" class="space-y-2.5"></div>
-
-                    <!-- Vitrine des Badges & Récompenses (12 badges par paliers) -->
-                    <div class="pt-2.5 border-t border-slate-100 space-y-2.5">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <span class="text-xs font-bold text-slate-800 block">🏆 Collection de Badges</span>
-                                <span class="text-[10px] text-slate-400">Revenez chaque jour pour débloquer les paliers supérieurs</span>
-                            </div>
-                            <span id="badges-unlocked-count" class="text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-2.5 py-0.5 rounded-full">0 / 12</span>
-                        </div>
-                        <div id="badges-showcase-grid" class="grid grid-cols-3 gap-2"></div>
-                    </div>
                 </div>
             </div>
 
@@ -1299,6 +1305,50 @@
         </div>
     </div>
 
+    <!-- ===================================================================== -->
+    <!-- MODALE : MA SÉRIE QUOTIDIENNE (STYLE DUOLINGO)                        -->
+    <!-- ===================================================================== -->
+    <div id="streak-modal" class="fixed inset-0 bg-slate-900/65 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">🔥</span>
+                    <h3 class="font-bold text-slate-900 text-sm">Ma Série Quotidienne</h3>
+                </div>
+                <button onclick="document.getElementById('streak-modal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 text-xs font-bold">✕</button>
+            </div>
+
+            <div class="text-center bg-gradient-to-b from-amber-50 to-orange-50/60 border border-amber-200/70 rounded-3xl p-4 space-y-1">
+                <span class="text-4xl block" id="streak-modal-flame">🔥</span>
+                <div class="text-2xl font-extrabold text-slate-900" id="streak-modal-count">0 jour</div>
+                <p class="text-xs text-slate-600" id="streak-modal-msg">Enregistrez votre bilan chaque jour pour faire grandir votre flamme.</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5 text-center">
+                <div class="bg-softGray rounded-2xl p-3">
+                    <span class="text-[10px] text-slate-400 block">Record personnel</span>
+                    <strong class="text-sm text-slate-900" id="streak-modal-best">0 jour</strong>
+                </div>
+                <div class="bg-sky-50 border border-sky-100 rounded-2xl p-3">
+                    <span class="text-[10px] text-sky-700 block">Gels de série</span>
+                    <strong class="text-sm text-sky-900" id="streak-modal-shields">❄️ 0 disponible</strong>
+                </div>
+            </div>
+
+            <div class="bg-softGray/80 rounded-2xl p-3.5 space-y-1.5 text-[11px] text-slate-600 leading-relaxed">
+                <p class="font-bold text-slate-800">Comment fonctionne la série ?</p>
+                <ul class="list-disc pl-4 space-y-1">
+                    <li><strong>1 bilan par jour = +1 jour de série</strong> (bilan complet ou <em>Journée calme en 1 clic</em>).</li>
+                    <li><strong>Gel de série (❄️) :</strong> tous les <strong>7 jours consécutifs</strong>, vous gagnez 1 Gel (max 2). Si vous oubliez un jour, il protège automatiquement votre flamme !</li>
+                </ul>
+            </div>
+
+            <button onclick="document.getElementById('streak-modal').classList.add('hidden')" class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-2.5 rounded-2xl text-xs transition">
+                Continuer mon suivi ✨
+            </button>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-2.5 rounded-2xl shadow-xl text-xs font-medium opacity-0 pointer-events-none transition-all duration-300 z-50 whitespace-nowrap no-print">
         Action effectuée
@@ -1700,14 +1750,13 @@
                 entries.push(calmEntry);
             }
 
-            const xpGain = awardDailyCheckinPoints(todayIso, false);
-            evaluateGamificationBadges(true);
+            const streakRes = recordDailyStreakProgress(todayIso);
             saveState();
             refreshAllViews();
-            if (xpGain && xpGain.milestoneHit) {
-                showToast(`🔥 Palier ${xpGain.milestoneHit.label} ! +${xpGain.earned + xpGain.milestoneHit.bonus} XP`);
-            } else if (xpGain) {
-                showToast(`✨ Journée calme enregistrée ! +${xpGain.earned} XP (×${xpGain.mult.toFixed(1)})`);
+            if (streakRes.earnedFreeze) {
+                showToast(`🔥 ${streakRes.streak} jours de série ! +1 Gel de série gagné ❄️`);
+            } else if (streakRes.isFirstTimeToday) {
+                showToast(`🔥 Série : ${streakRes.streak} jour${streakRes.streak > 1 ? 's' : ''} ! Journée calme enregistrée ✨`);
             } else {
                 showToast('✨ Journée calme mise à jour !');
             }
@@ -1752,46 +1801,46 @@
             return streak;
         }
 
-        function getStreakMultiplier(streak) {
-            if (streak >= 30) return 2.5;
-            if (streak >= 14) return 2.0;
-            if (streak >= 7) return 1.5;
-            if (streak >= 3) return 1.2;
-            return 1.0;
+        function recordDailyStreakProgress(isoDate) {
+            gamification.rewardedEntryDates = gamification.rewardedEntryDates || [];
+            const isFirstTimeToday = !gamification.rewardedEntryDates.includes(isoDate);
+            if (isFirstTimeToday) {
+                gamification.rewardedEntryDates.push(isoDate);
+            }
+
+            const streak = computeRealStreak();
+            gamification.rewardedStreakMilestones = gamification.rewardedStreakMilestones || [];
+            let earnedFreeze = false;
+
+            // Tous les 7 jours consécutifs (7, 14, 21, 28...), offre 1 Gel de série (max 2 en stock)
+            if (streak > 0 && streak % 7 === 0 && !gamification.rewardedStreakMilestones.includes(streak)) {
+                gamification.rewardedStreakMilestones.push(streak);
+                if ((gamification.streakShields || 0) < 2) {
+                    gamification.streakShields = (gamification.streakShields || 0) + 1;
+                    earnedFreeze = true;
+                }
+            }
+
+            return { isFirstTimeToday, streak, earnedFreeze };
         }
 
-        function awardDailyCheckinPoints(isoDate, isFullCheckin = true) {
-            gamification.rewardedEntryDates = gamification.rewardedEntryDates || [];
-            if (gamification.rewardedEntryDates.includes(isoDate)) return null;
-
-            gamification.rewardedEntryDates.push(isoDate);
+        function openStreakModal() {
             const streak = computeRealStreak();
-            const mult = getStreakMultiplier(streak);
-            const basePts = isFullCheckin ? 15 : 10;
-            const earned = Math.round(basePts * mult);
-            gamification.points += earned;
+            const shields = gamification.streakShields || 0;
+            const best = Math.max(streak, gamification.bestStreak || 0);
+            const todayDone = entries.some(e => e.isoDate === getTodayIso());
 
-            // Paliers de série récompensés + attribution d'un Bouclier de Série tous les 7 jours
-            const milestones = [
-                { days: 3, bonus: 25, shield: 0, label: '3 jours consécutifs' },
-                { days: 7, bonus: 60, shield: 1, label: '7 jours consécutifs (+1 Bouclier 🛡️)' },
-                { days: 14, bonus: 120, shield: 1, label: '14 jours consécutifs (+1 Bouclier 🛡️)' },
-                { days: 21, bonus: 200, shield: 1, label: '21 jours consécutifs (+1 Bouclier 🛡️)' },
-                { days: 30, bonus: 350, shield: 2, label: '30 jours consécutifs (+2 Boucliers 🛡️)' }
-            ];
+            document.getElementById('streak-modal-flame').innerText = todayDone ? '🔥' : (streak > 0 ? '⏳' : '🕯️');
+            document.getElementById('streak-modal-count').innerText = `${streak} jour${streak > 1 ? 's' : ''}`;
+            document.getElementById('streak-modal-best').innerText = `${best} jour${best > 1 ? 's' : ''}`;
+            document.getElementById('streak-modal-shields').innerText = `❄️ ${shields} / 2`;
+            document.getElementById('streak-modal-msg').innerText = todayDone
+                ? 'Bravo ! Votre bilan du jour est validé, votre flamme est allumée.'
+                : (streak > 0
+                    ? 'Faites votre bilan aujourd’hui pour prolonger votre série !'
+                    : 'Commencez votre série dès aujourd’hui en enregistrant votre bilan.');
 
-            gamification.rewardedStreakMilestones = gamification.rewardedStreakMilestones || [];
-            let milestoneHit = null;
-            milestones.forEach(m => {
-                if (streak >= m.days && !gamification.rewardedStreakMilestones.includes(m.days)) {
-                    gamification.rewardedStreakMilestones.push(m.days);
-                    gamification.points += m.bonus;
-                    gamification.streakShields = (gamification.streakShields || 0) + m.shield;
-                    milestoneHit = m;
-                }
-            });
-
-            return { earned, mult, streak, milestoneHit };
+            document.getElementById('streak-modal').classList.remove('hidden');
         }
 
         function computePeaceDigestivePct() {
@@ -1805,8 +1854,9 @@
 
         function updateStreakAndKPIs() {
             const streak = computeRealStreak();
+            const todayDone = entries.some(e => e.isoDate === getTodayIso());
             const streakEl = document.getElementById('streak-badge');
-            streakEl.innerText = streak === 0 ? '🌱 0 jour' : `🔥 ${streak} jour${streak > 1 ? 's' : ''}`;
+            streakEl.innerText = `${todayDone ? '🔥' : '🕯️'} ${streak} jour${streak > 1 ? 's' : ''}`;
 
             const peaceEl = document.getElementById('kpi-peace');
             const peaceSub = document.getElementById('kpi-peace-subtitle');
@@ -2025,25 +2075,7 @@
             }
         }
 
-        // --- SYSTÈME DE BADGES (12 PALIERS), SÉRIES MULTIPLICATRICES & PUNITIONS ---
-        const BADGES_CATALOG = [
-            // Série & Assiduité
-            { id: 'first_step', tier: 'Bronze', icon: '🌱', title: 'Premier Pas', desc: '1er bilan enregistré', reward: 20, check: () => entries.length >= 1 },
-            { id: 'streak_3', tier: 'Bronze', icon: '🕯️', title: 'Flamme Naissante', desc: 'Série de 3 jours', reward: 30, check: () => Math.max(computeRealStreak(), gamification.bestStreak || 0) >= 3 },
-            { id: 'streak_7', tier: 'Argent', icon: '🔥', title: 'Semaine de Fer', desc: 'Série de 7 jours', reward: 60, check: () => Math.max(computeRealStreak(), gamification.bestStreak || 0) >= 7 },
-            { id: 'streak_14', tier: 'Or', icon: '⚡', title: 'Rythme Solide', desc: 'Série de 14 jours', reward: 100, check: () => Math.max(computeRealStreak(), gamification.bestStreak || 0) >= 14 },
-            { id: 'streak_30', tier: 'Platine', icon: '💎', title: 'Inébranlable', desc: 'Série de 30 jours', reward: 200, check: () => Math.max(computeRealStreak(), gamification.bestStreak || 0) >= 30 },
-            // Défis & Discipline
-            { id: 'challenger', tier: 'Bronze', icon: '🧪', title: 'Explorateur', desc: '1er défi lancé', reward: 25, check: () => challenges.length >= 1 || gamification.completedChallenges >= 1 },
-            { id: 'multitasker', tier: 'Argent', icon: '🎯', title: 'Multi-Défis', desc: '3 défis en parallèle', reward: 50, check: () => challenges.filter(c => !c.completed).length >= 3 },
-            { id: 'finisher_1', tier: 'Argent', icon: '🏅', title: 'Finisseur', desc: '1 défi réussi à 100 %', reward: 60, check: () => gamification.completedChallenges >= 1 },
-            { id: 'master_3', tier: 'Or', icon: '👑', title: 'Maître Zen', desc: '3 défis réussis', reward: 120, check: () => gamification.completedChallenges >= 3 },
-            // Analyse & Paix Digestive
-            { id: 'analyst_5', tier: 'Bronze', icon: '🧠', title: 'Profil Calibré', desc: '5 bilans complétés', reward: 40, check: () => entries.length >= 5 },
-            { id: 'custom_maker', tier: 'Argent', icon: '🧩', title: 'Sur-Mesure', desc: '2 facteurs créés', reward: 35, check: () => userCreatedFactors.length >= 2 },
-            { id: 'peace_keeper', tier: 'Or', icon: '💚', title: 'Havre de Paix', desc: '≥ 70% de Paix (min 7j)', reward: 100, check: () => { const p = computePeaceDigestivePct(); return entries.length >= 7 && p && p.pct >= 70; } }
-        ];
-
+        // --- SÉRIE DUOLINGO (7 JOURS DE LA SEMAINE) & GAGES DÉFIS ---
         const WELLNESS_PUNISHMENTS = [
             'Gage : 5 minutes de cohérence cardiaque (5-5) dès maintenant.',
             'Gage : Boire un grand verre d’eau à température ambiante ou une tisane apaisante.',
@@ -2052,67 +2084,86 @@
             'Gage : Couper les écrans 30 minutes plus tôt ce soir pour apaiser le système nerveux.'
         ];
 
-        function evaluateGamificationBadges(silent = false) {
-            let newlyUnlocked = [];
-            BADGES_CATALOG.forEach(b => {
-                if (!gamification.unlockedBadges.includes(b.id) && b.check()) {
-                    gamification.unlockedBadges.push(b.id);
-                    gamification.points += (b.reward || 25);
-                    newlyUnlocked.push(b);
-                }
-            });
-            if (newlyUnlocked.length > 0 && !silent) {
-                showToast(`🏆 Badge « ${newlyUnlocked[0].title} » débloqué (+${newlyUnlocked[0].reward} pts) !`);
-            }
+        function evaluateGamificationBadges() {
+            // Maintenu pour compatibilité sans affichage de badges
+            computeRealStreak();
         }
 
-        function getUserRankTitle(points) {
-            if (points >= 800) return { label: 'Légende de la Sérénité', icon: '💎', nextPts: null };
-            if (points >= 450) return { label: 'Gardien de l’Équilibre', icon: '👑', nextPts: 800 };
-            if (points >= 220) return { label: 'Stratège Digestif', icon: '🥇', nextPts: 450 };
-            if (points >= 90) return { label: 'Explorateur Régulier', icon: '🥈', nextPts: 220 };
-            return { label: 'Apprenti Serein', icon: '🌱', nextPts: 90 };
-        }
-
-        function renderHomeXpAndStreakCard() {
-            const container = document.getElementById('home-xp-streak-card');
-            if (!container) return;
+        function renderDuolingoStreakCard() {
+            const weekGrid = document.getElementById('duo-week-days');
+            const titleEl = document.getElementById('duo-streak-title');
+            const subEl = document.getElementById('duo-streak-subtitle');
+            const flameBox = document.getElementById('duo-flame-box');
+            const shieldPill = document.getElementById('duo-shield-pill');
+            if (!weekGrid) return;
 
             const streak = computeRealStreak();
-            const mult = getStreakMultiplier(streak);
-            const rank = getUserRankTitle(gamification.points);
             const shields = gamification.streakShields || 0;
-            const todayDone = entries.some(e => e.isoDate === getTodayIso());
+            const todayIso = getTodayIso();
+            const todayDone = entries.some(e => e.isoDate === todayIso);
+            const entryDates = new Set(entries.map(e => e.isoDate));
+            const shieldDates = new Set(gamification.shieldUsedDates || []);
 
-            // Prochain palier de série
-            const nextMilestones = [3, 7, 14, 21, 30];
-            const nextGoal = nextMilestones.find(m => streak < m) || 30;
-            const streakPct = Math.min(100, Math.round((streak / nextGoal) * 100));
+            if (titleEl) titleEl.innerText = `${streak} jour${streak > 1 ? 's' : ''} de série`;
+            if (shieldPill) shieldPill.innerText = `❄️ ${shields} gel${shields > 1 ? 's' : ''}`;
 
-            container.innerHTML = `
-                <div class="flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-2">
-                        <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-base">${rank.icon}</span>
-                        <div>
-                            <span class="text-xs font-bold text-white block">${rank.label}</span>
-                            <span class="text-[10px] text-slate-300">Multiplicateur série : <strong class="text-amber-300">×${mult.toFixed(1)}</strong></span>
-                        </div>
+            if (flameBox) {
+                flameBox.className = todayDone
+                    ? 'w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center text-xl font-bold shadow-sm transition'
+                    : (streak > 0
+                        ? 'w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 text-amber-500 flex items-center justify-center text-xl font-bold transition'
+                        : 'w-10 h-10 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center text-xl font-bold transition');
+            }
+
+            if (subEl) {
+                if (todayDone) {
+                    subEl.innerText = streak >= 7
+                        ? 'Flamme allumée aujourd’hui ! Continuez sur cette belle lancée.'
+                        : `Bilan du jour validé ! Encore ${7 - (streak % 7)} j avant le prochain Gel ❄️`;
+                } else if (streak > 0) {
+                    subEl.innerText = 'Validez votre bilan aujourd’hui pour ne pas perdre votre flamme !';
+                } else {
+                    subEl.innerText = 'Enregistrez votre bilan aujourd’hui pour allumer votre flamme.';
+                }
+            }
+
+            // Construire la semaine courante du Lundi (0) au Dimanche (6)
+            const now = new Date();
+            const jsDay = now.getDay(); // 0 = Dim, 1 = Lun ... 6 = Sam
+            const mondayOffset = jsDay === 0 ? -6 : 1 - jsDay;
+            const dayLabels = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+
+            const cells = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(now);
+                d.setDate(now.getDate() + mondayOffset + i);
+                const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                const isDone = entryDates.has(iso);
+                const isFrozen = !isDone && shieldDates.has(iso);
+                const isToday = iso === todayIso;
+                const isFuture = iso > todayIso;
+
+                let circleHtml = '';
+                if (isDone) {
+                    circleHtml = `<div class="w-8 h-8 mx-auto rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center text-xs font-bold shadow-2xs">🔥</div>`;
+                } else if (isFrozen) {
+                    circleHtml = `<div class="w-8 h-8 mx-auto rounded-full bg-sky-100 border border-sky-300 text-sky-700 flex items-center justify-center text-xs font-bold" title="Série protégée par un Gel">❄️</div>`;
+                } else if (isToday) {
+                    circleHtml = `<div class="w-8 h-8 mx-auto rounded-full border-2 border-dashed border-amber-400 bg-amber-50/50 text-amber-600 flex items-center justify-center text-[11px] font-bold">•</div>`;
+                } else if (isFuture) {
+                    circleHtml = `<div class="w-8 h-8 mx-auto rounded-full bg-slate-50 border border-slate-100 text-slate-300 flex items-center justify-center text-[10px]"></div>`;
+                } else {
+                    circleHtml = `<div class="w-8 h-8 mx-auto rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-[10px]">—</div>`;
+                }
+
+                cells.push(`
+                    <div class="flex flex-col items-center gap-1">
+                        <span class="text-[10px] font-bold ${isToday ? 'text-primary' : 'text-slate-400'}">${dayLabels[i]}</span>
+                        ${circleHtml}
                     </div>
-                    <div class="text-right">
-                        <span class="text-xs font-bold text-amber-300 block">${gamification.points} XP</span>
-                        <span class="text-[10px] text-slate-300" title="Protège votre série en cas d'oubli d'1 jour">🛡️ ${shields} bouclier${shields > 1 ? 's' : ''}</span>
-                    </div>
-                </div>
-                <div class="space-y-1">
-                    <div class="flex justify-between text-[10px] text-slate-300">
-                        <span>${todayDone ? '✅ Bilan du jour validé !' : '⏳ Bilan du jour à valider pour garder la série'}</span>
-                        <span>Palier ${streak}/${nextGoal}j</span>
-                    </div>
-                    <div class="w-full bg-white/15 h-1.5 rounded-full overflow-hidden">
-                        <div class="bg-gradient-to-r from-amber-400 to-emerald-400 h-full rounded-full transition-all" style="width: ${streakPct}%"></div>
-                    </div>
-                </div>
-            `;
+                `);
+            }
+            weekGrid.innerHTML = cells.join('');
         }
 
         // --- DÉFIS PERSONNALISÉS (JUSQU'À 5 SIMULTANÉMENT + VALIDATION / SANCTION) ---
@@ -2122,8 +2173,8 @@
             const counterBadge = document.getElementById('active-challenges-counter');
             const createBtnStats = document.getElementById('btn-create-challenge-stats');
             const gamificationBar = document.getElementById('gamification-summary-bar');
-            const badgesGrid = document.getElementById('badges-showcase-grid');
-            const badgesCountEl = document.getElementById('badges-unlocked-count');
+
+            renderDuolingoStreakCard();
 
             const activeList = challenges.filter(c => !c.completed);
             const todayIso = getTodayIso();
@@ -2134,56 +2185,19 @@
                 createBtnStats.classList.toggle('opacity-50', activeList.length >= MAX_ACTIVE_CHALLENGES);
             }
 
-            // Barre de gamification (points, rang, gages actifs)
+            // Affiche uniquement l'encart de gage s'il y a un gage actif à accomplir
             if (gamificationBar) {
-                const rank = getUserRankTitle(gamification.points);
                 const pendingGages = (gamification.activeGages || []);
-                gamificationBar.innerHTML = `
-                    <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-2xl p-3 space-y-2">
-                        <div class="flex items-center justify-between text-xs">
-                            <span class="font-bold flex items-center gap-1.5"><span>${rank.icon}</span><span>${rank.label}</span></span>
-                            <span class="bg-white/15 px-2.5 py-0.5 rounded-full font-bold text-amber-300">${gamification.points} pts</span>
-                        </div>
-                        <div class="flex items-center justify-between text-[10px] text-slate-300">
-                            <span>🏅 ${gamification.completedChallenges} défi(s) réussi(s)</span>
-                            <span>⚠️ ${gamification.missedDaysCount} écart(s)</span>
-                        </div>
-                        ${pendingGages.length > 0 ? `
-                            <div class="bg-rose-500/20 border border-rose-400/40 rounded-xl p-2 flex items-center justify-between gap-2 text-[10px]">
-                                <span class="text-rose-100 leading-snug">⚡ <strong>Gage actif :</strong> ${pendingGages[0]}</span>
-                                <button onclick="completeActiveGage()" class="bg-white text-slate-900 font-bold px-2 py-1 rounded-lg shrink-0">Fait ✓</button>
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            }
-
-            renderHomeXpAndStreakCard();
-
-            // Rendu des 12 badges avec paliers (Bronze, Argent, Or, Platine)
-            if (badgesGrid && badgesCountEl) {
-                badgesCountEl.innerText = `${gamification.unlockedBadges.length} / ${BADGES_CATALOG.length}`;
-                const tierStyles = {
-                    Bronze: 'bg-orange-50/80 border-orange-200 text-orange-900',
-                    Argent: 'bg-slate-100/90 border-slate-300 text-slate-900',
-                    Or: 'bg-amber-50/90 border-amber-300 text-amber-950',
-                    Platine: 'bg-indigo-50/90 border-indigo-300 text-indigo-950'
-                };
-                badgesGrid.innerHTML = BADGES_CATALOG.map(b => {
-                    const unlocked = gamification.unlockedBadges.includes(b.id);
-                    const cardCls = unlocked ? (tierStyles[b.tier] || 'bg-amber-50 border-amber-200 text-slate-900') : 'bg-slate-50 border-slate-100 text-slate-400 opacity-60';
-                    return `
-                        <div class="p-2 rounded-2xl border text-center space-y-0.5 ${cardCls}">
-                            <div class="flex items-center justify-between text-[8px] font-bold opacity-75">
-                                <span>${b.tier}</span>
-                                <span>+${b.reward}</span>
-                            </div>
-                            <span class="text-lg block">${unlocked ? b.icon : '🔒'}</span>
-                            <span class="text-[10px] font-bold block truncate">${b.title}</span>
-                            <span class="text-[9px] block leading-tight">${b.desc}</span>
+                if (pendingGages.length > 0) {
+                    gamificationBar.innerHTML = `
+                        <div class="bg-rose-50 border border-rose-200 rounded-2xl p-3 flex items-center justify-between gap-2 text-xs">
+                            <span class="text-rose-900 leading-snug text-[11px]">⚡ <strong>Gage bien-être :</strong> ${pendingGages[0]}</span>
+                            <button onclick="completeActiveGage()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-2.5 py-1.5 rounded-xl text-[11px] shrink-0">Fait ✓</button>
                         </div>
                     `;
-                }).join('');
+                } else {
+                    gamificationBar.innerHTML = '';
+                }
             }
 
             if (activeList.length === 0) {
@@ -2230,7 +2244,7 @@
                         <div class="flex items-center justify-between gap-1.5 pt-0.5">
                             <div class="flex items-center gap-1.5">
                                 <button onclick="validateChallengeDay('${ch.id}')" ${isDoneToday ? 'disabled' : ''} class="text-[11px] font-bold px-2.5 py-1.5 rounded-xl transition ${isDoneToday ? 'bg-success/15 text-success cursor-default' : 'bg-success hover:bg-emerald-600 text-white shadow-2xs'}">
-                                    ${isDoneToday ? '✓ Validé (+10 pts)' : '✓ Réussi aujourd’hui'}
+                                    ${isDoneToday ? '✓ Validé' : '✓ Réussi aujourd’hui'}
                                 </button>
                                 <button onclick="missChallengeDay('${ch.id}')" ${isMissedToday ? 'disabled' : ''} class="text-[11px] font-bold px-2.5 py-1.5 rounded-xl transition ${isMissedToday ? 'bg-rose-100 text-rose-500 cursor-default' : 'bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200'}">
                                     ${isMissedToday ? '⚠️ Manqué' : '✕ Écart'}
@@ -2281,17 +2295,15 @@
                 ch.completed = true;
                 gamification.completedChallenges += 1;
                 gamification.points += 50;
-                evaluateGamificationBadges(false);
                 saveState();
                 renderChallengesUI();
-                showToast(`🎉 Défi « ${ch.title} » terminé ! Récompense : +50 pts !`);
+                showToast(`🎉 Défi « ${ch.title} » terminé avec succès !`);
                 return;
             }
 
-            evaluateGamificationBadges(false);
             saveState();
             renderChallengesUI();
-            showToast(`Bravo ! Jour validé (+10 pts) 🌟`);
+            showToast(`Bravo ! Jour validé 🌟`);
         }
 
         function missChallengeDay(challengeId) {
@@ -2314,7 +2326,7 @@
                 gamification.activeGages.unshift(gage);
 
                 document.getElementById('penalty-modal-desc').innerText = `Écart enregistré sur le défi « ${ch.title} ». Pour vous aider à garder le cap :`;
-                document.getElementById('penalty-modal-points').innerText = `-${penaltyPts} pts de discipline • Progression du défi remise à 0/${ch.duration}j`;
+                document.getElementById('penalty-modal-points').innerText = `Progression du défi remise à 0 / ${ch.duration} j`;
                 document.getElementById('penalty-modal-gage').innerText = gage;
                 document.getElementById('penalty-modal').classList.remove('hidden');
             }
@@ -2329,7 +2341,7 @@
                 gamification.points += 5;
                 saveState();
                 renderChallengesUI();
-                showToast('Gage accompli ! +5 pts récupérés 💪');
+                showToast('Gage bien-être accompli 💪');
             }
         }
 
@@ -3301,15 +3313,14 @@
                 entries.push(newEntry);
             }
             
-            const xpGain = awardDailyCheckinPoints(todayIso, true);
-            evaluateGamificationBadges(true);
+            const streakRes = recordDailyStreakProgress(todayIso);
             saveState();
             closeCheckinModal();
             refreshAllViews();
-            if (xpGain && xpGain.milestoneHit) {
-                showToast(`🔥 Palier ${xpGain.milestoneHit.label} ! +${xpGain.earned + xpGain.milestoneHit.bonus} XP`);
-            } else if (xpGain) {
-                showToast(`🎉 Bilan validé ! +${xpGain.earned} XP (série ×${xpGain.mult.toFixed(1)})`);
+            if (streakRes.earnedFreeze) {
+                showToast(`🔥 ${streakRes.streak} jours de série ! +1 Gel de série gagné ❄️`);
+            } else if (streakRes.isFirstTimeToday) {
+                showToast(`🔥 Série : ${streakRes.streak} jour${streakRes.streak > 1 ? 's' : ''} ! Bilan validé 🎉`);
             } else {
                 showToast(isUpdate ? 'Bilan du jour mis à jour ! ✨' : 'Bilan du jour enregistré ! 🎉');
             }
