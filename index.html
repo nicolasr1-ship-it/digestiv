@@ -82,6 +82,10 @@
                 </div>
             </div>
             <div class="flex items-center space-x-1.5">
+                <button onclick="openReminderModal()" id="header-reminder-btn" aria-label="Rappel du soir" title="Rappel bilan du soir" class="bg-softGray hover:bg-slate-200/70 text-slate-600 border border-slate-200/80 w-8 h-8 rounded-2xl text-xs font-bold flex items-center justify-center transition active:scale-95 relative">
+                    <span>🔔</span>
+                    <span id="header-reminder-dot" class="hidden w-2 h-2 rounded-full bg-success absolute top-1 right-1"></span>
+                </button>
                 <button onclick="openCrisisModal()" aria-label="Urgence Crise" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/80 px-2.5 py-1.5 rounded-2xl text-[11px] font-bold flex items-center gap-1 transition active:scale-95">
                     <span>🆘</span><span>Urgence Crise</span>
                 </button>
@@ -98,6 +102,9 @@
             <!-- ONGLET 1 : ACCUEIL                                              -->
             <!-- =============================================================== -->
             <div id="tab-home" class="space-y-4">
+
+                <!-- Bannière intelligente Rappel Bilan du Soir -->
+                <div id="evening-reminder-banner" class="hidden"></div>
                 
                 <!-- Carte Principale Bilan du Jour -->
                 <div class="bg-gradient-to-br from-primary to-blue-600 rounded-3xl p-5 text-white shadow-lg shadow-primary/20 relative overflow-hidden">
@@ -255,14 +262,14 @@
                         <div id="bristol-distribution-list" class="space-y-2"></div>
                     </div>
 
-                    <!-- Déclencheurs Simples -->
+                    <!-- Score d'Impact Réel (Différentiel Crise vs Calme) -->
                     <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-3.5">
                         <div class="flex items-center justify-between">
-                            <h3 class="font-bold text-slate-800 text-sm">🎯 Facteurs & Seuils de Confiance</h3>
-                            <span class="text-[10px] bg-softGray text-slate-500 px-2 py-0.5 rounded-full font-medium">Jours de crise</span>
+                            <h3 class="font-bold text-slate-800 text-sm">🎯 Score d'Impact Réel</h3>
+                            <span class="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">Crise vs Calme</span>
                         </div>
                         <p class="text-[11px] text-slate-500 leading-relaxed">
-                            Fréquence d'apparition lors des jours symptomatiques (douleur ≥ 4 ou ballonnement ≥ 4).
+                            Compare le taux de crise <strong>avec</strong> ce facteur par rapport au taux <strong>sans</strong> ce facteur (isole les vrais déclencheurs des habitudes neutres).
                         </p>
                         <div id="correlations-list" class="space-y-3"></div>
                     </div>
@@ -311,18 +318,35 @@
                     <div id="healing-combos-radar-container"></div>
                 </div>
 
-                <!-- Module Défis Personnalisés -->
-                <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-3">
-                    <div class="flex items-center justify-between">
+                <!-- Module Défis Personnalisés (jusqu'à 5 simultanés) & Badges -->
+                <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-3.5">
+                    <div class="flex items-center justify-between gap-2">
                         <div>
-                            <h3 class="font-bold text-slate-800 text-sm">🧪 Expériences & Défis Personnels</h3>
-                            <p class="text-[11px] text-slate-500">Testez une habitude ou une éviction sur quelques jours.</p>
+                            <div class="flex items-center gap-1.5">
+                                <h3 class="font-bold text-slate-800 text-sm">🧪 Défis Personnels</h3>
+                                <span id="active-challenges-counter" class="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">0 / 5</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500">Jusqu'à 5 expériences simultanées avec validation quotidienne.</p>
                         </div>
-                        <button onclick="openChallengeCreatorModal()" class="bg-primary text-white text-xs font-bold px-3.5 py-2 rounded-2xl hover:bg-blue-600 shadow-xs transition shrink-0">
+                        <button id="btn-create-challenge-stats" onclick="openChallengeCreatorModal()" class="bg-primary text-white text-xs font-bold px-3.5 py-2 rounded-2xl hover:bg-blue-600 shadow-xs transition shrink-0">
                             + Créer un défi
                         </button>
                     </div>
-                    <div id="stats-challenge-status"></div>
+
+                    <!-- Barre de niveau, points & pénalités -->
+                    <div id="gamification-summary-bar"></div>
+
+                    <!-- Liste des défis actifs (max 5) -->
+                    <div id="stats-challenge-status" class="space-y-2.5"></div>
+
+                    <!-- Vitrine des Badges & Récompenses -->
+                    <div class="pt-2 border-t border-slate-100 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-800">🏆 Badges & Récompenses</span>
+                            <span id="badges-unlocked-count" class="text-[10px] font-semibold text-slate-400">0 débloqué</span>
+                        </div>
+                        <div id="badges-showcase-grid" class="grid grid-cols-3 gap-2"></div>
+                    </div>
                 </div>
             </div>
 
@@ -440,6 +464,19 @@
                     <button onclick="openMedicalReportModal()" class="w-full bg-primary hover:bg-blue-600 text-white text-xs font-bold py-3 rounded-2xl transition shadow-md">
                         👁️ Aperçu & Export PDF Médecin
                     </button>
+                </div>
+
+                <!-- Rappel Quotidien en Fin de Journée -->
+                <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider">🔔 Rappel bilan du soir</h4>
+                            <p class="text-[11px] text-slate-500 mt-0.5" id="profile-reminder-status">Désactivé • Ne manquez plus votre bilan</p>
+                        </div>
+                        <button onclick="openReminderModal()" class="bg-primary/10 hover:bg-primary/20 text-primary font-bold text-xs px-3 py-2 rounded-xl transition shrink-0">
+                            Configurer
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Sauvegarde & Réinitialisation Complète -->
@@ -1188,6 +1225,76 @@
         </div>
     </div>
 
+    <!-- ===================================================================== -->
+    <!-- MODALE : RAPPEL EN FIN DE JOURNÉE (NOTIFICATION & CALENDRIER)         -->
+    <!-- ===================================================================== -->
+    <div id="reminder-modal" class="fixed inset-0 bg-slate-900/65 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">🔔</span>
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-sm">Rappel quotidien du soir</h3>
+                        <p class="text-[11px] text-slate-500">Complétez votre bilan digestif avant de dormir</p>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('reminder-modal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 text-xs font-bold">✕</button>
+            </div>
+
+            <div class="flex items-center justify-between bg-softGray p-3.5 rounded-2xl">
+                <div>
+                    <span class="text-xs font-bold text-slate-800 block">Activer le rappel du soir</span>
+                    <span class="text-[10px] text-slate-500">Notification navigateur + alerte douce dans l'app</span>
+                </div>
+                <input type="checkbox" id="reminder-enabled-toggle" class="w-5 h-5 accent-primary cursor-pointer">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Heure souhaitée en fin de journée</label>
+                <input type="time" id="reminder-time-input" value="20:30" class="w-full bg-softGray border border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm font-bold text-slate-900 focus:outline-none focus:border-primary">
+            </div>
+
+            <div class="bg-blue-50/70 border border-blue-100 rounded-2xl p-3 space-y-2">
+                <p class="text-[11px] text-slate-600 leading-relaxed">
+                    💡 <strong>Astuce mobile :</strong> Sur smartphone, vous pouvez aussi ajouter un rappel récurrent directement dans votre agenda (.ics) pour être notifié même lorsque le navigateur est fermé.
+                </p>
+                <button type="button" onclick="downloadReminderIcs()" class="w-full bg-white hover:bg-blue-50 text-primary border border-blue-200 font-bold py-2 rounded-xl text-[11px] transition">
+                    📅 Ajouter le rappel quotidien à mon agenda (.ics)
+                </button>
+            </div>
+
+            <div class="flex gap-2">
+                <button type="button" onclick="testEveningNotification()" class="px-3.5 py-2.5 rounded-2xl bg-softGray hover:bg-slate-200/70 text-slate-700 text-xs font-semibold transition">
+                    Tester 🔔
+                </button>
+                <button type="button" onclick="saveReminderSettings()" class="flex-1 bg-primary hover:bg-blue-600 text-white font-bold py-2.5 rounded-2xl text-xs shadow-md transition">
+                    Enregistrer le rappel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODALE : PUNITION / GAGE LORS D'UN DÉFI MANQUÉ                        -->
+    <!-- ===================================================================== -->
+    <div id="penalty-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4 text-center">
+            <span class="text-4xl block">⚠️</span>
+            <h3 class="font-bold text-slate-900 text-base">Défi manqué aujourd'hui !</h3>
+            <p class="text-xs text-slate-600 leading-relaxed" id="penalty-modal-desc">
+                Vous avez signalé un écart sur votre défi. Une pénalité s'applique pour garder le cap :
+            </p>
+            <div class="bg-rose-50 border border-rose-200 rounded-2xl p-3.5 space-y-1.5 text-left">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-rose-700 block">⚡ Sanction & Gage bien-être</span>
+                <p class="text-xs font-bold text-rose-900" id="penalty-modal-points">-15 pts de discipline • Série du défi remise à 0</p>
+                <p class="text-[11px] text-rose-800" id="penalty-modal-gage">Gage : 5 minutes de cohérence cardiaque ou une grande tasse d'eau/tisane maintenant.</p>
+            </div>
+            <button onclick="document.getElementById('penalty-modal').classList.add('hidden')" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-2xl text-xs transition">
+                J'assume mon gage 💪
+            </button>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-2.5 rounded-2xl shadow-xl text-xs font-medium opacity-0 pointer-events-none transition-all duration-300 z-50 whitespace-nowrap no-print">
         Action effectuée
@@ -1199,8 +1306,12 @@
         const USER_FACTORS_KEY = 'digestiv_user_created_factors_v4';
         const INSTALL_DATE_KEY = 'digestiv_install_date';
         const CHALLENGE_KEY = 'digestiv_active_challenge_v4';
+        const CHALLENGES_LIST_KEY = 'digestiv_challenges_v5';
+        const GAMIFICATION_KEY = 'digestiv_gamification_v5';
+        const REMINDER_KEY = 'digestiv_reminder_v5';
         const USER_NAME_KEY = 'digestiv_user_name_v4';
         const ONBOARDED_KEY = 'digestiv_onboarded_v4';
+        const MAX_ACTIVE_CHALLENGES = 5;
 
         // Échelle de Bristol complète (Types 1 à 7)
         const bristolScaleData = [
@@ -1390,7 +1501,34 @@
         let communityTips = JSON.parse(localStorage.getItem(TIPS_KEY)) || defaultTips;
         // Aucun facteur personnalisé pré-rempli : tableau vide par défaut
         let userCreatedFactors = JSON.parse(localStorage.getItem(USER_FACTORS_KEY)) || [];
-        let activeChallenge = JSON.parse(localStorage.getItem(CHALLENGE_KEY)) || null;
+        // Migration transparente depuis l'ancien défi unique vers la liste jusqu'à 5 défis
+        let challenges = JSON.parse(localStorage.getItem(CHALLENGES_LIST_KEY));
+        if (!Array.isArray(challenges)) {
+            const legacyChallenge = JSON.parse(localStorage.getItem(CHALLENGE_KEY));
+            challenges = legacyChallenge ? [{
+                id: 'ch_legacy_' + Date.now(),
+                title: legacyChallenge.title,
+                duration: legacyChallenge.duration,
+                category: legacyChallenge.category,
+                startDate: legacyChallenge.startDate,
+                checkedDates: [],
+                missedDates: [],
+                completed: false
+            }] : [];
+        }
+        let gamification = JSON.parse(localStorage.getItem(GAMIFICATION_KEY)) || {
+            points: 0,
+            completedChallenges: 0,
+            missedDaysCount: 0,
+            unlockedBadges: [],
+            activeGages: []
+        };
+        let reminderSettings = JSON.parse(localStorage.getItem(REMINDER_KEY)) || {
+            enabled: false,
+            time: '20:30',
+            lastNotifiedDate: ''
+        };
+        let reminderIntervalId = null;
         let userName = localStorage.getItem(USER_NAME_KEY) || '';
         
         let currentQuoteIndex = 0;
@@ -1411,7 +1549,9 @@
             document.getElementById('header-date').innerText = now.toLocaleDateString('fr-FR', options);
             currentQuoteIndex = now.getDate() % positiveQuotes.length;
             renderPositiveQuote();
+            evaluateGamificationBadges(true);
             refreshAllViews();
+            startEveningReminderWatcher();
             checkFirstLaunchOnboarding();
         });
 
@@ -1467,15 +1607,15 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
             localStorage.setItem(TIPS_KEY, JSON.stringify(communityTips));
             localStorage.setItem(USER_FACTORS_KEY, JSON.stringify(userCreatedFactors));
-            if (activeChallenge) {
-                localStorage.setItem(CHALLENGE_KEY, JSON.stringify(activeChallenge));
-            } else {
-                localStorage.removeItem(CHALLENGE_KEY);
-            }
+            localStorage.setItem(CHALLENGES_LIST_KEY, JSON.stringify(challenges));
+            localStorage.setItem(GAMIFICATION_KEY, JSON.stringify(gamification));
+            localStorage.setItem(REMINDER_KEY, JSON.stringify(reminderSettings));
+            localStorage.removeItem(CHALLENGE_KEY);
         }
 
         function refreshAllViews() {
             renderUserGreeting();
+            renderReminderUI();
             updateStreakAndKPIs();
             renderIntestinalWeather();
             renderChallengesUI();
@@ -1550,6 +1690,7 @@
                 entries.push(calmEntry);
             }
 
+            evaluateGamificationBadges(true);
             saveState();
             refreshAllViews();
             showToast('✨ Journée calme enregistrée ! (Modifiable via le bilan)');
@@ -1689,18 +1830,280 @@
             `;
         }
 
-        // --- DÉFIS PERSONNALISÉS (AUCUN DÉFI PRÉ-ACTIF AU LANCEMENT) ---
+        // --- NOTIFICATION EN FIN DE JOURNÉE (RAPPEL BILAN DU SOIR) ---
+        function openReminderModal() {
+            document.getElementById('reminder-enabled-toggle').checked = !!reminderSettings.enabled;
+            document.getElementById('reminder-time-input').value = reminderSettings.time || '20:30';
+            document.getElementById('reminder-modal').classList.remove('hidden');
+        }
+
+        async function saveReminderSettings() {
+            const enabled = document.getElementById('reminder-enabled-toggle').checked;
+            const time = document.getElementById('reminder-time-input').value || '20:30';
+
+            if (enabled && 'Notification' in window && Notification.permission === 'default') {
+                try {
+                    await Notification.requestPermission();
+                } catch (e) {
+                    console.warn('Permission notification ignorée :', e);
+                }
+            }
+
+            reminderSettings.enabled = enabled;
+            reminderSettings.time = time;
+            saveState();
+            renderReminderUI();
+            document.getElementById('reminder-modal').classList.add('hidden');
+            showToast(enabled ? `Rappel du soir activé à ${time} 🔔` : 'Rappel du soir désactivé');
+        }
+
+        function testEveningNotification() {
+            const msg = 'C’est l’heure de votre bilan digestif du soir (30 sec) 🌿';
+            if ('Notification' in window) {
+                if (Notification.permission === 'granted') {
+                    new Notification('Digestiv — Bilan du soir', { body: msg });
+                    showToast('Notification de test envoyée 🔔');
+                    return;
+                } else if (Notification.permission !== 'denied') {
+                    Notification.requestPermission().then(perm => {
+                        if (perm === 'granted') {
+                            new Notification('Digestiv — Bilan du soir', { body: msg });
+                            showToast('Notification de test envoyée 🔔');
+                        } else {
+                            showToast('Notification bloquée par le navigateur : bannière affichée');
+                        }
+                    });
+                    return;
+                }
+            }
+            showToast('🔔 Aperçu : ' + msg);
+        }
+
+        function downloadReminderIcs() {
+            const timeVal = document.getElementById('reminder-time-input').value || reminderSettings.time || '20:30';
+            const [hh, mm] = timeVal.split(':').map(Number);
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mo = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const startStr = `${yyyy}${mo}${dd}T${String(hh).padStart(2, '0')}${String(mm).padStart(2, '0')}00`;
+            const endMin = (mm + 10) % 60;
+            const endHour = (hh + Math.floor((mm + 10) / 60)) % 24;
+            const endStr = `${yyyy}${mo}${dd}T${String(endHour).padStart(2, '0')}${String(endMin).padStart(2, '0')}00`;
+
+            const icsContent = [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:-//Digestiv//Rappel Bilan SII//FR',
+                'BEGIN:VEVENT',
+                `UID:digestiv-reminder-${Date.now()}@digestiv.app`,
+                `DTSTAMP:${startStr}`,
+                `DTSTART:${startStr}`,
+                `DTEND:${endStr}`,
+                'RRULE:FREQ=DAILY',
+                'SUMMARY:✍️ Bilan digestif du soir (Digestiv)',
+                'DESCRIPTION:Prenez 30 secondes pour noter vos ressentis, votre transit Bristol et vos facteurs du jour.',
+                'BEGIN:VALARM',
+                'TRIGGER:-PT0M',
+                'ACTION:DISPLAY',
+                'DESCRIPTION:Rappel bilan digestif Digestiv',
+                'END:VALARM',
+                'END:VEVENT',
+                'END:VCALENDAR'
+            ].join('\r\n');
+
+            const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'rappel_bilan_digestiv.ics';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            showToast('Fichier agenda .ics téléchargé 📅');
+        }
+
+        function startEveningReminderWatcher() {
+            if (reminderIntervalId) clearInterval(reminderIntervalId);
+            checkEveningReminderTrigger();
+            reminderIntervalId = setInterval(checkEveningReminderTrigger, 30000);
+        }
+
+        function checkEveningReminderTrigger() {
+            renderReminderUI();
+            if (!reminderSettings.enabled) return;
+
+            const todayIso = getTodayIso();
+            const hasEntryToday = entries.some(e => e.isoDate === todayIso);
+            if (hasEntryToday) return;
+
+            const now = new Date();
+            const [targetH, targetM] = (reminderSettings.time || '20:30').split(':').map(Number);
+            const nowMinutes = now.getHours() * 60 + now.getMinutes();
+            const targetMinutes = targetH * 60 + targetM;
+
+            if (nowMinutes >= targetMinutes && reminderSettings.lastNotifiedDate !== todayIso) {
+                reminderSettings.lastNotifiedDate = todayIso;
+                saveState();
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification('Digestiv — Bilan du soir 🌙', {
+                        body: 'Vous n’avez pas encore enregistré votre bilan aujourd’hui. Prenez 30 secondes pour le compléter !'
+                    });
+                }
+            }
+        }
+
+        function renderReminderUI() {
+            const dot = document.getElementById('header-reminder-dot');
+            const statusEl = document.getElementById('profile-reminder-status');
+            const bannerEl = document.getElementById('evening-reminder-banner');
+
+            if (dot) dot.classList.toggle('hidden', !reminderSettings.enabled);
+            if (statusEl) {
+                statusEl.innerText = reminderSettings.enabled
+                    ? `Activé chaque jour à ${reminderSettings.time}`
+                    : 'Désactivé • Ne manquez plus votre bilan';
+            }
+
+            if (!bannerEl) return;
+            const todayIso = getTodayIso();
+            const hasEntryToday = entries.some(e => e.isoDate === todayIso);
+
+            if (!reminderSettings.enabled || hasEntryToday) {
+                bannerEl.classList.add('hidden');
+                return;
+            }
+
+            const now = new Date();
+            const [targetH, targetM] = (reminderSettings.time || '20:30').split(':').map(Number);
+            const isPastReminderTime = (now.getHours() * 60 + now.getMinutes()) >= (targetH * 60 + targetM);
+
+            if (isPastReminderTime) {
+                bannerEl.classList.remove('hidden');
+                bannerEl.innerHTML = `
+                    <div class="bg-amber-50 border border-amber-200 rounded-3xl p-3.5 shadow-sm flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-xl shrink-0">🌙</span>
+                            <div>
+                                <h4 class="text-xs font-bold text-amber-900">Bilan du soir en attente (${reminderSettings.time})</h4>
+                                <p class="text-[11px] text-amber-800/90">Complétez votre journée pour garder votre série intacte.</p>
+                            </div>
+                        </div>
+                        <button onclick="openCheckinModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] px-3 py-2 rounded-2xl shrink-0 transition">
+                            Compléter
+                        </button>
+                    </div>
+                `;
+            } else {
+                bannerEl.classList.add('hidden');
+            }
+        }
+
+        // --- SYSTÈME DE BADGES, RÉCOMPENSES & PUNITIONS (DÉFIS) ---
+        const BADGES_CATALOG = [
+            { id: 'first_step', icon: '🌱', title: 'Premier Pas', desc: '1er bilan enregistré', check: () => entries.length >= 1 },
+            { id: 'challenger', icon: '🧪', title: 'Explorateur', desc: '1er défi lancé', check: () => challenges.length >= 1 || gamification.completedChallenges >= 1 },
+            { id: 'multitasker', icon: '⚡', title: 'Multi-Défis', desc: '3 défis actifs en parallèle', check: () => challenges.filter(c => !c.completed).length >= 3 },
+            { id: 'finisher_1', icon: '🏅', title: 'Finisseur', desc: '1er défi réussi à 100 %', check: () => gamification.completedChallenges >= 1 },
+            { id: 'master_3', icon: '👑', title: 'Maître Zen', desc: '3 défis terminés avec succès', check: () => gamification.completedChallenges >= 3 },
+            { id: 'streak_7', icon: '🔥', title: 'Régularité 7j', desc: '7 jours consécutifs de suivi', check: () => computeRealStreak() >= 7 }
+        ];
+
+        const WELLNESS_PUNISHMENTS = [
+            'Gage : 5 minutes de cohérence cardiaque (5-5) dès maintenant.',
+            'Gage : Boire un grand verre d’eau à température ambiante ou une tisane apaisante.',
+            'Gage : 10 minutes de marche digestive calme après le prochain repas.',
+            'Gage : Auto-massage abdominal dans le sens horaire pendant 3 minutes.',
+            'Gage : Couper les écrans 30 minutes plus tôt ce soir pour apaiser le système nerveux.'
+        ];
+
+        function evaluateGamificationBadges(silent = false) {
+            let newlyUnlocked = [];
+            BADGES_CATALOG.forEach(b => {
+                if (!gamification.unlockedBadges.includes(b.id) && b.check()) {
+                    gamification.unlockedBadges.push(b.id);
+                    gamification.points += 25;
+                    newlyUnlocked.push(b);
+                }
+            });
+            if (newlyUnlocked.length > 0 && !silent) {
+                showToast(`🏆 Badge débloqué : ${newlyUnlocked[0].title} (+25 pts) !`);
+            }
+        }
+
+        function getUserRankTitle(points) {
+            if (points >= 300) return { label: 'Gardien de l’Équilibre', icon: '👑' };
+            if (points >= 150) return { label: 'Stratège Digestif', icon: '🥇' };
+            if (points >= 60) return { label: 'Explorateur Régulier', icon: '🥈' };
+            return { label: 'Apprenti Serein', icon: '🌱' };
+        }
+
+        // --- DÉFIS PERSONNALISÉS (JUSQU'À 5 SIMULTANÉMENT + VALIDATION / SANCTION) ---
         function renderChallengesUI() {
             const homeContainer = document.getElementById('home-challenge-container');
             const statsContainer = document.getElementById('stats-challenge-status');
+            const counterBadge = document.getElementById('active-challenges-counter');
+            const createBtnStats = document.getElementById('btn-create-challenge-stats');
+            const gamificationBar = document.getElementById('gamification-summary-bar');
+            const badgesGrid = document.getElementById('badges-showcase-grid');
+            const badgesCountEl = document.getElementById('badges-unlocked-count');
 
-            if (!activeChallenge) {
+            const activeList = challenges.filter(c => !c.completed);
+            const todayIso = getTodayIso();
+
+            if (counterBadge) counterBadge.innerText = `${activeList.length} / ${MAX_ACTIVE_CHALLENGES}`;
+            if (createBtnStats) {
+                createBtnStats.disabled = activeList.length >= MAX_ACTIVE_CHALLENGES;
+                createBtnStats.classList.toggle('opacity-50', activeList.length >= MAX_ACTIVE_CHALLENGES);
+            }
+
+            // Barre de gamification (points, rang, gages actifs)
+            if (gamificationBar) {
+                const rank = getUserRankTitle(gamification.points);
+                const pendingGages = (gamification.activeGages || []);
+                gamificationBar.innerHTML = `
+                    <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-2xl p-3 space-y-2">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-bold flex items-center gap-1.5"><span>${rank.icon}</span><span>${rank.label}</span></span>
+                            <span class="bg-white/15 px-2.5 py-0.5 rounded-full font-bold text-amber-300">${gamification.points} pts</span>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-slate-300">
+                            <span>🏅 ${gamification.completedChallenges} défi(s) réussi(s)</span>
+                            <span>⚠️ ${gamification.missedDaysCount} écart(s)</span>
+                        </div>
+                        ${pendingGages.length > 0 ? `
+                            <div class="bg-rose-500/20 border border-rose-400/40 rounded-xl p-2 flex items-center justify-between gap-2 text-[10px]">
+                                <span class="text-rose-100 leading-snug">⚡ <strong>Gage actif :</strong> ${pendingGages[0]}</span>
+                                <button onclick="completeActiveGage()" class="bg-white text-slate-900 font-bold px-2 py-1 rounded-lg shrink-0">Fait ✓</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+            // Rendu des badges
+            if (badgesGrid && badgesCountEl) {
+                badgesCountEl.innerText = `${gamification.unlockedBadges.length} / ${BADGES_CATALOG.length} débloqués`;
+                badgesGrid.innerHTML = BADGES_CATALOG.map(b => {
+                    const unlocked = gamification.unlockedBadges.includes(b.id);
+                    return `
+                        <div class="p-2 rounded-2xl border text-center space-y-0.5 ${unlocked ? 'bg-amber-50/70 border-amber-200 text-slate-900' : 'bg-slate-50 border-slate-100 text-slate-400 opacity-60'}">
+                            <span class="text-lg block">${unlocked ? b.icon : '🔒'}</span>
+                            <span class="text-[10px] font-bold block truncate">${b.title}</span>
+                            <span class="text-[9px] block leading-tight">${b.desc}</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            if (activeList.length === 0) {
                 homeContainer.innerHTML = `
                     <div class="bg-white border border-slate-200/80 rounded-3xl p-4 shadow-sm flex items-center justify-between gap-3">
                         <div class="space-y-0.5">
-                            <span class="text-[10px] font-bold text-primary uppercase tracking-wider">🧪 Expérience personnelle</span>
+                            <span class="text-[10px] font-bold text-primary uppercase tracking-wider">🧪 Expériences & Défis (0/${MAX_ACTIVE_CHALLENGES})</span>
                             <h4 class="text-xs font-bold text-slate-900">Envie de tester une nouvelle habitude ?</h4>
-                            <p class="text-[11px] text-slate-500">Créez un défi sur-mesure (ex: sans café, marche digestive) à votre rythme.</p>
+                            <p class="text-[11px] text-slate-500">Lancez jusqu'à 5 défis simultanés et gagnez des badges.</p>
                         </div>
                         <button onclick="openChallengeCreatorModal()" class="bg-primary/10 hover:bg-primary hover:text-white text-primary font-bold text-xs px-3.5 py-2.5 rounded-2xl transition shrink-0">
                             + Créer
@@ -1709,41 +2112,144 @@
                 `;
                 statsContainer.innerHTML = `
                     <p class="text-xs text-slate-500 bg-softGray p-3 rounded-2xl">
-                        Aucun défi actif pour le moment. Appuyez sur <strong>« + Créer un défi »</strong> pour lancer votre première expérience ciblée.
+                        Aucun défi actif pour le moment. Appuyez sur <strong>« + Créer un défi »</strong> pour en lancer jusqu'à ${MAX_ACTIVE_CHALLENGES} en parallèle.
                     </p>
                 `;
                 return;
             }
 
-            const [sy, sm, sd] = activeChallenge.startDate.split('-').map(Number);
-            const startDt = new Date(sy, sm - 1, sd);
-            const [ty, tm, td] = getTodayIso().split('-').map(Number);
-            const todayDt = new Date(ty, tm - 1, td);
-            const elapsed = Math.max(1, Math.min(activeChallenge.duration, Math.round((todayDt - startDt) / (1000 * 60 * 60 * 24)) + 1));
-            const pct = Math.round((elapsed / activeChallenge.duration) * 100);
+            const renderSingleChallengeCard = (ch) => {
+                const validatedCount = (ch.checkedDates || []).length;
+                const missedCount = (ch.missedDates || []).length;
+                const pct = Math.min(100, Math.round((validatedCount / ch.duration) * 100));
+                const isDoneToday = (ch.checkedDates || []).includes(todayIso);
+                const isMissedToday = (ch.missedDates || []).includes(todayIso);
 
-            const cardHtml = `
-                <div class="bg-white border border-primary/25 rounded-3xl p-4 shadow-sm space-y-2.5">
+                return `
+                    <div class="bg-white border border-primary/20 rounded-2xl p-3.5 shadow-2xs space-y-2.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">🧪 ${ch.category}</span>
+                            <div class="flex items-center gap-1.5">
+                                ${missedCount > 0 ? `<span class="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">⚠️ ${missedCount} écart${missedCount > 1 ? 's' : ''}</span>` : ''}
+                                <span class="text-[11px] text-slate-700 font-bold">${validatedCount} / ${ch.duration} j</span>
+                            </div>
+                        </div>
+                        <h4 class="text-xs font-bold text-slate-900">${ch.title}</h4>
+                        <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                            <div class="bg-success h-full rounded-full transition-all" style="width: ${pct}%"></div>
+                        </div>
+                        <div class="flex items-center justify-between gap-1.5 pt-0.5">
+                            <div class="flex items-center gap-1.5">
+                                <button onclick="validateChallengeDay('${ch.id}')" ${isDoneToday ? 'disabled' : ''} class="text-[11px] font-bold px-2.5 py-1.5 rounded-xl transition ${isDoneToday ? 'bg-success/15 text-success cursor-default' : 'bg-success hover:bg-emerald-600 text-white shadow-2xs'}">
+                                    ${isDoneToday ? '✓ Validé (+10 pts)' : '✓ Réussi aujourd’hui'}
+                                </button>
+                                <button onclick="missChallengeDay('${ch.id}')" ${isMissedToday ? 'disabled' : ''} class="text-[11px] font-bold px-2.5 py-1.5 rounded-xl transition ${isMissedToday ? 'bg-rose-100 text-rose-500 cursor-default' : 'bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200'}">
+                                    ${isMissedToday ? '⚠️ Manqué' : '✕ Écart'}
+                                </button>
+                            </div>
+                            <button onclick="stopChallengeById('${ch.id}')" title="Arrêter ce défi" class="text-[10px] font-semibold text-slate-400 hover:text-rose-500 px-1.5 py-1 transition">
+                                Arrêter
+                            </button>
+                        </div>
+                    </div>
+                `;
+            };
+
+            const cardsHtml = activeList.map(renderSingleChallengeCard).join('');
+
+            // Sur l'accueil : encart synthétique affichant tous les défis en cours (jusqu'à 5) + bouton + si < 5
+            homeContainer.innerHTML = `
+                <div class="bg-white border border-slate-200/80 rounded-3xl p-4 shadow-sm space-y-3">
                     <div class="flex items-center justify-between">
-                        <span class="text-[11px] font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">🧪 Défi en cours • ${activeChallenge.category}</span>
-                        <span class="text-[11px] text-slate-600 font-bold">Jour ${elapsed} / ${activeChallenge.duration}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-slate-900">🧪 Mes Défis en cours</span>
+                            <span class="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">${activeList.length} / ${MAX_ACTIVE_CHALLENGES}</span>
+                        </div>
+                        ${activeList.length < MAX_ACTIVE_CHALLENGES ? `
+                            <button onclick="openChallengeCreatorModal()" class="text-[11px] font-bold text-primary hover:underline">+ Ajouter</button>
+                        ` : `<span class="text-[10px] font-semibold text-amber-600">Max atteint</span>`}
                     </div>
-                    <h4 class="text-sm font-bold text-slate-900">${activeChallenge.title}</h4>
-                    <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                        <div class="bg-success h-full rounded-full transition-all" style="width: ${pct}%"></div>
-                    </div>
-                    <div class="flex justify-end pt-1">
-                        <button onclick="stopActiveChallenge()" class="text-[11px] font-semibold text-slate-400 hover:text-rose-500 transition">
-                            Terminer / Archiver ce défi
-                        </button>
-                    </div>
+                    <div class="space-y-2.5">${cardsHtml}</div>
                 </div>
             `;
-            homeContainer.innerHTML = cardHtml;
-            statsContainer.innerHTML = cardHtml;
+
+            statsContainer.innerHTML = cardsHtml;
+        }
+
+        function validateChallengeDay(challengeId) {
+            const ch = challenges.find(c => c.id === challengeId);
+            if (!ch) return;
+            const todayIso = getTodayIso();
+            ch.checkedDates = ch.checkedDates || [];
+            ch.missedDates = (ch.missedDates || []).filter(d => d !== todayIso);
+
+            if (!ch.checkedDates.includes(todayIso)) {
+                ch.checkedDates.push(todayIso);
+                gamification.points += 10;
+            }
+
+            if (ch.checkedDates.length >= ch.duration) {
+                ch.completed = true;
+                gamification.completedChallenges += 1;
+                gamification.points += 50;
+                evaluateGamificationBadges(false);
+                saveState();
+                renderChallengesUI();
+                showToast(`🎉 Défi « ${ch.title} » terminé ! Récompense : +50 pts !`);
+                return;
+            }
+
+            evaluateGamificationBadges(false);
+            saveState();
+            renderChallengesUI();
+            showToast(`Bravo ! Jour validé (+10 pts) 🌟`);
+        }
+
+        function missChallengeDay(challengeId) {
+            const ch = challenges.find(c => c.id === challengeId);
+            if (!ch) return;
+            const todayIso = getTodayIso();
+            ch.missedDates = ch.missedDates || [];
+            ch.checkedDates = (ch.checkedDates || []).filter(d => d !== todayIso);
+
+            if (!ch.missedDates.includes(todayIso)) {
+                ch.missedDates.push(todayIso);
+                // Punition : perte de points, réinitialisation de la progression du défi et attribution d'un gage bien-être
+                const penaltyPts = 15;
+                gamification.points = Math.max(0, gamification.points - penaltyPts);
+                gamification.missedDaysCount += 1;
+                ch.checkedDates = [];
+
+                const gage = WELLNESS_PUNISHMENTS[Math.floor(Math.random() * WELLNESS_PUNISHMENTS.length)];
+                gamification.activeGages = gamification.activeGages || [];
+                gamification.activeGages.unshift(gage);
+
+                document.getElementById('penalty-modal-desc').innerText = `Écart enregistré sur le défi « ${ch.title} ». Pour vous aider à garder le cap :`;
+                document.getElementById('penalty-modal-points').innerText = `-${penaltyPts} pts de discipline • Progression du défi remise à 0/${ch.duration}j`;
+                document.getElementById('penalty-modal-gage').innerText = gage;
+                document.getElementById('penalty-modal').classList.remove('hidden');
+            }
+
+            saveState();
+            renderChallengesUI();
+        }
+
+        function completeActiveGage() {
+            if (gamification.activeGages && gamification.activeGages.length > 0) {
+                gamification.activeGages.shift();
+                gamification.points += 5;
+                saveState();
+                renderChallengesUI();
+                showToast('Gage accompli ! +5 pts récupérés 💪');
+            }
         }
 
         function openChallengeCreatorModal() {
+            const activeCount = challenges.filter(c => !c.completed).length;
+            if (activeCount >= MAX_ACTIVE_CHALLENGES) {
+                showToast(`Limite atteinte : ${MAX_ACTIVE_CHALLENGES} défis actifs maximum`);
+                return;
+            }
             document.getElementById('custom-challenge-title').value = '';
             document.getElementById('challenge-creator-modal').classList.remove('hidden');
         }
@@ -1754,6 +2260,11 @@
         }
 
         function saveCustomChallenge() {
+            const activeCount = challenges.filter(c => !c.completed).length;
+            if (activeCount >= MAX_ACTIVE_CHALLENGES) {
+                showToast(`Vous avez déjà ${MAX_ACTIVE_CHALLENGES} défis en cours`);
+                return;
+            }
             const title = document.getElementById('custom-challenge-title').value.trim();
             if (!title) {
                 showToast('Indiquez un titre pour votre défi');
@@ -1762,23 +2273,28 @@
             const duration = parseInt(document.getElementById('custom-challenge-duration').value, 10);
             const category = document.getElementById('custom-challenge-cat').value;
 
-            activeChallenge = {
+            challenges.push({
+                id: 'ch_' + Date.now(),
                 title,
                 duration,
                 category,
-                startDate: getTodayIso()
-            };
+                startDate: getTodayIso(),
+                checkedDates: [],
+                missedDates: [],
+                completed: false
+            });
+            evaluateGamificationBadges(false);
             saveState();
             document.getElementById('challenge-creator-modal').classList.add('hidden');
             renderChallengesUI();
-            showToast(`Défi « ${title} » démarré 🚀`);
+            showToast(`Défi « ${title} » démarré (${activeCount + 1}/${MAX_ACTIVE_CHALLENGES}) 🚀`);
         }
 
-        function stopActiveChallenge() {
-            activeChallenge = null;
+        function stopChallengeById(challengeId) {
+            challenges = challenges.filter(c => c.id !== challengeId);
             saveState();
             renderChallengesUI();
-            showToast('Défi clôturé');
+            showToast('Défi retiré');
         }
 
         // --- RADAR DES COMBOS DÉCLENCHEURS (EFFET CUMULATIF) ---
@@ -2018,45 +2534,85 @@
             }).join('');
         }
 
-        function calculateCorrelations() {
+        function computeRealImpactScores() {
             const factorStats = {};
+            const totalEntries = entries.length;
+
             entries.forEach(entry => {
                 const isSymptomatic = entry.pain >= 4 || (entry.bloating ?? 0) >= 4;
-                entry.factors.forEach(rawName => {
-                    const cleanName = rawName.replace(/\s*\(\d+\/5\)$/, '');
-                    if (!factorStats[cleanName]) factorStats[cleanName] = { total: 0, crisisHits: 0 };
-                    factorStats[cleanName].total += 1;
-                    if (isSymptomatic) factorStats[cleanName].crisisHits += 1;
+                const uniqueFactors = [...new Set((entry.factors || []).map(f => f.replace(/\s*\(\d+\/5\)$/, '').trim()).filter(Boolean))];
+                uniqueFactors.forEach(cleanName => {
+                    if (!factorStats[cleanName]) factorStats[cleanName] = { withTotal: 0, withCrisis: 0 };
+                    factorStats[cleanName].withTotal += 1;
+                    if (isSymptomatic) factorStats[cleanName].withCrisis += 1;
                 });
             });
 
-            const sorted = Object.keys(factorStats).map(name => {
-                const s = factorStats[name];
-                const rate = Math.round((s.crisisHits / s.total) * 100);
-                const stars = s.total >= 5 ? '⭐️⭐️⭐️⭐️⭐️' : (s.total >= 3 ? '⭐️⭐️⭐️' : '⭐️ (En cours)');
-                return { name, rate, total: s.total, stars };
-            }).sort((a, b) => b.rate - a.rate || b.total - a.total);
+            const totalCrises = entries.filter(e => e.pain >= 4 || (e.bloating ?? 0) >= 4).length;
 
+            return Object.keys(factorStats).map(name => {
+                const s = factorStats[name];
+                const withoutTotal = totalEntries - s.withTotal;
+                const withoutCrisis = totalCrises - s.withCrisis;
+
+                const rateWith = s.withTotal > 0 ? Math.round((s.withCrisis / s.withTotal) * 100) : 0;
+                const rateWithout = withoutTotal > 0 ? Math.round((withoutCrisis / withoutTotal) * 100) : 0;
+                // Différentiel réel (en points de pourcentage)
+                const realImpact = rateWith - rateWithout;
+
+                let verdict = 'Neutre';
+                let badgeClass = 'bg-slate-100 text-slate-600';
+                if (realImpact >= 25) {
+                    verdict = 'Fort déclencheur';
+                    badgeClass = 'bg-rose-100 text-rose-700';
+                } else if (realImpact >= 10) {
+                    verdict = 'Suspect modéré';
+                    badgeClass = 'bg-amber-100 text-amber-800';
+                } else if (realImpact <= -10) {
+                    verdict = 'Plutôt bien toléré';
+                    badgeClass = 'bg-emerald-100 text-emerald-700';
+                }
+
+                const stars = s.withTotal >= 5 ? '⭐️⭐️⭐️⭐️⭐️' : (s.withTotal >= 3 ? '⭐️⭐️⭐️' : '⭐️ (En cours)');
+                return {
+                    name,
+                    rateWith,
+                    rateWithout,
+                    realImpact,
+                    verdict,
+                    badgeClass,
+                    total: s.withTotal,
+                    stars
+                };
+            }).sort((a, b) => b.realImpact - a.realImpact || b.rateWith - a.rateWith);
+        }
+
+        function calculateCorrelations() {
+            const sorted = computeRealImpactScores();
             const container = document.getElementById('correlations-list');
             if (sorted.length === 0) {
-                container.innerHTML = '<p class="text-xs text-slate-400">Continuez à noter vos facteurs pour afficher les corrélations.</p>';
+                container.innerHTML = '<p class="text-xs text-slate-400">Continuez à noter vos facteurs pour afficher leur score d’impact réel.</p>';
                 return;
             }
 
             container.innerHTML = sorted.slice(0, 6).map(item => {
-                const barColor = item.rate >= 65 ? 'bg-warning' : 'bg-primary';
+                const barColor = item.realImpact >= 25 ? 'bg-rose-500' : (item.realImpact >= 10 ? 'bg-warning' : (item.realImpact <= -10 ? 'bg-success' : 'bg-primary'));
+                const impactLabel = item.realImpact > 0 ? `+${item.realImpact} pts` : `${item.realImpact} pts`;
                 return `
-                    <div>
-                        <div class="flex justify-between items-center text-xs font-semibold text-slate-800 mb-1">
-                            <span class="truncate pr-2">${item.name}</span>
-                            <span class="text-warning shrink-0">${item.rate}%</span>
+                    <div class="p-3 rounded-2xl bg-softGray/60 border border-slate-100 space-y-1.5">
+                        <div class="flex justify-between items-center gap-2 text-xs font-semibold text-slate-800">
+                            <span class="truncate">${item.name}</span>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${item.badgeClass}">${item.verdict}</span>
+                                <span class="font-bold text-slate-900">${impactLabel}</span>
+                            </div>
                         </div>
-                        <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-1">
-                            <div class="${barColor} h-full rounded-full" style="width: ${item.rate}%"></div>
+                        <div class="w-full bg-slate-200/70 h-2 rounded-full overflow-hidden">
+                            <div class="${barColor} h-full rounded-full" style="width: ${item.rateWith}%"></div>
                         </div>
-                        <div class="flex justify-between text-[10px] text-slate-400">
-                            <span>Confiance : ${item.stars}</span>
-                            <span>Noté ${item.total} fois</span>
+                        <div class="flex justify-between text-[10px] text-slate-500">
+                            <span>Avec : <strong>${item.rateWith}%</strong> crise • Sans : <strong>${item.rateWithout}%</strong></span>
+                            <span>${item.stars} (${item.total}x)</span>
                         </div>
                     </div>
                 `;
@@ -2643,6 +3199,7 @@
                 entries.push(newEntry);
             }
             
+            evaluateGamificationBadges(true);
             saveState();
             closeCheckinModal();
             refreshAllViews();
@@ -2742,16 +3299,14 @@
                     .join(' • ');
                 document.getElementById('rep-bristol-summary').innerText = bSummary || '—';
 
-                // Facteurs lors des jours symptomatiques
-                const counts = {};
-                entries.filter(e => e.pain >= 4 || (e.bloating ?? 0) >= 4).forEach(e => e.factors.forEach(f => {
-                    const cleanName = f.replace(/\s*\(\d+\/5\)$/, '');
-                    counts[cleanName] = (counts[cleanName] || 0) + 1;
-                }));
-                const triggersHtml = Object.entries(counts)
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([name, count]) => `<li><strong>${name}</strong> : observé lors de ${count} épisode(s) symptomatique(s)</li>`)
-                    .join('') || '<li>Aucune crise majeure enregistrée sur la période.</li>';
+                // Facteurs classés par Score d'Impact Réel (avec vs sans)
+                const realScores = computeRealImpactScores();
+                const triggersHtml = realScores.length > 0
+                    ? realScores.slice(0, 6).map(item => {
+                        const sign = item.realImpact > 0 ? `+${item.realImpact}` : `${item.realImpact}`;
+                        return `<li><strong>${item.name}</strong> (${item.verdict}, impact ${sign} pts) : crise dans ${item.rateWith}% des cas avec vs ${item.rateWithout}% sans (${item.total}x noté)</li>`;
+                    }).join('')
+                    : '<li>Aucun facteur particulier noté sur la période.</li>';
                 document.getElementById('rep-triggers-list').innerHTML = triggersHtml;
 
                 // Combos déclencheurs
@@ -2808,7 +3363,7 @@
         }
 
         function exportJsonBackup() {
-            const payload = { userName, installDate, entries, userCreatedFactors, activeChallenge };
+            const payload = { userName, installDate, entries, userCreatedFactors, challenges, gamification, reminderSettings };
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
             const a = document.createElement('a');
             a.setAttribute("href", dataStr);
@@ -2826,7 +3381,9 @@
         function confirmFullReset() {
             entries = [];
             userCreatedFactors = [];
-            activeChallenge = null;
+            challenges = [];
+            gamification = { points: 0, completedChallenges: 0, missedDaysCount: 0, unlockedBadges: [], activeGages: [] };
+            reminderSettings = { enabled: false, time: '20:30', lastNotifiedDate: '' };
             userName = '';
             localStorage.removeItem(USER_NAME_KEY);
             installDate = getTodayIso();
