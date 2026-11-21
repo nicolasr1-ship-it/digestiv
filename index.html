@@ -107,7 +107,6 @@
                 <div class="bg-gradient-to-br from-primary to-blue-600 rounded-3xl p-5 text-white shadow-lg shadow-primary/20 relative overflow-hidden">
                     <div class="flex justify-between items-start mb-3">
                         <div>
-                            <span class="bg-white/20 text-white text-[11px] font-medium px-2.5 py-1 rounded-full">Suivi Quotidien SII</span>
                             <h2 class="text-xl font-bold mt-2 flex items-center gap-1.5 flex-wrap">
                                 <span>Bonjour<span id="user-greeting-name"></span> 👋</span>
                                 <button onclick="openUserNameModal()" aria-label="Modifier mon prénom" title="Personnaliser mon prénom" class="w-6 h-6 rounded-full bg-white/20 hover:bg-white/30 text-white text-xs flex items-center justify-center transition">
@@ -1352,6 +1351,7 @@
 
         // Échelle de Bristol complète (Types 1 à 7)
         const bristolScaleData = [
+            { type: 0, icon: '🚫', title: 'Aucune selle aujourd’hui', desc: 'Pas de passage à la selle sur la journée', badge: 'Aucune selle', color: 'border-slate-400 bg-slate-100 text-slate-800' },
             { type: 1, icon: '🪨', title: 'Type 1 : Petites billes dures', desc: 'Constipation sévère (difficiles à évacuer)', badge: 'Constipation sévère', color: 'border-rose-300 bg-rose-50/70 text-rose-800' },
             { type: 2, icon: '🍇', title: 'Type 2 : En saucisse bosselée', desc: 'Légère constipation', badge: 'Légère constipation', color: 'border-amber-300 bg-amber-50/70 text-amber-800' },
             { type: 3, icon: '🥖', title: 'Type 3 : Saucisse craquelée', desc: 'Transit normal', badge: 'Transit normal', color: 'border-emerald-300 bg-emerald-50/60 text-emerald-800' },
@@ -1924,7 +1924,7 @@
             const factorsText = e.factors.length ? e.factors.join(', ') : (e.note || 'Aucun facteur noté');
             banner.innerHTML = `
                 <div class="flex justify-between font-bold text-slate-800 mb-1">
-                    <span>📅 Bilan du ${e.date} • Bristol Type ${e.bristol || 4}</span>
+                    <span>📅 Bilan du ${e.date} • ${(e.bristol ?? 4) === 0 ? 'Aucune selle' : 'Bristol Type ' + (e.bristol ?? 4)}</span>
                     <span>Douleur ${e.pain}/10 • Ball. ${e.bloating ?? 0}/10 • Gaz ${e.flatulence ?? 0}/10</span>
                 </div>
                 <p class="text-[11px] text-slate-600">Détails : <span class="font-medium text-slate-800">${factorsText}</span></p>
@@ -2571,20 +2571,21 @@
             if (!container) return;
 
             totalLabel.innerText = `${entries.length} bilan${entries.length > 1 ? 's' : ''}`;
-            const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0 };
+            const counts = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0 };
             entries.forEach(e => {
-                const t = Number(e.bristol) || 4;
+                const t = e.bristol !== undefined && e.bristol !== null ? Number(e.bristol) : 4;
                 if (counts[t] !== undefined) counts[t] += 1;
             });
 
             container.innerHTML = bristolScaleData.map(item => {
                 const c = counts[item.type];
                 const pct = entries.length > 0 ? Math.round((c / entries.length) * 100) : 0;
-                const barCls = (item.type === 3 || item.type === 4) ? 'bg-success' : ((item.type === 1 || item.type === 7) ? 'bg-rose-400' : 'bg-warning');
+                const barCls = item.type === 0 ? 'bg-slate-400' : ((item.type === 3 || item.type === 4) ? 'bg-success' : ((item.type === 1 || item.type === 7) ? 'bg-rose-400' : 'bg-warning'));
+                const labelTxt = item.type === 0 ? 'Aucune selle' : `Type ${item.type} <span class="text-slate-400">(${item.badge})</span>`;
                 return `
                     <div class="space-y-1">
                         <div class="flex justify-between text-[11px]">
-                            <span class="font-medium text-slate-700">${item.icon} Type ${item.type} <span class="text-slate-400">(${item.badge})</span></span>
+                            <span class="font-medium text-slate-700">${item.icon} ${labelTxt}</span>
                             <span class="font-bold text-slate-800">${c}x (${pct}%)</span>
                         </div>
                         <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
@@ -2759,11 +2760,12 @@
         function renderBristolSelector() {
             const container = document.getElementById('bristol-selector-list');
             const badge = document.getElementById('bristol-selected-badge');
-            const activeItem = bristolScaleData.find(b => b.type === selectedBristolType) || bristolScaleData[3];
-            badge.innerText = `Type ${activeItem.type} • ${activeItem.badge}`;
+            const activeItem = bristolScaleData.find(b => b.type === selectedBristolType) || bristolScaleData.find(b => b.type === 4);
+            badge.innerText = activeItem.type === 0 ? activeItem.badge : `Type ${activeItem.type} • ${activeItem.badge}`;
 
             container.innerHTML = bristolScaleData.map(item => {
                 const isSelected = item.type === selectedBristolType;
+                const pillTag = item.type === 0 ? 'Aucune' : 'T' + item.type;
                 return `
                     <button type="button" onclick="selectBristolType(${item.type})" class="w-full p-2.5 rounded-2xl border text-left flex items-center justify-between transition ${isSelected ? item.color + ' ring-1 ring-primary/40 font-semibold' : 'border-slate-200 bg-white text-slate-700 hover:bg-softGray/60'}">
                         <div class="flex items-center gap-2.5 min-w-0">
@@ -2774,7 +2776,7 @@
                             </div>
                         </div>
                         <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg shrink-0 ml-2 ${isSelected ? 'bg-white/90 text-slate-900 shadow-2xs' : 'bg-slate-100 text-slate-400'}">
-                            ${isSelected ? 'Choisi ✓' : 'T' + item.type}
+                            ${isSelected ? 'Choisi ✓' : pillTag}
                         </span>
                     </button>
                 `;
@@ -3375,12 +3377,12 @@
                 // Répartition Bristol
                 const bCounts = {};
                 entries.forEach(e => {
-                    const t = e.bristol || 4;
+                    const t = e.bristol !== undefined && e.bristol !== null ? e.bristol : 4;
                     bCounts[t] = (bCounts[t] || 0) + 1;
                 });
                 const bSummary = Object.entries(bCounts)
                     .sort((a, b) => Number(a[0]) - Number(b[0]))
-                    .map(([t, c]) => `Type ${t} (${c}x)`)
+                    .map(([t, c]) => Number(t) === 0 ? `Aucune selle (${c}x)` : `Type ${t} (${c}x)`)
                     .join(' • ');
                 document.getElementById('rep-bristol-summary').innerText = bSummary || '—';
 
