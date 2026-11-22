@@ -1714,8 +1714,8 @@
             }
         }
 
-        const SUPABASE_URL = 'COLLER_TON_URL_ICI';
-        const SUPABASE_ANON_KEY = 'COLLER_TA_CLE_ANON_ICI';
+        const SUPABASE_URL = 'https://fptktjfibwfrjwhpmoxd.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_jroo2EXdwdCIaisKTd8iHQ_R-zQYywh';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUser = null;
@@ -1793,6 +1793,10 @@
         async function handleSignUp() {
             const email = document.getElementById('auth-email').value.trim();
             const password = document.getElementById('auth-password').value;
+            if (!email || password.length < 6) {
+                return showToast('⚠️ Email requis et mot de passe de 6 caractères min.');
+            }
+            showToast('Création du compte en cours...');
             const { data, error } = await supabaseClient.auth.signUp({ email, password });
 
             if (error) return showToast('❌ ' + error.message);
@@ -1807,9 +1811,13 @@
         async function handleSignIn() {
             const email = document.getElementById('auth-email').value.trim();
             const password = document.getElementById('auth-password').value;
+            if (!email || !password) {
+                return showToast('⚠️ Renseignez votre email et votre mot de passe');
+            }
+            showToast('Connexion en cours...');
             const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
-            if (error) return showToast('❌ Email ou mot de passe incorrect');
+            if (error) return showToast('❌ ' + error.message);
             showToast('Connexion réussie ☁️');
             document.getElementById('auth-modal').classList.add('hidden');
         }
