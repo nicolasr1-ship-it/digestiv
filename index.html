@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-title" content="Digestiv">
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#3B82F6">
-        <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36' fill='none' stroke='%233B82F6' stroke-width='2.6' stroke-linecap='round'%3E%3Cpath d='M12 6C12 4.5 14 4 16 4C18 4 19 5.5 18.5 7.5C18 9.5 10 9 10 12.5C10 16 26 11.5 26 15.5C26 19.5 10 16.5 10 20.5C10 24.5 25 21.5 25 25.5C25 29 12 27 12 30.5C12 32.5 14.5 33 17 33'/%3E%3C/svg%3E">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36' fill='none' stroke='%233B82F6' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 4v3.5c0 1.2 1.2 1.8 2.8 1.8 3.2 0 5.5 2.4 5.5 5.4 0 3.2-2.6 5.3-6.1 5.3h-3.4c-2.6 0-4.3 1.4-4.3 3.5 0 2 1.7 3.3 4.3 3.3h4.8c2.4 0 4 1.3 4 3.2 0 2-1.8 3.2-4.6 3.2H17v1.8'/%3E%3C/svg%3E">
     <title>Digestiv - Suivi et Corrélations SII</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -53,6 +53,16 @@
             animation: breathePulse 10s ease-in-out infinite;
         }
 
+        /* Micro-animation dopamine déblocage de badge */
+        @keyframes badgePop {
+            0% { transform: scale(0.7); opacity: 0; }
+            65% { transform: scale(1.06); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-badge-pop {
+            animation: badgePop 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
         /* Masquer le badge flottant Netlify s'il est injecté */
         iframe[src*="netlify"], div[class*="netlify"], #netlify-identity-widget { display: none !important; visibility: hidden !important; }
 
@@ -73,8 +83,8 @@
         <header class="bg-white border-b border-slate-100 px-5 py-3.5 flex items-center justify-between z-10 shrink-0">
             <div class="flex items-center space-x-2.5">
                 <div class="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold">
-                    <svg class="w-6 h-6 text-primary" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-label="Logo Intestin">
-                        <path d="M12 6C12 4.5 14 4 16 4C18 4 19 5.5 18.5 7.5C18 9.5 10 9 10 12.5C10 16 26 11.5 26 15.5C26 19.5 10 16.5 10 20.5C10 24.5 25 21.5 25 25.5C25 29 12 27 12 30.5C12 32.5 14.5 33 17 33"/>
+                    <svg class="w-6 h-6 text-primary" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="Logo Système Digestif">
+                        <path d="M16 4v3.5c0 1.2 1.2 1.8 2.8 1.8 3.2 0 5.5 2.4 5.5 5.4 0 3.2-2.6 5.3-6.1 5.3h-3.4c-2.6 0-4.3 1.4-4.3 3.5 0 2 1.7 3.3 4.3 3.3h4.8c2.4 0 4 1.3 4 3.2 0 2-1.8 3.2-4.6 3.2H17v1.8"/>
                     </svg>
                 </div>
                 <div>
@@ -186,7 +196,7 @@
                     <div id="day-detail-banner" class="mt-3 p-3 bg-softGray rounded-2xl text-xs text-slate-600 hidden"></div>
                 </div>
 
-                <!-- Encart Expérience / Défi (Optionnel, aucun défi pré-actif au lancement) -->
+                <!-- Encart Expérience / Défi (Jusqu'à 10 défis simultanés) -->
                 <div id="home-challenge-container"></div>
 
             </div>
@@ -223,7 +233,6 @@
                             ✍️ Enregistrer mon bilan
                         </button>
                     </div>
-
                 </div>
 
                 <!-- ÉTAT COMPLET (>= 5 bilans enregistrés) -->
@@ -302,25 +311,28 @@
                     <div id="healing-combos-radar-container"></div>
                 </div>
 
-                <!-- Module Défis Personnalisés (jusqu'à 5 simultanés) -->
+                <!-- Module Défis Personnalisés (jusqu'à 10 simultanés) + Badges -->
                 <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-3.5">
                     <div class="flex items-center justify-between gap-2">
                         <div>
                             <div class="flex items-center gap-1.5">
                                 <h3 class="font-bold text-slate-800 text-sm">🧪 Défis Personnels</h3>
-                                <span id="active-challenges-counter" class="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">0 / 5</span>
+                                <span id="active-challenges-counter" class="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">0 / 10</span>
                             </div>
-                            <p class="text-[11px] text-slate-500">Jusqu'à 5 expériences simultanées avec suivi quotidien.</p>
+                            <p class="text-[11px] text-slate-500">Jusqu'à 10 expériences simultanées en instantané.</p>
                         </div>
                         <button id="btn-create-challenge-stats" onclick="openChallengeCreatorModal()" class="bg-primary text-white text-xs font-bold px-3.5 py-2 rounded-2xl hover:bg-blue-600 shadow-xs transition shrink-0">
                             + Créer un défi
                         </button>
                     </div>
 
+                    <!-- Vitrine fluide et minimaliste des badges de défis -->
+                    <div id="challenge-badges-strip" class="pt-0.5"></div>
+
                     <!-- Encart gage actif éventuel -->
                     <div id="gamification-summary-bar"></div>
 
-                    <!-- Liste des défis actifs (max 5) -->
+                    <!-- Liste des défis actifs (max 10) -->
                     <div id="stats-challenge-status" class="space-y-2.5"></div>
                 </div>
             </div>
@@ -363,7 +375,7 @@
                     <div class="bg-white border border-slate-200/80 rounded-3xl p-4 shadow-sm flex items-center justify-between gap-3">
                         <div>
                             <h4 class="text-xs font-bold text-slate-900">🧪 Lancer une expérience personnelle</h4>
-                            <p class="text-[11px] text-slate-500">Définissez votre propre défi sur 3 à 21 jours.</p>
+                            <p class="text-[11px] text-slate-500">Jusqu'à 10 défis simultanés sur 3 à 21 jours.</p>
                         </div>
                         <button onclick="openChallengeCreatorModal()" class="bg-primary text-white text-xs font-bold px-3.5 py-2 rounded-2xl shrink-0">
                             + Nouveau défi
@@ -398,9 +410,9 @@
                 <!-- Carte Statut Local -->
                 <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 flex items-center space-x-3.5">
                     <div class="w-14 h-14 rounded-2xl bg-primary text-white font-bold flex items-center justify-center shrink-0">
-                        <svg class="w-8 h-8 text-white" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-label="Logo Intestin">
-                        <path d="M12 6C12 4.5 14 4 16 4C18 4 19 5.5 18.5 7.5C18 9.5 10 9 10 12.5C10 16 26 11.5 26 15.5C26 19.5 10 16.5 10 20.5C10 24.5 25 21.5 25 25.5C25 29 12 27 12 30.5C12 32.5 14.5 33 17 33"/>
-                    </svg>
+                        <svg class="w-8 h-8 text-white" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="Logo Système Digestif">
+                            <path d="M16 4v3.5c0 1.2 1.2 1.8 2.8 1.8 3.2 0 5.5 2.4 5.5 5.4 0 3.2-2.6 5.3-6.1 5.3h-3.4c-2.6 0-4.3 1.4-4.3 3.5 0 2 1.7 3.3 4.3 3.3h4.8c2.4 0 4 1.3 4 3.2 0 2-1.8 3.2-4.6 3.2H17v1.8"/>
+                        </svg>
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
@@ -509,8 +521,8 @@
             <!-- Étape 1 : But de l'application -->
             <div id="welcome-step-1" class="space-y-4">
                 <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mx-auto">
-                    <svg class="w-8 h-8 text-primary" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 6C12 4.5 14 4 16 4C18 4 19 5.5 18.5 7.5C18 9.5 10 9 10 12.5C10 16 26 11.5 26 15.5C26 19.5 10 16.5 10 20.5C10 24.5 25 21.5 25 25.5C25 29 12 27 12 30.5C12 32.5 14.5 33 17 33"/>
+                    <svg class="w-8 h-8 text-primary" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 4v3.5c0 1.2 1.2 1.8 2.8 1.8 3.2 0 5.5 2.4 5.5 5.4 0 3.2-2.6 5.3-6.1 5.3h-3.4c-2.6 0-4.3 1.4-4.3 3.5 0 2 1.7 3.3 4.3 3.3h4.8c2.4 0 4 1.3 4 3.2 0 2-1.8 3.2-4.6 3.2H17v1.8"/>
                     </svg>
                 </div>
                 <div class="text-center space-y-1.5">
@@ -645,55 +657,93 @@
     </div>
 
     <!-- ===================================================================== -->
-    <!-- MODALE : CRÉATEUR DE DÉFI PERSONNALISÉ                                -->
+    <!-- MODALE : CRÉATEUR DE DÉFI PERSONNALISÉ (INSTANTANÉ JUSQU'À 10)        -->
     <!-- ===================================================================== -->
     <div id="challenge-creator-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
-        <div class="bg-white w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
+        <div class="bg-white w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto hide-scrollbar">
             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
                 <div>
-                    <h3 class="font-bold text-slate-900 text-sm">🧪 Créer mon propre Défi / Expérience</h3>
-                    <p class="text-[11px] text-slate-500">Testez une habitude ou l'arrêt d'un aliment suspect</p>
+                    <div class="flex items-center gap-2">
+                        <h3 class="font-bold text-slate-900 text-sm">🧪 Créer des Défis / Expériences</h3>
+                        <span id="modal-challenges-counter" class="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">0 / 10</span>
+                    </div>
+                    <p class="text-[11px] text-slate-500">Ajoutez vos défis en instantané (jusqu'à 10 actifs) • 🏅 Badges à débloquer</p>
                 </div>
                 <button onclick="document.getElementById('challenge-creator-modal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 text-xs font-bold">✕</button>
             </div>
 
             <div>
-                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Idées rapides (touchez pour pré-remplir)</label>
-                <div class="flex flex-wrap gap-1.5">
-                    <button type="button" onclick="prefillChallenge('Sans caféine le matin', 'Alimentation')" class="text-[11px] bg-softGray hover:bg-primary/10 hover:text-primary px-2.5 py-1 rounded-xl font-medium transition">☕ Sans caféine</button>
-                    <button type="button" onclick="prefillChallenge('Sans lactose / produits laitiers', 'Alimentation')" class="text-[11px] bg-softGray hover:bg-primary/10 hover:text-primary px-2.5 py-1 rounded-xl font-medium transition">🥛 Sans lactose</button>
-                    <button type="button" onclick="prefillChallenge('15 min de marche après le dîner', 'Hygiène de vie')" class="text-[11px] bg-softGray hover:bg-primary/10 hover:text-primary px-2.5 py-1 rounded-xl font-medium transition">🚶 Marche digestive</button>
-                    <button type="button" onclick="prefillChallenge('5 min de cohérence cardiaque / jour', 'Stress')" class="text-[11px] bg-softGray hover:bg-primary/10 hover:text-primary px-2.5 py-1 rounded-xl font-medium transition">🫁 Cohérence cardiaque</button>
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">⚡ Ajout instantané (1 clic)</label>
+                    <span class="text-[10px] text-slate-400">7 jours par défaut</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5" id="instant-challenge-presets">
+                    <button type="button" onclick="quickAddInstantChallenge('Sans caféine le matin', 'Alimentation', 7)" class="text-[11px] bg-softGray hover:bg-primary hover:text-white text-slate-700 px-2.5 py-1.5 rounded-xl font-medium transition">+ ☕ Sans caféine</button>
+                    <button type="button" onclick="quickAddInstantChallenge('Sans lactose / produits laitiers', 'Alimentation', 7)" class="text-[11px] bg-softGray hover:bg-primary hover:text-white text-slate-700 px-2.5 py-1.5 rounded-xl font-medium transition">+ 🥛 Sans lactose</button>
+                    <button type="button" onclick="quickAddInstantChallenge('15 min de marche après le dîner', 'Hygiène de vie', 7)" class="text-[11px] bg-softGray hover:bg-primary hover:text-white text-slate-700 px-2.5 py-1.5 rounded-xl font-medium transition">+ 🚶 Marche digestive</button>
+                    <button type="button" onclick="quickAddInstantChallenge('5 min de cohérence cardiaque / jour', 'Stress', 7)" class="text-[11px] bg-softGray hover:bg-primary hover:text-white text-slate-700 px-2.5 py-1.5 rounded-xl font-medium transition">+ 🫁 Cohérence cardiaque</button>
+                    <button type="button" onclick="quickAddInstantChallenge('1,5 L d’eau plate par jour', 'Hygiène de vie', 7)" class="text-[11px] bg-softGray hover:bg-primary hover:text-white text-slate-700 px-2.5 py-1.5 rounded-xl font-medium transition">+ 💧 Hydratation 1,5L</button>
+                    <button type="button" onclick="quickAddInstantChallenge('Zéro sucre raffiné le soir', 'Alimentation', 7)" class="text-[11px] bg-softGray hover:bg-primary hover:text-white text-slate-700 px-2.5 py-1.5 rounded-xl font-medium transition">+ 🍬 Sans sucre le soir</button>
+                    <button type="button" onclick="quickAddInstantChallenge('Tisane menthe / fenouil après repas', 'Alimentation', 7)" class="text-[11px] bg-softGray hover:bg-primary hover:text-white text-slate-700 px-2.5 py-1.5 rounded-xl font-medium transition">+ 🍵 Tisane digestive</button>
+                    <button type="button" onclick="quickAddInstantChallenge('Manger lentement (20 min min.)', 'Hygiène de vie', 7)" class="text-[11px] bg-softGray hover:bg-primary hover:text-white text-slate-700 px-2.5 py-1.5 rounded-xl font-medium transition">+ 🍽️ Mastication lente</button>
                 </div>
             </div>
 
-            <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Titre de votre défi</label>
-                <input type="text" id="custom-challenge-title" placeholder="Ex: Zéro sucre raffiné, Tisane fenouil chaque soir..." class="w-full bg-softGray border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-primary">
-            </div>
+            <hr class="border-slate-100">
 
-            <div class="grid grid-cols-2 gap-2.5">
+            <div class="space-y-3">
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Durée (jours)</label>
-                    <select id="custom-challenge-duration" class="w-full bg-softGray border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none">
-                        <option value="3">3 jours (Test flash)</option>
-                        <option value="7" selected>7 jours (Recommandé)</option>
-                        <option value="14">14 jours (Approfondi)</option>
-                        <option value="21">21 jours (Nouvelle habitude)</option>
-                    </select>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Ou saisissez un défi sur-mesure</label>
+                    <input type="text" id="custom-challenge-title" onkeydown="if(event.key==='Enter') saveCustomChallenge(true)" placeholder="Ex: Sans gluten, Pas d'écran 30 min avant dodo..." class="w-full bg-softGray border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-primary">
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Thématique</label>
-                    <select id="custom-challenge-cat" class="w-full bg-softGray border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none">
-                        <option value="Alimentation">🥗 Alimentation</option>
-                        <option value="Stress">🧘‍♂️ Stress & Sommeil</option>
-                        <option value="Hygiène de vie">🏃‍♂️ Hygiène de vie</option>
-                    </select>
+
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Durée (jours)</label>
+                        <select id="custom-challenge-duration" class="w-full bg-softGray border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none">
+                            <option value="3">3 jours (Test flash)</option>
+                            <option value="7" selected>7 jours (Recommandé)</option>
+                            <option value="14">14 jours (Approfondi)</option>
+                            <option value="21">21 jours (Nouvelle habitude)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Thématique</label>
+                        <select id="custom-challenge-cat" class="w-full bg-softGray border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none">
+                            <option value="Alimentation">🥗 Alimentation</option>
+                            <option value="Stress">🧘‍♂️ Stress & Sommeil</option>
+                            <option value="Hygiène de vie">🏃‍♂️ Hygiène de vie</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex gap-2">
+                    <button type="button" onclick="saveCustomChallenge(true)" class="flex-1 bg-primary/10 hover:bg-primary/20 text-primary font-bold py-3 rounded-2xl text-xs transition">
+                        + Ajouter & continuer
+                    </button>
+                    <button type="button" onclick="saveCustomChallenge(false)" class="flex-1 bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-2xl text-xs shadow-md transition">
+                        🚀 Lancer & fermer
+                    </button>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <button onclick="saveCustomChallenge()" class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-2xl text-xs shadow-md transition">
-                🚀 Lancer mon défi personnalisé
+    <!-- ===================================================================== -->
+    <!-- MODALE : BADGE DÉBLOQUÉ (CIRCUIT DE LA RÉCOMPENSE / DOPAMINE)         -->
+    <!-- ===================================================================== -->
+    <div id="badge-unlock-modal" class="fixed inset-0 bg-slate-900/65 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white w-full max-w-xs rounded-3xl p-6 shadow-2xl text-center space-y-4 animate-badge-pop border border-slate-100">
+            <div class="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-br from-amber-50 to-emerald-50 border border-amber-200/70 flex items-center justify-center text-4xl shadow-xs" id="badge-unlock-icon">
+                🏅
+            </div>
+            <div class="space-y-1">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-success bg-success/10 px-2.5 py-0.5 rounded-full">Nouveau badge débloqué</span>
+                <h3 class="font-bold text-slate-900 text-base pt-1" id="badge-unlock-title">Premier Pas</h3>
+                <p class="text-xs text-slate-500 leading-relaxed" id="badge-unlock-desc">Vous avez validé votre premier jour de défi.</p>
+            </div>
+            <button onclick="closeBadgeUnlockModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-2xl text-xs transition">
+                Continuer ✨
             </button>
         </div>
     </div>
@@ -1354,7 +1404,7 @@
     </div>
 
     <!-- ===================================================================== -->
-    <!-- MODALE : AUTHENTIFICATION SUPABASE                                    -->
+    <!-- MODALE : AUTHENTIFICATION SUPABASE (AVEC APERÇU MOT DE PASSE)         -->
     <!-- ===================================================================== -->
     <div id="auth-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
         <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
@@ -1365,7 +1415,7 @@
 
             <div id="auth-logged-out-view" class="space-y-3">
                 <p class="text-xs text-slate-500 leading-relaxed">
-                    Connectez-vous pour sauvegarder et retrouver vos bilans sur tous vos appareils.
+                    Connectez-vous ou créez un compte pour sauvegarder et retrouver vos bilans sur tous vos appareils.
                 </p>
                 <button type="button" onclick="handleGoogleSignIn()" class="w-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold py-2.5 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-2xs transition">
                     <svg class="w-4 h-4" viewBox="0 0 24 24">
@@ -1382,7 +1432,19 @@
                     <div class="flex-1 h-px bg-slate-200"></div>
                 </div>
                 <input type="email" id="auth-email" placeholder="Votre adresse email" class="w-full bg-softGray border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-primary">
-                <input type="password" id="auth-password" placeholder="Mot de passe (min. 6 caractères)" class="w-full bg-softGray border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-primary">
+                <div class="relative">
+                    <input type="password" id="auth-password" placeholder="Mot de passe (min. 6 caractères)" class="w-full bg-softGray border border-slate-200 rounded-2xl pl-3.5 pr-10 py-2.5 text-xs focus:outline-none focus:border-primary">
+                    <button type="button" onclick="toggleAuthPasswordVisibility()" id="toggle-auth-pwd-btn" aria-label="Afficher ou masquer le mot de passe" title="Afficher le mot de passe" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-700 transition">
+                        <svg id="eye-icon-show" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <svg id="eye-icon-hide" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                            <line x1="1" y1="1" x2="23" y2="23"/>
+                        </svg>
+                    </button>
+                </div>
                 <div class="flex gap-2 pt-1">
                     <button onclick="handleSignIn()" class="flex-1 bg-primary hover:bg-blue-600 text-white font-bold py-2.5 rounded-2xl text-xs transition">
                         Se connecter
@@ -1421,7 +1483,17 @@
         const REMINDER_KEY = 'digestiv_reminder_v5';
         const USER_NAME_KEY = 'digestiv_user_name_v4';
         const ONBOARDED_KEY = 'digestiv_onboarded_v4';
-        const MAX_ACTIVE_CHALLENGES = 5;
+        const MAX_ACTIVE_CHALLENGES = 10;
+
+        // Définition des badges de défis (simple, fluide et motivant)
+        const CHALLENGE_BADGES = [
+            { id: 'first_launch', icon: '🌱', title: 'Premier Élan', desc: 'Vous avez lancé votre tout premier défi personnel.' },
+            { id: 'first_day', icon: '⚡', title: 'Premier Pas', desc: 'Vous avez validé votre première journée de défi.' },
+            { id: 'three_days', icon: '🔥', title: 'Rythme Lancé', desc: '3 jours de défi validés au total.' },
+            { id: 'first_complete', icon: '🏆', title: 'Défi Accompli', desc: 'Vous avez mené un défi complet jusqu’au bout !' },
+            { id: 'multi_tasker', icon: '🎯', title: 'Multi-Objectifs', desc: 'Vous menez au moins 3 défis simultanément.' },
+            { id: 'master_three', icon: '💎', title: 'Maître Régulier', desc: '3 défis complets terminés avec succès.' }
+        ];
 
         // Échelle de Bristol complète (Types 1 à 7)
         const bristolScaleData = [
@@ -1433,57 +1505,6 @@
             { type: 5, icon: '☁️', title: 'Type 5 : Morceaux mous à bords nets', desc: 'Tendance molle', badge: 'Tendance molle', color: 'border-amber-300 bg-amber-50/60 text-amber-800' },
             { type: 6, icon: '🥣', title: 'Type 6 : Morceaux duveteux / pâteux', desc: 'Diarrhée légère', badge: 'Diarrhée légère', color: 'border-orange-300 bg-orange-50/70 text-orange-800' },
             { type: 7, icon: '💧', title: 'Type 7 : Entièrement liquide', desc: 'Diarrhée', badge: 'Diarrhée', color: 'border-rose-400 bg-rose-50 text-rose-800' }
-        ];
-
-        // Bibliothèque de facteurs déclencheurs fins intégrée (ne pré-remplit PAS l'onglet Médecin)
-        const builtInTriggerLibrary = {
-            'Alimentation & Écarts': [
-                { name: 'Nutella / Pâte à tartiner', icon: '🍫' },
-                { name: 'Fast-food / Friture', icon: '🍟' },
-                { name: 'Excès de gluten / Pain', icon: '🥖' },
-                { name: 'Produits laitiers / Lactose', icon: '🥛' },
-                { name: 'Épices fortes / Piment', icon: '🌶️' },
-                { name: 'Sucre raffiné / Pâtisserie', icon: '🧁' },
-                { name: 'Boisson gazeuse', icon: '🥤' }
-            ],
-            'Émotions & Stress': [
-                { name: 'Messages de mon ex', icon: '💔' },
-                { name: 'Pression employeur', icon: '💼' },
-                { name: 'Conflit familial', icon: '🗣️' },
-                { name: 'Charge mentale', icon: '🤯' },
-                { name: 'Anxiété d’anticipation', icon: '😰' },
-                { name: 'Insomnie / Réveils', icon: '🌙' }
-            ],
-            'Corps & Mode de vie': [
-                { name: 'Cycle menstruel', icon: '🩸' },
-                { name: 'Manque d’eau', icon: '💧' },
-                { name: 'Voyage / Déplacement', icon: '✈️' },
-                { name: 'Sédentarité prolongée', icon: '🪑' },
-                { name: 'Médicament / Antibiotique', icon: '💊' }
-            ]
-        };
-
-        const positiveQuotes = [
-            {
-                text: "« Une journée difficile ne définit pas tout votre parcours. Votre corps apprend, s'adapte, et chaque période de calme est une victoire. »",
-                author: "Bienveillance & Résilience"
-            },
-            {
-                text: "« Écouter son ventre sans le juger, c'est déjà apaiser la moitié du chemin entre l'esprit et l'intestin. »",
-                author: "Équilibre Neuro-Digestif"
-            },
-            {
-                text: "« Vous n'êtes pas vos symptômes. Vous êtes une personne résiliente qui apprend chaque jour à mieux se connaître. »",
-                author: "Communauté Digestiv"
-            },
-            {
-                text: "« La guérison et l'apaisement ne sont jamais linéaires : célébrez chaque journée légère et soyez doux avec vous-même les jours sensibles. »",
-                author: "Sagesse Quotidienne"
-            },
-            {
-                text: "« Respirer profondément pendant une minute envoie un signal direct de sécurité à votre système nerveux entérique. »",
-                author: "Réflexe Apaisement"
-            }
         ];
 
         const scientificResources = [
@@ -1601,7 +1622,6 @@
             const byDay = new Map();
             (Array.isArray(rawEntries) ? rawEntries : []).forEach(entry => {
                 if (!entry || !entry.isoDate) return;
-                // Remplace systématiquement par le dernier bilan enregistré pour cette journée
                 byDay.delete(entry.isoDate);
                 byDay.set(entry.isoDate, entry);
             });
@@ -1610,9 +1630,7 @@
 
         let entries = deduplicateEntriesByDay(JSON.parse(localStorage.getItem(STORAGE_KEY)) || []);
         let communityTips = JSON.parse(localStorage.getItem(TIPS_KEY)) || defaultTips;
-        // Aucun facteur personnalisé pré-rempli : tableau vide par défaut
         let userCreatedFactors = JSON.parse(localStorage.getItem(USER_FACTORS_KEY)) || [];
-        // Migration transparente depuis l'ancien défi unique vers la liste jusqu'à 5 défis
         let challenges = JSON.parse(localStorage.getItem(CHALLENGES_LIST_KEY));
         if (!Array.isArray(challenges)) {
             const legacyChallenge = JSON.parse(localStorage.getItem(CHALLENGE_KEY));
@@ -1647,12 +1665,12 @@
         let reminderIntervalId = null;
         let userName = localStorage.getItem(USER_NAME_KEY) || '';
         
-        let currentQuoteIndex = 0;
         let checkinStep = 1;
         let selectedBristolType = 4;
         let selectedLibraryFactors = new Set();
         let currentUserFactorValues = {};
         let trendChartInstance = null;
+        let badgeUnlockQueue = [];
 
         // Variables cohérence cardiaque
         let breathingInterval = null;
@@ -1734,7 +1752,27 @@
         let cameFromOnboarding = false;
 
         function openAuthModal() {
+            const pwdInput = document.getElementById('auth-password');
+            if (pwdInput) {
+                pwdInput.type = 'password';
+                document.getElementById('eye-icon-show')?.classList.remove('hidden');
+                document.getElementById('eye-icon-hide')?.classList.add('hidden');
+            }
             document.getElementById('auth-modal').classList.remove('hidden');
+        }
+
+        function toggleAuthPasswordVisibility() {
+            const pwdInput = document.getElementById('auth-password');
+            const showIcon = document.getElementById('eye-icon-show');
+            const hideIcon = document.getElementById('eye-icon-hide');
+            const toggleBtn = document.getElementById('toggle-auth-pwd-btn');
+            if (!pwdInput) return;
+
+            const isPassword = pwdInput.type === 'password';
+            pwdInput.type = isPassword ? 'text' : 'password';
+            if (showIcon) showIcon.classList.toggle('hidden', isPassword);
+            if (hideIcon) hideIcon.classList.toggle('hidden', !isPassword);
+            if (toggleBtn) toggleBtn.title = isPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe';
         }
 
         function openAuthFromOnboarding() {
@@ -1899,7 +1937,6 @@
             renderProfileFactorsManager();
         }
 
-
         // --- GESTION DU PRÉNOM UTILISATEUR ---
         function renderUserGreeting() {
             const greetingEl = document.getElementById('user-greeting-name');
@@ -1926,7 +1963,7 @@
                 localStorage.setItem(USER_NAME_KEY, userName);
             } else {
                 localStorage.removeItem(USER_NAME_KEY);
-            localStorage.removeItem(ONBOARDED_KEY);
+                localStorage.removeItem(ONBOARDED_KEY);
             }
             renderUserGreeting();
             document.getElementById('username-modal').classList.add('hidden');
@@ -1955,7 +1992,6 @@
                 note: 'Journée calme enregistrée en 1 clic'
             };
 
-            // Si un bilan existe déjà aujourd'hui, on le remplace proprement ; sinon on l'ajoute
             const existingIdx = entries.findIndex(e => e.isoDate === todayIso);
             if (existingIdx !== -1) {
                 entries[existingIdx] = calmEntry;
@@ -1993,7 +2029,6 @@
             const yesterday = shiftIsoDate(today, -1);
             const twoDaysAgo = shiftIsoDate(today, -2);
 
-            // Si un seul jour (hier) a été sauté et qu'un bouclier est disponible, on protège automatiquement la série
             if (!dateSet.has(today) && !dateSet.has(yesterday) && dateSet.has(twoDaysAgo) && !shieldSet.has(yesterday) && (gamification.streakShields || 0) > 0) {
                 gamification.streakShields -= 1;
                 gamification.shieldUsedDates = [...shieldSet, yesterday];
@@ -2025,7 +2060,6 @@
             gamification.rewardedStreakMilestones = gamification.rewardedStreakMilestones || [];
             let earnedFreeze = false;
 
-            // Tous les 7 jours consécutifs (7, 14, 21, 28...), offre 1 Gel de série (max 2 en stock)
             if (streak > 0 && streak % 7 === 0 && !gamification.rewardedStreakMilestones.includes(streak)) {
                 gamification.rewardedStreakMilestones.push(streak);
                 if ((gamification.streakShields || 0) < 2) {
@@ -2288,7 +2322,7 @@
             }
         }
 
-        // --- SÉRIE DUOLINGO (7 JOURS DE LA SEMAINE) & GAGES DÉFIS ---
+        // --- SÉRIE DUOLINGO (7 JOURS DE LA SEMAINE), BADGES & GAGES DÉFIS ---
         const WELLNESS_PUNISHMENTS = [
             'Gage : 5 minutes de cohérence cardiaque (5-5) dès maintenant.',
             'Gage : Boire un grand verre d’eau à température ambiante ou une tisane apaisante.',
@@ -2297,9 +2331,86 @@
             'Gage : Couper les écrans 30 minutes plus tôt ce soir pour apaiser le système nerveux.'
         ];
 
-        function evaluateGamificationBadges() {
-            // Maintenu pour compatibilité sans affichage de badges
+        function evaluateGamificationBadges(silent = false) {
             computeRealStreak();
+            gamification.unlockedBadges = gamification.unlockedBadges || [];
+
+            const totalValidatedDays = challenges.reduce((acc, c) => acc + (c.checkedDates ? c.checkedDates.length : 0), 0);
+            const activeCount = challenges.filter(c => !c.completed).length;
+            const completedCount = Math.max(
+                gamification.completedChallenges || 0,
+                challenges.filter(c => c.completed).length
+            );
+            gamification.completedChallenges = completedCount;
+
+            const conditions = {
+                first_launch: challenges.length >= 1,
+                first_day: totalValidatedDays >= 1,
+                three_days: totalValidatedDays >= 3,
+                first_complete: completedCount >= 1,
+                multi_tasker: activeCount >= 3,
+                master_three: completedCount >= 3
+            };
+
+            const newlyUnlocked = [];
+            CHALLENGE_BADGES.forEach(badge => {
+                if (conditions[badge.id] && !gamification.unlockedBadges.includes(badge.id)) {
+                    gamification.unlockedBadges.push(badge.id);
+                    newlyUnlocked.push(badge);
+                }
+            });
+
+            if (!silent && newlyUnlocked.length > 0) {
+                badgeUnlockQueue.push(...newlyUnlocked);
+                showNextBadgeUnlockModal();
+            }
+        }
+
+        function showNextBadgeUnlockModal() {
+            if (badgeUnlockQueue.length === 0) return;
+            const modal = document.getElementById('badge-unlock-modal');
+            if (!modal || !modal.classList.contains('hidden')) return;
+
+            const badge = badgeUnlockQueue.shift();
+            document.getElementById('badge-unlock-icon').innerText = badge.icon;
+            document.getElementById('badge-unlock-title').innerText = badge.title;
+            document.getElementById('badge-unlock-desc').innerText = badge.desc;
+            modal.classList.remove('hidden');
+        }
+
+        function closeBadgeUnlockModal() {
+            document.getElementById('badge-unlock-modal').classList.add('hidden');
+            if (badgeUnlockQueue.length > 0) {
+                setTimeout(showNextBadgeUnlockModal, 180);
+            }
+        }
+
+        function renderChallengeBadgesStrip() {
+            const strip = document.getElementById('challenge-badges-strip');
+            if (!strip) return;
+
+            const unlocked = new Set(gamification.unlockedBadges || []);
+            const unlockedCount = unlocked.size;
+
+            strip.innerHTML = `
+                <div class="bg-softGray/70 border border-slate-100 rounded-2xl p-2.5 space-y-2">
+                    <div class="flex items-center justify-between px-0.5">
+                        <span class="text-[10px] font-bold text-slate-600 uppercase tracking-wider">🏅 Badges Défis</span>
+                        <span class="text-[10px] font-bold text-slate-500">${unlockedCount} / ${CHALLENGE_BADGES.length}</span>
+                    </div>
+                    <div class="grid grid-cols-6 gap-1.5">
+                        ${CHALLENGE_BADGES.map(b => {
+                            const isUnlocked = unlocked.has(b.id);
+                            return `
+                                <button type="button" onclick="showToast('${b.icon} ${b.title} : ${b.desc.replace(/'/g, "’")}')" title="${b.title} — ${b.desc}" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl border text-center transition active:scale-95 ${isUnlocked ? 'bg-white border-amber-200/80 shadow-2xs' : 'bg-slate-100/70 border-transparent opacity-40 grayscale'}">
+                                    <span class="text-base leading-none">${b.icon}</span>
+                                    <span class="text-[8px] font-bold text-slate-700 mt-1 truncate w-full">${b.title.split(' ')[0]}</span>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
         }
 
         function renderDuolingoStreakCard() {
@@ -2340,9 +2451,8 @@
                 }
             }
 
-            // Construire la semaine courante du Lundi (0) au Dimanche (6)
             const now = new Date();
-            const jsDay = now.getDay(); // 0 = Dim, 1 = Lun ... 6 = Sam
+            const jsDay = now.getDay();
             const mondayOffset = jsDay === 0 ? -6 : 1 - jsDay;
             const dayLabels = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
@@ -2379,26 +2489,28 @@
             weekGrid.innerHTML = cells.join('');
         }
 
-        // --- DÉFIS PERSONNALISÉS (JUSQU'À 5 SIMULTANÉMENT + VALIDATION / SANCTION) ---
+        // --- DÉFIS PERSONNALISÉS (JUSQU'À 10 SIMULTANÉMENT + BADGES DOPAMINE) ---
         function renderChallengesUI() {
             const homeContainer = document.getElementById('home-challenge-container');
             const statsContainer = document.getElementById('stats-challenge-status');
             const counterBadge = document.getElementById('active-challenges-counter');
+            const modalCounterBadge = document.getElementById('modal-challenges-counter');
             const createBtnStats = document.getElementById('btn-create-challenge-stats');
             const gamificationBar = document.getElementById('gamification-summary-bar');
 
             renderDuolingoStreakCard();
+            renderChallengeBadgesStrip();
 
             const activeList = challenges.filter(c => !c.completed);
             const todayIso = getTodayIso();
 
             if (counterBadge) counterBadge.innerText = `${activeList.length} / ${MAX_ACTIVE_CHALLENGES}`;
+            if (modalCounterBadge) modalCounterBadge.innerText = `${activeList.length} / ${MAX_ACTIVE_CHALLENGES}`;
             if (createBtnStats) {
                 createBtnStats.disabled = activeList.length >= MAX_ACTIVE_CHALLENGES;
                 createBtnStats.classList.toggle('opacity-50', activeList.length >= MAX_ACTIVE_CHALLENGES);
             }
 
-            // Affiche uniquement l'encart de gage s'il y a un gage actif à accomplir
             if (gamificationBar) {
                 const pendingGages = (gamification.activeGages || []);
                 if (pendingGages.length > 0) {
@@ -2413,13 +2525,21 @@
                 }
             }
 
+            const unlockedBadges = CHALLENGE_BADGES.filter(b => (gamification.unlockedBadges || []).includes(b.id));
+            const miniBadgesHtml = unlockedBadges.length > 0
+                ? `<div class="flex items-center gap-1">${unlockedBadges.slice(-4).map(b => `<span title="${b.title}" class="text-xs bg-amber-50 border border-amber-200/70 w-6 h-6 rounded-lg flex items-center justify-center">${b.icon}</span>`).join('')}</div>`
+                : '';
+
             if (activeList.length === 0) {
                 homeContainer.innerHTML = `
                     <div class="bg-white border border-slate-200/80 rounded-3xl p-4 shadow-sm flex items-center justify-between gap-3">
                         <div class="space-y-0.5">
-                            <span class="text-[10px] font-bold text-primary uppercase tracking-wider">🧪 Expériences & Défis (0/${MAX_ACTIVE_CHALLENGES})</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-bold text-primary uppercase tracking-wider">🧪 Défis (0/${MAX_ACTIVE_CHALLENGES})</span>
+                                ${miniBadgesHtml}
+                            </div>
                             <h4 class="text-xs font-bold text-slate-900">Envie de tester une nouvelle habitude ?</h4>
-                            <p class="text-[11px] text-slate-500">Lancez jusqu'à 5 défis simultanés et gagnez des badges.</p>
+                            <p class="text-[11px] text-slate-500">Ajoutez jusqu'à ${MAX_ACTIVE_CHALLENGES} défis en instantané et débloquez vos badges.</p>
                         </div>
                         <button onclick="openChallengeCreatorModal()" class="bg-primary/10 hover:bg-primary hover:text-white text-primary font-bold text-xs px-3.5 py-2.5 rounded-2xl transition shrink-0">
                             + Créer
@@ -2428,7 +2548,7 @@
                 `;
                 statsContainer.innerHTML = `
                     <p class="text-xs text-slate-500 bg-softGray p-3 rounded-2xl">
-                        Aucun défi actif pour le moment. Appuyez sur <strong>« + Créer un défi »</strong> pour en lancer jusqu'à ${MAX_ACTIVE_CHALLENGES} en parallèle.
+                        Aucun défi actif pour le moment. Appuyez sur <strong>« + Créer un défi »</strong> pour en ajouter jusqu'à ${MAX_ACTIVE_CHALLENGES} en instantané.
                     </p>
                 `;
                 return;
@@ -2452,11 +2572,11 @@
                         </div>
                         <h4 class="text-xs font-bold text-slate-900">${ch.title}</h4>
                         <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                            <div class="bg-success h-full rounded-full transition-all" style="width: ${pct}%"></div>
+                            <div class="bg-success h-full rounded-full transition-all duration-300" style="width: ${pct}%"></div>
                         </div>
                         <div class="flex items-center justify-between gap-1.5 pt-0.5">
                             <div class="flex items-center gap-1.5">
-                                <button onclick="validateChallengeDay('${ch.id}')" ${isDoneToday ? 'disabled' : ''} class="text-[11px] font-bold px-2.5 py-1.5 rounded-xl transition ${isDoneToday ? 'bg-success/15 text-success cursor-default' : 'bg-success hover:bg-emerald-600 text-white shadow-2xs'}">
+                                <button onclick="validateChallengeDay('${ch.id}')" ${isDoneToday ? 'disabled' : ''} class="text-[11px] font-bold px-2.5 py-1.5 rounded-xl transition ${isDoneToday ? 'bg-success/15 text-success cursor-default' : 'bg-success hover:bg-emerald-600 text-white shadow-2xs active:scale-95'}">
                                     ${isDoneToday ? '✓ Validé' : '✓ Réussi aujourd’hui'}
                                 </button>
                                 <button onclick="missChallengeDay('${ch.id}')" ${isMissedToday ? 'disabled' : ''} class="text-[11px] font-bold px-2.5 py-1.5 rounded-xl transition ${isMissedToday ? 'bg-rose-100 text-rose-500 cursor-default' : 'bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200'}">
@@ -2473,17 +2593,17 @@
 
             const cardsHtml = activeList.map(renderSingleChallengeCard).join('');
 
-            // Sur l'accueil : encart synthétique affichant tous les défis en cours (jusqu'à 5) + bouton + si < 5
             homeContainer.innerHTML = `
                 <div class="bg-white border border-slate-200/80 rounded-3xl p-4 shadow-sm space-y-3">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-bold text-slate-900">🧪 Mes Défis en cours</span>
-                            <span class="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">${activeList.length} / ${MAX_ACTIVE_CHALLENGES}</span>
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="text-xs font-bold text-slate-900 shrink-0">🧪 Mes Défis</span>
+                            <span class="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full shrink-0">${activeList.length} / ${MAX_ACTIVE_CHALLENGES}</span>
+                            ${miniBadgesHtml}
                         </div>
                         ${activeList.length < MAX_ACTIVE_CHALLENGES ? `
-                            <button onclick="openChallengeCreatorModal()" class="text-[11px] font-bold text-primary hover:underline">+ Ajouter</button>
-                        ` : `<span class="text-[10px] font-semibold text-amber-600">Max atteint</span>`}
+                            <button onclick="openChallengeCreatorModal()" class="text-[11px] font-bold text-primary hover:underline shrink-0">+ Ajouter</button>
+                        ` : `<span class="text-[10px] font-semibold text-amber-600 shrink-0">Max atteint</span>`}
                     </div>
                     <div class="space-y-2.5">${cardsHtml}</div>
                 </div>
@@ -2508,12 +2628,14 @@
                 ch.completed = true;
                 gamification.completedChallenges += 1;
                 gamification.points += 50;
+                evaluateGamificationBadges(false);
                 saveState();
                 renderChallengesUI();
-                showToast(`🎉 Défi « ${ch.title} » terminé avec succès !`);
+                showToast(`🏆 Défi « ${ch.title} » accompli !`);
                 return;
             }
 
+            evaluateGamificationBadges(false);
             saveState();
             renderChallengesUI();
             showToast(`Bravo ! Jour validé 🌟`);
@@ -2528,7 +2650,6 @@
 
             if (!ch.missedDates.includes(todayIso)) {
                 ch.missedDates.push(todayIso);
-                // Punition : perte de points, réinitialisation de la progression du défi et attribution d'un gage bien-être
                 const penaltyPts = 15;
                 gamification.points = Math.max(0, gamification.points - penaltyPts);
                 gamification.missedDaysCount += 1;
@@ -2565,15 +2686,38 @@
                 return;
             }
             document.getElementById('custom-challenge-title').value = '';
+            const modalCounter = document.getElementById('modal-challenges-counter');
+            if (modalCounter) modalCounter.innerText = `${activeCount} / ${MAX_ACTIVE_CHALLENGES}`;
             document.getElementById('challenge-creator-modal').classList.remove('hidden');
         }
 
-        function prefillChallenge(title, cat) {
-            document.getElementById('custom-challenge-title').value = title;
-            document.getElementById('custom-challenge-cat').value = cat;
+        function quickAddInstantChallenge(title, category, duration = 7) {
+            const activeCount = challenges.filter(c => !c.completed).length;
+            if (activeCount >= MAX_ACTIVE_CHALLENGES) {
+                showToast(`Limite atteinte : ${MAX_ACTIVE_CHALLENGES} défis en cours`);
+                return;
+            }
+            challenges.push({
+                id: 'ch_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+                title,
+                duration,
+                category,
+                startDate: getTodayIso(),
+                checkedDates: [],
+                missedDates: [],
+                completed: false
+            });
+            evaluateGamificationBadges(false);
+            saveState();
+            renderChallengesUI();
+            const newCount = activeCount + 1;
+            if (newCount >= MAX_ACTIVE_CHALLENGES) {
+                document.getElementById('challenge-creator-modal').classList.add('hidden');
+            }
+            showToast(`Défi ajouté (${newCount}/${MAX_ACTIVE_CHALLENGES}) ⚡`);
         }
 
-        function saveCustomChallenge() {
+        function saveCustomChallenge(keepOpen = false) {
             const activeCount = challenges.filter(c => !c.completed).length;
             if (activeCount >= MAX_ACTIVE_CHALLENGES) {
                 showToast(`Vous avez déjà ${MAX_ACTIVE_CHALLENGES} défis en cours`);
@@ -2588,7 +2732,7 @@
             const category = document.getElementById('custom-challenge-cat').value;
 
             challenges.push({
-                id: 'ch_' + Date.now(),
+                id: 'ch_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
                 title,
                 duration,
                 category,
@@ -2599,9 +2743,15 @@
             });
             evaluateGamificationBadges(false);
             saveState();
-            document.getElementById('challenge-creator-modal').classList.add('hidden');
+            document.getElementById('custom-challenge-title').value = '';
+            const newCount = activeCount + 1;
+            if (!keepOpen || newCount >= MAX_ACTIVE_CHALLENGES) {
+                document.getElementById('challenge-creator-modal').classList.add('hidden');
+            } else {
+                document.getElementById('custom-challenge-title').focus();
+            }
             renderChallengesUI();
-            showToast(`Défi « ${title} » démarré (${activeCount + 1}/${MAX_ACTIVE_CHALLENGES}) 🚀`);
+            showToast(`Défi « ${title} » ajouté (${newCount}/${MAX_ACTIVE_CHALLENGES}) 🚀`);
         }
 
         function stopChallengeById(challengeId) {
@@ -2613,13 +2763,11 @@
 
         // --- RADAR DES COMBOS DÉCLENCHEURS (EFFET CUMULATIF) ---
         function computeTriggerCombos() {
-            // Uniquement les bilans réels où douleur >= 4 ou ballonnement >= 4
             const crisisEntries = entries.filter(e => e.pain >= 4 || (e.bloating ?? 0) >= 4);
             if (crisisEntries.length < 2) return [];
 
             const pairCounts = {};
             crisisEntries.forEach(entry => {
-                // Normaliser tous les facteurs du jour (sans la note /5)
                 const normalized = [...new Set(
                     (entry.factors || []).map(f => f.replace(/\s*\(\d+\/5\)$/, '').trim()).filter(Boolean)
                 )].sort();
@@ -2702,17 +2850,13 @@
             `;
         }
 
-
-
         // --- RADAR DES COMBOS GUÉRISSEURS (SYNERGIE APAISANTE) ---
         function computeHealingCombos() {
-            // Journées calmes (douleur <= 3 et ballonnements <= 3)
             const calmEntries = entries.filter(e => e.pain <= 3 && (e.bloating ?? 0) <= 3);
             if (calmEntries.length < 2) return [];
 
             const pairCounts = {};
             calmEntries.forEach(entry => {
-                // Combine facteurs protecteurs et éventuels facteurs positifs/habitudes du jour
                 const protective = (entry.protectiveFactors || []).map(f => f.replace(/\s*\(\d+\/5\)$/, '').trim()).filter(Boolean);
                 const otherFactors = (entry.factors || [])
                     .map(f => f.replace(/\s*\(\d+\/5\)$/, '').trim())
@@ -2784,7 +2928,6 @@
                 document.getElementById('onboarding-progress-bar').style.width = pct + '%';
                 const remaining = minRequired - count;
                 document.getElementById('onboarding-remaining-text').innerText = `Encore ${remaining} bilan${remaining > 1 ? 's' : ''} pour débloquer l'analyse complète`;
-
             } else {
                 onboardingView.classList.add('hidden');
                 fullView.classList.remove('hidden');
@@ -2865,7 +3008,6 @@
 
                 const rateWith = s.withTotal > 0 ? Math.round((s.withCrisis / s.withTotal) * 100) : 0;
                 const rateWithout = withoutTotal > 0 ? Math.round((withoutCrisis / withoutTotal) * 100) : 0;
-                // Différentiel réel (en points de pourcentage)
                 const realImpact = rateWith - rateWithout;
 
                 let verdict = 'Neutre';
@@ -2983,7 +3125,7 @@
             if (tabId === 'stats') {
                 renderStatsViews();
                 renderCombosRadar();
-            renderHealingCombosRadar();
+                renderHealingCombosRadar();
             }
             document.getElementById('main-container').scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -3139,7 +3281,6 @@
             showToast('Facteur personnalisé supprimé');
         }
 
-        // Onglet Médecin : n'affiche STRICTEMENT que les facteurs créés manuellement par l'utilisateur (vide au départ)
         function renderProfileFactorsManager() {
             const container = document.getElementById('profile-factors-manager');
             if (!container) return;
@@ -3215,7 +3356,6 @@
             }
         }
 
-        // Rendu Étape 2 unifiée du Bilan : facteurs créés manuellement par l'utilisateur (déclencheurs & protecteurs)
         function renderStep2Factors() {
             const triggerCustomContainer = document.getElementById('survey-user-trigger-factors');
             const protectiveCustomContainer = document.getElementById('survey-user-protective-factors');
@@ -3244,12 +3384,6 @@
                     </div>
                 `;
             }
-        }
-
-        function toggleLibraryFactor(name) {
-            if (selectedLibraryFactors.has(name)) selectedLibraryFactors.delete(name);
-            else selectedLibraryFactors.add(name);
-            renderStep2Factors();
         }
 
         function toggleBinaryUserFactor(id) {
@@ -3606,7 +3740,6 @@
                 document.getElementById('rep-peace-score').innerText = peaceData ? peaceData.pct + '%' : '—';
                 document.getElementById('rep-avg-stress').innerText = avgStress + ' / 5';
 
-                // Répartition Bristol
                 const bCounts = {};
                 entries.forEach(e => {
                     const t = e.bristol !== undefined && e.bristol !== null ? e.bristol : 4;
@@ -3618,7 +3751,6 @@
                     .join(' • ');
                 document.getElementById('rep-bristol-summary').innerText = bSummary || '—';
 
-                // Facteurs classés par Score d'Impact Réel (avec vs sans)
                 const realScores = computeRealImpactScores();
                 const triggersHtml = realScores.length > 0
                     ? realScores.slice(0, 6).map(item => {
@@ -3628,14 +3760,12 @@
                     : '<li>Aucun facteur particulier noté sur la période.</li>';
                 document.getElementById('rep-triggers-list').innerHTML = triggersHtml;
 
-                // Combos déclencheurs
                 const combos = computeTriggerCombos();
                 const combosHtml = combos.length > 0
                     ? combos.slice(0, 5).map(c => `<li><strong>${c.factorA} + ${c.factorB}</strong> : associés ${c.count} fois lors d'un jour de crise (${c.pctOfCrises}%)</li>`).join('')
                     : '<li>Pas encore assez d’occurrences cumulées pour isoler un duo déclencheur.</li>';
                 document.getElementById('rep-combos-list').innerHTML = combosHtml;
 
-                // Combos guérisseurs
                 const healingCombos = computeHealingCombos();
                 const healingCombosHtml = healingCombos.length > 0
                     ? healingCombos.slice(0, 5).map(c => `<li><strong>${c.factorA} + ${c.factorB}</strong> : associés ${c.count} fois lors d'une journée calme (${c.pctOfCalm}%)</li>`).join('')
@@ -3645,7 +3775,6 @@
             document.getElementById('medical-modal').classList.remove('hidden');
         }
 
-
         async function downloadMedicalPdf() {
             const element = document.getElementById('medical-report-content');
             const btn = document.getElementById('btn-download-pdf');
@@ -3654,7 +3783,7 @@
             btn.innerHTML = '<span>⏳</span><span>Génération du PDF...</span>';
 
             const safeName = userName
-                ? '_' + userName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_')
+                ? '_' + userName.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '_')
                 : '';
             const filename = `Bilan_Digestiv${safeName}_${getTodayIso()}.pdf`;
 
