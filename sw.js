@@ -1,4 +1,4 @@
-const CACHE_NAME = 'digestiv-v3';
+const CACHE_NAME = 'digestiv-v4';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -26,11 +26,21 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
+  const url = new URL(event.request.url);
+
+  // Ne jamais mettre en cache les requêtes API/Auth Supabase ni les extensions
+  if (url.hostname.includes('supabase.co') || !url.protocol.startsWith('http')) {
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        if (response && (response.status === 200 || response.type === 'opaque')) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
         return response;
       })
       .catch(() => caches.match(event.request))
