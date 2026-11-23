@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "fr.digestiv.app",
+        "sha256_cert_fingerprints": ["B9:D0:BA:50:AD:65:6D:DC:AE:41:19:F4:F9:2E:34:21:75:B2:A0:2F:4C:B1:56:70:5F:DF:3E:81:E8:DA:9D:79"]
+      }
+    }]
