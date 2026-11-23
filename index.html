@@ -1453,13 +1453,16 @@
                 </div>
             </div>
 
-            <div id="auth-logged-in-view" class="space-y-3 hidden text-center">
+            <div id="auth-logged-in-view" class="space-y-2.5 hidden text-center">
                 <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-3">
                     <span class="text-xs font-bold text-emerald-800 block">✅ Synchronisation active</span>
                     <span id="auth-user-email" class="text-[11px] text-emerald-700"></span>
                 </div>
-                <button onclick="handleSignOut()" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-2.5 rounded-2xl text-xs transition">
+                <button onclick="handleSignOut()" class="w-full bg-softGray hover:bg-slate-200/70 text-slate-700 font-bold py-2.5 rounded-2xl text-xs transition">
                     Se déconnecter
+                </button>
+                <button onclick="handleDeleteCloudAccount()" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-2.5 rounded-2xl text-xs transition">
+                    🗑️ Supprimer mon compte et mes données Cloud
                 </button>
             </div>
         </div>
@@ -1734,18 +1737,22 @@
 
         const SUPABASE_URL = 'https://fptktjfibwfrjwhpmoxd.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_jroo2EXdwdCIaisKTd8iHQ_R-zQYywh';
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabaseClient = window.supabase
+            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+            : null;
 
         let currentUser = null;
 
-        supabaseClient.auth.onAuthStateChange(async (event, session) => {
-            currentUser = session?.user || null;
-            updateAuthUI();
-            if (currentUser) {
-                completeOnboardingAfterAuth();
-                await loadUserDataFromSupabase();
-            }
-        });
+        if (supabaseClient) {
+            supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                currentUser = session?.user || null;
+                updateAuthUI();
+                if (currentUser) {
+                    completeOnboardingAfterAuth();
+                    await loadUserDataFromSupabase();
+                }
+            });
+        }
 
         let cameFromOnboarding = false;
 
@@ -1819,6 +1826,7 @@
         }
 
         async function handleGoogleSignIn() {
+            if (!supabaseClient) return showToast('⚠️ Connexion Internet requise pour le Cloud');
             const { error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
@@ -1829,6 +1837,7 @@
         }
 
         async function handleSignUp() {
+            if (!supabaseClient) return showToast('⚠️ Connexion Internet requise pour le Cloud');
             const email = document.getElementById('auth-email').value.trim();
             const password = document.getElementById('auth-password').value;
             if (!email || password.length < 6) {
@@ -1847,6 +1856,7 @@
         }
 
         async function handleSignIn() {
+            if (!supabaseClient) return showToast('⚠️ Connexion Internet requise pour le Cloud');
             const email = document.getElementById('auth-email').value.trim();
             const password = document.getElementById('auth-password').value;
             if (!email || !password) {
@@ -1861,13 +1871,37 @@
         }
 
         async function handleSignOut() {
-            await supabaseClient.auth.signOut();
+            if (supabaseClient) await supabaseClient.auth.signOut();
             showToast('Déconnecté');
             document.getElementById('auth-modal').classList.add('hidden');
         }
 
+        async function handleDeleteCloudAccount() {
+            if (!supabaseClient || !currentUser) return;
+            if (!confirm('Voulez-vous vraiment supprimer définitivement toutes vos données synchronisées sur le Cloud et vous déconnecter ? Cette action est irréversible.')) {
+                return;
+            }
+            showToast('Suppression des données Cloud...');
+            try {
+                await supabaseClient
+                    .from('user_profiles_data')
+                    .delete()
+                    .eq('user_id', currentUser.id);
+                try {
+                    await supabaseClient.rpc('delete_user');
+                } catch (_) {}
+                await supabaseClient.auth.signOut();
+                currentUser = null;
+                updateAuthUI();
+                document.getElementById('auth-modal').classList.add('hidden');
+                showToast('Données Cloud supprimées et compte déconnecté 🗑️');
+            } catch (err) {
+                showToast('❌ Erreur lors de la suppression : ' + err.message);
+            }
+        }
+
         async function loadUserDataFromSupabase() {
-            if (!currentUser) return;
+            if (!supabaseClient || !currentUser) return;
             const { data, error } = await supabaseClient
                 .from('user_profiles_data')
                 .select('*')
@@ -1891,7 +1925,7 @@
         }
 
         async function syncDataToSupabase() {
-            if (!currentUser) return;
+            if (!supabaseClient || !currentUser) return;
             await supabaseClient.from('user_profiles_data').upsert({
                 user_id: currentUser.id,
                 user_name: userName,
