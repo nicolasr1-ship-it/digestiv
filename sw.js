@@ -1,71 +1,3960 @@
-const CACHE_NAME = 'digestiv-v4';
-const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/privacy.html',
-  '/icon-192.png',
-  '/icon-512.png',
-  'https://cdn.tailwindcss.com',
-  'https://cdn.jsdelivr.net/npm/chart.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
-  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
-];
+<!DOCTYPE html>
+<html lang="fr" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Digestiv">
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#3B82F6">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%233B82F6'/%3E%3Cpath d='M29 12v5c0 1.8 1.6 2.8 3.8 2.8 4.8 0 8.2 3.5 8.2 8 0 4.6-3.8 7.6-8.8 7.6h-5.4c-3.8 0-6.3 2.1-6.3 5.2 0 3 2.5 5 6.3 5h7c3.6 0 6 1.9 6 4.7 0 2.9-2.7 4.7-6.8 4.7h-2v3' fill='none' stroke='%23FFFFFF' stroke-width='4.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='25' cy='27' r='2' fill='%23FFFFFF'/%3E%3Ccircle cx='35' cy='27' r='2' fill='%23FFFFFF'/%3E%3Cpath d='M28 30.5c1.2 1.2 2.8 1.2 4 0' fill='none' stroke='%23FFFFFF' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="./icon-512.png">
+    <title>Digestiv - Suivi et Corrélations SII</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-self.addEventListener('install', (event) => {
-  self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return Promise.allSettled(
-        ASSETS_TO_CACHE.map((url) =>
-          cache.add(url).catch((err) => console.warn('Pré-cache ignoré pour :', url, err))
-        )
-      );
-    })
-  );
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      )
-    ).then(() => self.clients.claim())
-  );
-});
-
-self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-
-  const url = new URL(event.request.url);
-
-  // Ne jamais mettre en cache les requêtes API/Auth Supabase ni les extensions
-  if (url.hostname.includes('supabase.co') || !url.protocol.startsWith('http')) {
-    return;
-  }
-
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        if (response && (response.status === 200 || response.type === 'opaque')) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poiret+One&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        cream: '#F8FAFC',
+                        softGray: '#F1F5F9'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        brand: ['Poiret One', 'cursive']
+                    }
+                }
+            }
         }
-        return response;
-      })
-      .catch(() => caches.match(event.request))
-  );
-});
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #F8FAFC; color: #1E293B; }
+        .font-brand { font-family: 'Poiret One', cursive; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 220px; max-height: 260px; }
 
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        if ('focus' in client) return client.focus();
-      }
-      if (clients.openWindow) return clients.openWindow('/');
-    })
-  );
-});
+        /* Animation fluide pour la cohérence cardiaque (5s inspir / 5s expir) */
+        @keyframes breathePulse {
+            0%, 100% { transform: scale(0.72); background-color: rgba(59, 130, 246, 0.25); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.2); }
+            50% { transform: scale(1.15); background-color: rgba(16, 185, 129, 0.35); box-shadow: 0 0 35px 12px rgba(16, 185, 129, 0.25); }
+        }
+        .breathing-circle-active {
+            animation: breathePulse 10s ease-in-out infinite;
+        }
+
+        /* Micro-animation dopamine déblocage de badge */
+        @keyframes badgePop {
+            0% { transform: scale(0.7); opacity: 0; }
+            65% { transform: scale(1.06); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-badge-pop {
+            animation: badgePop 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        /* Masquer le badge flottant Netlify s'il est injecté */
+        iframe[src*="netlify"], div[class*="netlify"], #netlify-identity-widget { display: none !important; visibility: hidden !important; }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+            #medical-modal { position: static !important; background: white !important; padding: 0 !important; display: block !important; }
+            #medical-modal > div { box-shadow: none !important; max-height: none !important; width: 100% !important; max-width: 100% !important; }
+        }
+    </style>
+</head>
+<body class="bg-cream text-slate-800 h-full flex flex-col items-center justify-start m-0 p-0 selection:bg-primary/20">
+
+    <!-- Conteneur principal Mobile-First -->
+    <div class="w-full max-w-md bg-white h-full flex flex-col shadow-2xl relative overflow-hidden sm:h-[94vh] sm:my-auto sm:rounded-3xl border border-slate-200/80 no-print">
+
+        <!-- En-tête -->
+        <header class="bg-white border-b border-slate-100 px-5 py-3.5 flex items-center justify-between z-10 shrink-0">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold">
+                    <svg class="w-7 h-7 text-primary" viewBox="0 0 64 64" fill="none" aria-label="Logo Digestiv">
+                        <path d="M29 11v5.5c0 1.9 1.7 3 4 3 5 0 8.5 3.7 8.5 8.4 0 4.8-4 8-9.2 8h-5.6c-4 0-6.6 2.2-6.6 5.4 0 3.2 2.6 5.2 6.6 5.2h7.3c3.8 0 6.3 2 6.3 4.9 0 3-2.8 4.9-7.1 4.9h-2.1v3.2" stroke="currentColor" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="24.5" cy="27.5" r="2.1" fill="currentColor"/>
+                        <circle cx="35.5" cy="27.5" r="2.1" fill="currentColor"/>
+                        <path d="M28 31.2c1.3 1.3 2.7 1.3 4 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-brand font-bold text-slate-900 text-2xl leading-none tracking-wide">
+                        Digestiv
+                    </h1>
+                    <p class="text-[11px] text-slate-500 mt-0.5" id="header-date">Aujourd'hui</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-1.5">
+                <button onclick="openReminderModal()" id="header-reminder-btn" aria-label="Rappel du soir" title="Rappel bilan du soir" class="bg-softGray hover:bg-slate-200/70 text-slate-600 border border-slate-200/80 w-8 h-8 rounded-2xl text-xs font-bold flex items-center justify-center transition active:scale-95 relative">
+                    <span>🔔</span>
+                    <span id="header-reminder-dot" class="hidden w-2 h-2 rounded-full bg-success absolute top-1 right-1"></span>
+                </button>
+                <button onclick="openCrisisModal()" aria-label="Urgence Crise" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/80 px-2.5 py-1.5 rounded-2xl text-[11px] font-bold flex items-center gap-1 transition active:scale-95">
+                    <span>🆘</span><span>Urgence Crise</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Zone de contenu défilante -->
+        <main id="main-container" class="flex-1 overflow-y-auto relative bg-cream/70 p-4 pb-24 hide-scrollbar">
+
+            <!-- =============================================================== -->
+            <!-- ONGLET 1 : ACCUEIL                                              -->
+            <!-- =============================================================== -->
+            <div id="tab-home" class="space-y-4">
+
+                <!-- Bannière intelligente Rappel Bilan du Soir -->
+                <div id="evening-reminder-banner" class="hidden"></div>
+                
+                <!-- Carte Principale Bilan du Jour -->
+                <div class="bg-gradient-to-br from-primary to-blue-600 rounded-3xl p-5 text-white shadow-lg shadow-primary/20 relative overflow-hidden">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h2 class="text-xl font-bold mt-2 flex items-center gap-1.5 flex-wrap">
+                                <span>Bonjour<span id="user-greeting-name"></span> 👋</span>
+                                <button onclick="openUserNameModal()" aria-label="Modifier mon prénom" title="Personnaliser mon prénom" class="w-6 h-6 rounded-full bg-white/20 hover:bg-white/30 text-white text-xs flex items-center justify-center transition">
+                                    ✏️
+                                </button>
+                            </h2>
+                        </div>
+                        <button type="button" onclick="openStreakModal()" class="text-right bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-2xl transition active:scale-95">
+                            <span class="text-[10px] text-blue-100 block">Série en cours</span>
+                            <span class="font-bold text-base flex items-center justify-end gap-1" id="streak-badge">🔥 0 j</span>
+                        </button>
+                    </div>
+                    <p class="text-blue-50 text-xs leading-relaxed mb-4">
+                        Enregistrez vos ressentis, votre transit et vos repas chaque jour pour repérer facilement ce qui vous fait du bien ou vous irrite.
+                    </p>
+                    <div class="space-y-2.5">
+                        <button onclick="openCheckinModal()" class="w-full bg-white text-primary hover:bg-blue-50 font-bold py-3 px-4 rounded-2xl shadow-md transition flex items-center justify-center gap-2 text-sm active:scale-[0.99]">
+                            ✍️ Enregistrer mon bilan
+                        </button>
+                        <button onclick="logCalmDayOneClick()" class="w-full bg-emerald-500/95 hover:bg-emerald-500 text-white border border-emerald-300/40 font-bold py-2.5 px-4 rounded-2xl shadow-sm transition flex items-center justify-center gap-2 text-xs active:scale-[0.99]">
+                            ✨ Journée calme (Tout va bien) — 1 clic
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Carte Paix Digestive -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-bold text-slate-800">💚 Paix Digestive</span>
+                            <button onclick="openPeaceInfoModal()" aria-label="Qu'est-ce que la paix digestive ?" class="w-5 h-5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary font-bold text-[11px] flex items-center justify-center transition">
+                                ?
+                            </button>
+                        </div>
+                        <p class="text-[11px] text-slate-500" id="kpi-peace-subtitle">En attente de votre premier bilan</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-2xl font-bold text-slate-900" id="kpi-peace">—</span>
+                        <span class="text-[10px] text-success font-semibold block" id="kpi-peace-tag">Jours calmes</span>
+                    </div>
+                </div>
+
+                <!-- Carte Série Quotidienne (Style Duolingo : 7 jours de la semaine + flamme + gel de série) -->
+                <div onclick="openStreakModal()" class="cursor-pointer bg-white hover:bg-amber-50/30 p-4 rounded-3xl border border-slate-100 shadow-sm space-y-3 transition">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div id="duo-flame-box" class="w-10 h-10 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center text-xl font-bold transition">
+                                🔥
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-sm font-bold text-slate-900" id="duo-streak-title">0 jour de série</span>
+                                    <span id="duo-shield-pill" class="text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200 px-2 py-0.5 rounded-full">❄️ 0 gel</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500" id="duo-streak-subtitle">Faites votre bilan aujourd'hui pour allumer la flamme !</p>
+                            </div>
+                        </div>
+                        <span class="text-slate-300 text-xs font-bold">›</span>
+                    </div>
+                    <!-- 7 jours de la semaine (Lun -> Dim) -->
+                    <div id="duo-week-days" class="grid grid-cols-7 gap-1.5 text-center pt-0.5"></div>
+                </div>
+
+                <!-- Météo Intestinale (Uniquement à partir de digestiv_install_date) -->
+                <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-sm">🌤️ Météo Intestinale</h3>
+                            <p class="text-[10px] text-slate-400" id="weather-since-label">Depuis votre installation</p>
+                        </div>
+                        <span class="text-[11px] text-slate-400">Touchez un jour</span>
+                    </div>
+                    <div id="weekly-weather-grid" class="grid grid-cols-7 gap-1.5 text-center"></div>
+                    <div id="day-detail-banner" class="mt-3 p-3 bg-softGray rounded-2xl text-xs text-slate-600 hidden"></div>
+                </div>
+
+                <!-- Encart Expérience / Défi (Jusqu'à 10 défis simultanés) -->
+                <div id="home-challenge-container"></div>
+
+            </div>
+
+            <!-- =============================================================== -->
+            <!-- ONGLET 2 : ANALYSES & CORRÉLATIONS                              -->
+            <!-- =============================================================== -->
+            <div id="tab-stats" class="space-y-4 hidden">
+                <div>
+                    <h2 class="font-bold text-slate-900 text-lg">Analyses & Corrélations</h2>
+                    <p class="text-xs text-slate-500">
+                        Croisement intelligent de vos bilans réels, combos déclencheurs et transit Bristol.
+                    </p>
+                </div>
+
+                <!-- ÉTAT PÉDAGOGIQUE DÉBUTANT (< 5 bilans enregistrés) -->
+                <div id="stats-onboarding-view" class="space-y-4">
+                    <div class="bg-gradient-to-br from-blue-50 via-white to-emerald-50/60 border border-blue-200/80 rounded-3xl p-5 shadow-sm space-y-3.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">🧠 Calibration de votre profil</span>
+                            <span class="text-xs font-bold text-slate-700" id="onboarding-days-counter">0 / 5 bilans</span>
+                        </div>
+                        <h3 class="font-bold text-slate-900 text-base">Apprentissage progressif de vos données</h3>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Pour éviter toute <strong>fausse alerte</strong>, l'algorithme attend au moins <strong>5 bilans enregistrés</strong> avant de tracer vos courbes et corrélations statistiques.
+                        </p>
+                        <div class="space-y-1.5">
+                            <div class="w-full bg-slate-200/80 h-2.5 rounded-full overflow-hidden">
+                                <div id="onboarding-progress-bar" class="bg-primary h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                            <p class="text-[10px] text-slate-500 text-right" id="onboarding-remaining-text">Encore 5 bilans pour débloquer l'analyse complète</p>
+                        </div>
+                        <button onclick="openCheckinModal()" class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-2.5 rounded-2xl text-xs shadow-sm transition">
+                            ✍️ Enregistrer mon bilan
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ÉTAT COMPLET (>= 5 bilans enregistrés) -->
+                <div id="stats-full-view" class="space-y-4 hidden">
+                    <!-- Graphique Courbe -->
+                    <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-bold text-slate-800 text-sm">📈 Douleur, Ballonnements & Gaz</h3>
+                            <span class="text-[10px] text-slate-400">Échelle 0-10</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Répartition Échelle de Bristol -->
+                    <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-slate-800 text-sm">🚽 Répartition du Transit (Bristol 1-7)</h3>
+                            <span class="text-[10px] text-slate-400" id="bristol-total-label">0 bilan</span>
+                        </div>
+                        <div id="bristol-distribution-list" class="space-y-2"></div>
+                    </div>
+
+                    <!-- Score d'Impact Réel (Différentiel Crise vs Calme) -->
+                    <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-3.5">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-slate-800 text-sm">🎯 Score d'Impact Réel</h3>
+                            <span class="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">Crise vs Calme</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 leading-relaxed">
+                            Compare le taux de crise <strong>avec</strong> ce facteur par rapport au taux <strong>sans</strong> ce facteur (isole les vrais déclencheurs des habitudes neutres).
+                        </p>
+                        <div id="correlations-list" class="space-y-3"></div>
+                    </div>
+
+                    <!-- Historique Visuel -->
+                    <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-bold text-slate-800 text-sm">🗓️ Historique de vos bilans</h3>
+                            <div class="flex items-center gap-1.5 text-[10px] text-slate-500">
+                                <span class="w-2.5 h-2.5 rounded-sm bg-success/40 inline-block"></span>Calme
+                                <span class="w-2.5 h-2.5 rounded-sm bg-warning/50 inline-block"></span>Modéré
+                                <span class="w-2.5 h-2.5 rounded-sm bg-rose-400 inline-block"></span>Crise
+                            </div>
+                        </div>
+                        <div id="monthly-heatmap" class="grid grid-cols-7 gap-1.5"></div>
+                    </div>
+                </div>
+
+                <!-- RADAR DES COMBOS DÉCLENCHEURS -->
+                <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-base">📡</span>
+                            <h3 class="font-bold text-slate-800 text-sm">Combos Déclencheurs</h3>
+                            <button onclick="openRadarInfoModal('trigger')" aria-label="Fonctionnement du radar des combos déclencheurs" class="w-5 h-5 rounded-full bg-amber-100/80 hover:bg-amber-200/80 text-amber-800 font-bold text-[11px] flex items-center justify-center transition">
+                                ?
+                            </button>
+                        </div>
+                    </div>
+                    <div id="combos-radar-container"></div>
+                </div>
+
+                <!-- RADAR DES COMBOS GUÉRISSEURS -->
+                <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-base">💚</span>
+                            <h3 class="font-bold text-slate-800 text-sm">Combos Guérisseurs</h3>
+                            <button onclick="openRadarInfoModal('healing')" aria-label="Fonctionnement du radar des combos guérisseurs" class="w-5 h-5 rounded-full bg-emerald-100/80 hover:bg-emerald-200/80 text-emerald-800 font-bold text-[11px] flex items-center justify-center transition">
+                                ?
+                            </button>
+                        </div>
+                    </div>
+                    <div id="healing-combos-radar-container"></div>
+                </div>
+
+                <!-- Module Défis Personnalisés (jusqu'à 10 simultanés) + Badges -->
+                <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-3.5">
+                    <div class="flex items-center justify-between gap-2">
+                        <div>
+                            <div class="flex items-center gap-1.5">
+                                <h3 class="font-bold text-slate-800 text-sm">🧪 Défis Personnels</h3>
+                                <span id="active-challenges-counter" class="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">0 / 10</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500">Jusqu'à 10 expériences simultanées en instantané.</p>
+                        </div>
+                        <button id="btn-create-challenge-stats" onclick="openChallengeCreatorModal()" class="bg-primary text-white text-xs font-bold px-3.5 py-2 rounded-2xl hover:bg-blue-600 shadow-xs transition shrink-0">
+                            + Créer un défi
+                        </button>
+                    </div>
+
+                    <!-- Vitrine fluide et minimaliste des badges de défis -->
+                    <div id="challenge-badges-strip" class="pt-0.5"></div>
+
+                    <!-- Encart gage actif éventuel -->
+                    <div id="gamification-summary-bar"></div>
+
+                    <!-- Liste des défis actifs (max 10) -->
+                    <div id="stats-challenge-status" class="space-y-2.5"></div>
+                </div>
+            </div>
+
+            <!-- =============================================================== -->
+            <!-- ONGLET 3 : ENTRAIDE & BASE DOCUMENTAIRE MÉDICALE                -->
+            <!-- =============================================================== -->
+            <div id="tab-community" class="space-y-4 hidden">
+                <div>
+                    <h2 class="font-bold text-slate-900 text-lg">Savoir Médical & Entraide</h2>
+                    <p class="text-xs text-slate-500">
+                        Référentiels scientifiques internationaux, défis personnels et partages patients.
+                    </p>
+                </div>
+
+                <!-- Sous-onglets -->
+                <div class="grid grid-cols-2 gap-2 bg-slate-200/70 p-1 rounded-2xl">
+                    <button onclick="switchCommunitySubTab('resources')" id="subtab-btn-resources" class="py-2 px-3 rounded-xl text-xs font-bold bg-white text-primary shadow-sm transition">
+                        📚 Ressources Médicales
+                    </button>
+                    <button onclick="switchCommunitySubTab('tips')" id="subtab-btn-tips" class="py-2 px-3 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 transition">
+                        🤝 Entraide & Défis
+                    </button>
+                </div>
+
+                <!-- Ressources Scientifiques -->
+                <div id="subtab-resources" class="space-y-3">
+                    <div class="flex gap-1.5 overflow-x-auto hide-scrollbar pb-1">
+                        <button onclick="filterResources('all')" class="res-filter bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded-xl shrink-0">Toutes (9)</button>
+                        <button onclick="filterResources('Recommandations')" class="res-filter bg-white border border-slate-200 text-slate-600 text-xs font-medium px-3 py-1.5 rounded-xl shrink-0">🩺 Recommandations</button>
+                        <button onclick="filterResources('Nutrition')" class="res-filter bg-white border border-slate-200 text-slate-600 text-xs font-medium px-3 py-1.5 rounded-xl shrink-0">🥗 FODMAP & Nutrition</button>
+                        <button onclick="filterResources('Neuro-gastro')" class="res-filter bg-white border border-slate-200 text-slate-600 text-xs font-medium px-3 py-1.5 rounded-xl shrink-0">🧠 Cerveau-Intestin</button>
+                        <button onclick="filterResources('Thérapies')" class="res-filter bg-white border border-slate-200 text-slate-600 text-xs font-medium px-3 py-1.5 rounded-xl shrink-0">🌿 Approches Complémentaires</button>
+                    </div>
+                    <div id="resources-feed" class="space-y-3"></div>
+                </div>
+
+                <!-- Mur des Astuces & Défis -->
+                <div id="subtab-tips" class="space-y-3 hidden">
+                    <div class="bg-white border border-slate-200/80 rounded-3xl p-4 shadow-sm flex items-center justify-between gap-3">
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-900">🧪 Lancer une expérience personnelle</h4>
+                            <p class="text-[11px] text-slate-500">Jusqu'à 10 défis simultanés sur 3 à 21 jours.</p>
+                        </div>
+                        <button onclick="openChallengeCreatorModal()" class="bg-primary text-white text-xs font-bold px-3.5 py-2 rounded-2xl shrink-0">
+                            + Nouveau défi
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-1">
+                        <span class="text-xs font-bold text-slate-700">Partages de la communauté SII</span>
+                        <button onclick="openTipModal()" class="bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-2 rounded-2xl text-xs font-semibold shadow-sm transition">
+                            + Partager une astuce
+                        </button>
+                    </div>
+                    <div class="flex gap-1.5 overflow-x-auto hide-scrollbar pb-1">
+                        <button onclick="filterTips('all')" class="tip-filter bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded-xl shrink-0">Tout</button>
+                        <button onclick="filterTips('Alimentation')" class="tip-filter bg-white border border-slate-200 text-slate-600 text-xs font-medium px-3 py-1.5 rounded-xl shrink-0">🥗 Alimentation</button>
+                        <button onclick="filterTips('Stress')" class="tip-filter bg-white border border-slate-200 text-slate-600 text-xs font-medium px-3 py-1.5 rounded-xl shrink-0">🧘‍♂️ Stress</button>
+                        <button onclick="filterTips('Soulagement')" class="tip-filter bg-white border border-slate-200 text-slate-600 text-xs font-medium px-3 py-1.5 rounded-xl shrink-0">🔥 Soulagement</button>
+                    </div>
+                    <div id="community-feed" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <!-- =============================================================== -->
+            <!-- ONGLET 4 : MÉDECIN & MES FACTEURS PERSONNALISÉS                 -->
+            <!-- =============================================================== -->
+            <div id="tab-profile" class="space-y-4 hidden">
+                <div>
+                    <h2 class="font-bold text-slate-900 text-lg">Médecin et Moi</h2>
+                    <p class="text-xs text-slate-500">Votre espace personnel, vos rappels et votre rapport médical PDF.</p>
+                </div>
+
+                <!-- Carte Statut Local -->
+                <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 flex items-center space-x-3.5">
+                    <div class="w-14 h-14 rounded-2xl bg-primary text-white font-bold flex items-center justify-center shrink-0">
+                        <svg class="w-9 h-9 text-white" viewBox="0 0 64 64" fill="none" aria-label="Logo Digestiv">
+                            <path d="M29 11v5.5c0 1.9 1.7 3 4 3 5 0 8.5 3.7 8.5 8.4 0 4.8-4 8-9.2 8h-5.6c-4 0-6.6 2.2-6.6 5.4 0 3.2 2.6 5.2 6.6 5.2h7.3c3.8 0 6.3 2 6.3 4.9 0 3-2.8 4.9-7.1 4.9h-2.1v3.2" stroke="currentColor" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="24.5" cy="27.5" r="2.1" fill="currentColor"/>
+                            <circle cx="35.5" cy="27.5" r="2.1" fill="currentColor"/>
+                            <path d="M28 31.2c1.3 1.3 2.7 1.3 4 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-bold text-slate-900 text-base" id="profile-user-title">Mon Espace Digestiv</h3>
+                            <button onclick="openUserNameModal()" class="text-[11px] text-primary font-semibold hover:underline">✏️ Prénom</button>
+                        </div>
+                        <p class="text-xs text-slate-500" id="profile-first-use-label">Suivi personnel SII • 100% Hors-ligne</p>
+                        <span class="inline-block mt-1 text-[10px] bg-success/15 text-success font-semibold px-2 py-0.5 rounded-full" id="total-entries-badge">0 bilan enregistré</span>
+                    </div>
+                </div>
+
+                <!-- Carte Compte & Sauvegarde Cloud -->
+                <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 flex items-center justify-between gap-3">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-1.5">
+                            <span id="auth-status-icon" class="text-sm">☁️</span>
+                            <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider">Compte & Sauvegarde Cloud</h4>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-0.5 truncate" id="profile-auth-status">Mode local • Connectez-vous pour synchroniser</p>
+                    </div>
+                    <button onclick="openAuthModal()" id="profile-auth-btn" class="bg-primary hover:bg-blue-600 text-white font-bold text-xs px-3.5 py-2.5 rounded-2xl shadow-xs transition shrink-0">
+                        Se connecter
+                    </button>
+                </div>
+
+                <!-- Rapport PDF Médecin -->
+                <div class="bg-slate-900 text-white rounded-3xl p-5 shadow-lg space-y-3.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] bg-white/15 px-2.5 py-1 rounded-full text-blue-200 font-medium">🩺 Synthèse Gastro-entérologue</span>
+                        <span class="text-lg">📄</span>
+                    </div>
+                    <h3 class="font-bold text-base">Rapport Clinique de Suivi</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Génère une fiche récapitulative imprimable ou enregistrable en PDF avec votre douleur moyenne, score de Paix Digestive, répartition Bristol, facteurs déclencheurs et combos.
+                    </p>
+                    <button onclick="openMedicalReportModal()" class="w-full bg-primary hover:bg-blue-600 text-white text-xs font-bold py-3 rounded-2xl transition shadow-md">
+                        👁️ Aperçu & Export PDF Médecin
+                    </button>
+                </div>
+
+                <!-- Rappel Quotidien en Fin de Journée -->
+                <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider">🔔 Rappel bilan du soir</h4>
+                            <p class="text-[11px] text-slate-500 mt-0.5" id="profile-reminder-status">Désactivé • Ne manquez plus votre bilan</p>
+                        </div>
+                        <button onclick="openReminderModal()" class="bg-primary/10 hover:bg-primary/20 text-primary font-bold text-xs px-3 py-2 rounded-xl transition shrink-0">
+                            Configurer
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sauvegarde & Réinitialisation Complète -->
+                <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-2.5">
+                    <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider">Gestion des données locales</h4>
+                    <button onclick="exportJsonBackup()" class="w-full text-left px-3.5 py-2.5 rounded-2xl bg-softGray hover:bg-slate-200/70 text-xs font-semibold text-slate-700 flex items-center justify-between transition">
+                        <span>💾 Exporter mes données (JSON)</span>
+                        <span>→</span>
+                    </button>
+                    <button onclick="openResetConfirmModal()" class="w-full text-left px-3.5 py-2.5 rounded-2xl bg-rose-50 hover:bg-rose-100 text-xs font-semibold text-rose-600 flex items-center justify-between transition">
+                        <span>🗑️ Réinitialiser toutes les données locales</span>
+                        <span>↺</span>
+                    </button>
+                </div>
+
+                <!-- Lien Règles de confidentialité & Contact -->
+                <div class="text-center pt-1 pb-2 space-y-1">
+                    <a href="./privacy.html" target="_blank" rel="noopener noreferrer" class="text-[11px] text-slate-400 hover:text-primary underline block">
+                        Règles de confidentialité & Mentions légales
+                    </a>
+                    <span class="text-[10px] text-slate-400 block">Contact : nicolasdigestiv@gmail.com</span>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Barre de Navigation Inférieure à 5 boutons -->
+        <nav class="bg-white border-t border-slate-100 px-3 py-2 flex items-center justify-around z-20 shrink-0">
+            <button onclick="switchTab('home')" id="nav-home" class="flex flex-col items-center text-primary transition space-y-0.5 py-1 px-2">
+                <span class="text-lg">🏠</span>
+                <span class="text-[10px] font-bold">Accueil</span>
+            </button>
+            <button onclick="switchTab('stats')" id="nav-stats" class="flex flex-col items-center text-slate-400 hover:text-slate-600 transition space-y-0.5 py-1 px-2">
+                <span class="text-lg">📊</span>
+                <span class="text-[10px] font-medium">Analyses</span>
+            </button>
+            <button onclick="openCheckinModal()" aria-label="Enregistrer mon bilan" class="w-12 h-12 bg-primary hover:bg-blue-600 text-white rounded-2xl shadow-lg shadow-primary/30 flex items-center justify-center -mt-5 text-xl font-bold transition transform active:scale-95">
+                +
+            </button>
+            <button onclick="switchTab('community')" id="nav-community" class="flex flex-col items-center text-slate-400 hover:text-slate-600 transition space-y-0.5 py-1 px-2">
+                <span class="text-lg">📚</span>
+                <span class="text-[10px] font-medium">Savoir</span>
+            </button>
+            <button onclick="switchTab('profile')" id="nav-profile" class="flex flex-col items-center text-slate-400 hover:text-slate-600 transition space-y-0.5 py-1 px-2">
+                <span class="text-lg">🩺</span>
+                <span class="text-[10px] font-medium">Médecin et Moi</span>
+            </button>
+        </nav>
+
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODALE : BIENVENUE & INITIALISATION (1ÈRE OUVERTURE)                  -->
+    <!-- ===================================================================== -->
+    <div id="welcome-onboarding-modal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-5 relative overflow-hidden">
+            <!-- Indicateur d'étape -->
+            <div class="flex items-center justify-between">
+                <span id="welcome-step-badge" class="text-[11px] font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">Bienvenue • 1 / 3</span>
+                <button id="welcome-skip-btn" onclick="goToWelcomeStep(3, true)" class="text-[11px] font-semibold text-slate-400 hover:text-slate-600 transition">Passer</button>
+            </div>
+
+            <!-- Étape 1 : But de l'application -->
+            <div id="welcome-step-1" class="space-y-4">
+                <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mx-auto">
+                    <svg class="w-9 h-9 text-primary" viewBox="0 0 64 64" fill="none">
+                        <path d="M29 11v5.5c0 1.9 1.7 3 4 3 5 0 8.5 3.7 8.5 8.4 0 4.8-4 8-9.2 8h-5.6c-4 0-6.6 2.2-6.6 5.4 0 3.2 2.6 5.2 6.6 5.2h7.3c3.8 0 6.3 2 6.3 4.9 0 3-2.8 4.9-7.1 4.9h-2.1v3.2" stroke="currentColor" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="24.5" cy="27.5" r="2.1" fill="currentColor"/>
+                        <circle cx="35.5" cy="27.5" r="2.1" fill="currentColor"/>
+                        <path d="M28 31.2c1.3 1.3 2.7 1.3 4 0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="text-center space-y-1.5">
+                    <h2 class="font-brand font-bold text-2xl text-slate-900">Bienvenue sur Digestiv</h2>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        Votre compagnon quotidien pour apaiser et comprendre le Syndrome de l'Intestin Irritable (SII).
+                    </p>
+                </div>
+                <div class="bg-softGray/80 rounded-2xl p-3.5 space-y-2.5 text-xs text-slate-700">
+                    <div class="flex items-start gap-2.5">
+                        <span class="text-base shrink-0">✍️</span>
+                        <span><strong>Suivez vos journées :</strong> notez vos ressentis, votre transit (Bristol) et vos habitudes en quelques secondes.</span>
+                    </div>
+                    <div class="flex items-start gap-2.5">
+                        <span class="text-base shrink-0">📡</span>
+                        <span><strong>Repérez vos déclencheurs & alliés :</strong> l'application croise vos données pour isoler ce qui vous irrite et ce qui vous soulage.</span>
+                    </div>
+                    <div class="flex items-start gap-2.5">
+                        <span class="text-base shrink-0">🔒</span>
+                        <span><strong>100 % privé et hors-ligne :</strong> vos données restent uniquement sur votre téléphone, exportables en PDF pour votre médecin.</span>
+                    </div>
+                </div>
+                <div class="space-y-2 pt-1">
+                    <button onclick="goToWelcomeStep(2)" class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-2xl text-xs shadow-md shadow-primary/20 transition">
+                        Continuer sans compte →
+                    </button>
+                    <button onclick="openAuthFromOnboarding()" id="welcome-auth-btn" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-2xl text-xs shadow-sm transition flex items-center justify-center gap-2">
+                        <span>☁️</span><span>Se connecter / Créer un compte</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Étape 2 : Choisir son prénom -->
+            <div id="welcome-step-2" class="space-y-4 hidden">
+                <div class="text-center space-y-1.5">
+                    <span class="text-3xl block">👋</span>
+                    <h3 class="font-bold text-base text-slate-900">Comment souhaitez-vous être appelé(e) ?</h3>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        Votre prénom personnalisera votre accueil et l'en-tête de vos bilans PDF médecin (modifiable à tout moment).
+                    </p>
+                </div>
+                <div>
+                    <input type="text" id="welcome-user-name-input" maxlength="35" placeholder="Ex : Nicolas, Camille..." onkeydown="if(event.key==='Enter') goToWelcomeStep(3)" class="w-full bg-softGray border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-900 text-center font-medium focus:outline-none focus:border-primary">
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="goToWelcomeStep(1)" class="px-4 py-3 rounded-2xl bg-softGray text-slate-600 text-xs font-semibold hover:bg-slate-200/70 transition">
+                        ← Retour
+                    </button>
+                    <button onclick="goToWelcomeStep(3)" class="flex-1 bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-2xl text-xs shadow-md shadow-primary/20 transition">
+                        Continuer →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Étape 3 (Dernier pop-up d'initialisation) : Avertissement médical -->
+            <div id="welcome-step-3" class="space-y-4 hidden">
+                <div class="text-center space-y-1.5">
+                    <span class="text-3xl block">🩺</span>
+                    <h3 class="font-bold text-base text-slate-900">Information importante</h3>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        Avant de démarrer votre suivi quotidien :
+                    </p>
+                </div>
+                <div class="bg-amber-50/90 border border-amber-200/80 rounded-2xl p-4 space-y-2.5 text-xs text-slate-700 leading-relaxed">
+                    <p class="font-semibold text-slate-900">
+                        Digestiv ne se soustrait pas à un avis médical et n'est qu'une aide dans la vie d'un malade.
+                    </p>
+                    <p class="text-[11px] text-slate-600">
+                        Cette application est un outil personnel d'observation et d'accompagnement au quotidien. Elle ne pose aucun diagnostic et ne remplace en aucun cas la consultation, le suivi ou les prescriptions de votre médecin ou gastro-entérologue.
+                    </p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="goToWelcomeStep(2)" class="px-4 py-3 rounded-2xl bg-softGray text-slate-600 text-xs font-semibold hover:bg-slate-200/70 transition">
+                        ← Retour
+                    </button>
+                    <button onclick="finishWelcomeOnboarding(false)" class="flex-1 bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-2xl text-xs shadow-md shadow-primary/20 transition">
+                        J'ai compris, démarrer ✨
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODALE : QU'EST-CE QUE LA PAIX DIGESTIVE ?                            -->
+    <!-- ===================================================================== -->
+    <div id="peace-info-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">💚</span>
+                    <h3 class="font-bold text-slate-900 text-sm">Qu'est-ce que la Paix Digestive ?</h3>
+                </div>
+                <button onclick="document.getElementById('peace-info-modal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 text-xs font-bold">✕</button>
+            </div>
+            <div class="space-y-2.5 text-xs text-slate-600 leading-relaxed">
+                <p>
+                    La <strong>Paix Digestive</strong> mesure le pourcentage de jours où votre système digestif vous laisse tranquille et où vous profitez d'un vrai confort quotidien.
+                </p>
+                <div class="bg-emerald-50/80 border border-emerald-200/70 rounded-2xl p-3.5 space-y-1.5 text-slate-700">
+                    <p class="font-bold text-emerald-800 text-[11px] uppercase tracking-wider">Comment est-elle calculée ?</p>
+                    <ul class="list-disc pl-4 space-y-1 text-[11px]">
+                        <li><strong>Douleur abdominale faible :</strong> inférieure ou égale à <strong>3 / 10</strong>.</li>
+                        <li><strong>Ballonnements maîtrisés :</strong> inférieurs ou égaux à <strong>3 / 10</strong>.</li>
+                        <li><strong>Objectif positif :</strong> plutôt que de focaliser uniquement sur les crises, cet indicateur valorise vos périodes d'accalmie et vos progrès réels.</li>
+                    </ul>
+                </div>
+            </div>
+            <button onclick="document.getElementById('peace-info-modal').classList.add('hidden')" class="w-full bg-primary text-white font-bold py-2.5 rounded-2xl text-xs">
+                J'ai compris ✨
+            </button>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODALE : EXPLICATION DES RADARS DE COMBOS (?)                         -->
+    <!-- ===================================================================== -->
+    <div id="radar-info-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl" id="radar-info-icon">📡</span>
+                    <h3 class="font-bold text-slate-900 text-sm" id="radar-info-title">Fonctionnement du Radar</h3>
+                </div>
+                <button onclick="document.getElementById('radar-info-modal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 text-xs font-bold">✕</button>
+            </div>
+            <div id="radar-info-body" class="space-y-2.5 text-xs text-slate-600 leading-relaxed"></div>
+            <button onclick="document.getElementById('radar-info-modal').classList.add('hidden')" class="w-full bg-primary text-white font-bold py-2.5 rounded-2xl text-xs">
+                J'ai compris ✨
+            </button>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODALE : CRÉATEUR DE DÉFI PERSONNALISÉ (INSTANTANÉ JUSQU'À 10)        -->
+    <!-- ===================================================================== -->
+    <div id="challenge-creator-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto hide-scrollbar">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h3 class="font-bold text-slate-900 text-sm">🧪 Créer des Défis / Expériences</h3>
+                        <span id="modal-challenges-counter" class="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">0 / 10</span>
+                    </div>
+                    <p class="text-[11px] text-slate-500">Ajoutez vos défis en instantané (jusqu'à 10 actifs) • 🏅 Badges à débloquer</p>
+                </div>
+                <button onclick="document.getElementById('challenge-creator-modal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 text-xs font-bold">✕</button>
+            </div>
+
+            <div>
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">💡 Proposition de défis</label>
+                    <span class="text-[10px] text-slate-400">Touchez pour sélectionner</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5" id="challenge-proposals-list">
+                    <button type="button" onclick="selectChallengeProposal('Sans caféine le matin')" class="text-[11px] bg-softGray hover:bg-primary/10 hover:text-primary text-slate-700 px-2.5 py-1.5 rounded-xl font-medium transition">☕ Sans caféine</button>
+                    <button type="button" onclick="selectChallengeProposal('Sans lactose / produits laitiers')" class="text-[11px] bg-softGray hover:bg-primary/10 hover:text-primary text-slate-700 px-2.5 py-1.5 rounded-xl font-medium transition">🥛 Sans lactose</button>
+                    <button type="button" onclick="selectChallengeProposal('15 min de marche après le dîner')" class="text-[11px] bg-softGray hover:bg-primary/10 hover:text-primary text-slate-700 px-2.5 py-1.5 rounded-xl font-medium transition">🚶 Marche digestive</button>
+                    <button type="button" onclick="selectChallengeProposal('5 min de cohérence cardiaque / jour')" class="text-[11px] bg-softGray hover:bg-primary/10 hover:text-primary text-slate-700 px-2.5 py-1.5 rounded-xl font-medium transition">🫁 Cohérence cardiaque</button>
+                    <button type="button" onclick="selectChallengeProposal('1,5 L d’eau plate par jour')" class="text-[11px] bg-softGray hover:bg-primary/10 hover:text-primary text-slate-700 px-2.5 py-1.5 rounded-xl font-medium transition">💧 Hydratation 1,5L</button>
+                    <button type="button" onclick="selectChallengeProposal('Zéro sucre raffiné le soir')" class="text-[11px] bg-softGray hover:bg-primary/10 hover:text-primary text-slate-700 px-2.5 py-1.5 rounded-xl font-medium transition">🍬 Sans sucre le soir</button>
+                    <button type="button" onclick="selectChallengeProposal('Tisane menthe / fenouil après repas')" class="text-[11px] bg-softGray hover:bg-primary/10 hover:text-primary text-slate-700 px-2.5 py-1.5 rounded-xl font-medium transition">🍵 Tisane digestive</button>
+                    <button type="button" onclick="selectChallengeProposal('Manger lentement (20 min min.)')" class="text-[11px] bg-softGray hover:bg-primary/10 hover:text-primary text-slate-700 px-2.5 py-1.5 rounded-xl font-medium transition">🍽️ Mastication lente</button>
+                </div>
+            </div>
+
+            <hr class="border-slate-100">
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Ou saisissez un défi sur-mesure</label>
+                    <input type="text" id="custom-challenge-title" onkeydown="if(event.key==='Enter') saveCustomChallenge(true)" placeholder="Ex: Sans gluten, Pas d'écran 30 min avant dodo..." class="w-full bg-softGray border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-primary">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Durée (jours)</label>
+                        <select id="custom-challenge-duration" class="w-full bg-softGray border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none">
+                            <option value="3">3 jours (Test flash)</option>
+                            <option value="7" selected>7 jours (Recommandé)</option>
+                            <option value="14">14 jours (Approfondi)</option>
+                            <option value="21">21 jours (Nouvelle habitude)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Thématique</label>
+                        <select id="custom-challenge-cat" class="w-full bg-softGray border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none">
+                            <option value="Alimentation">🥗 Alimentation</option>
+                            <option value="Stress">🧘‍♂️ Stress & Sommeil</option>
+                            <option value="Hygiène de vie">🏃‍♂️ Hygiène de vie</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex gap-2">
+                    <button type="button" onclick="saveCustomChallenge(true)" class="flex-1 bg-primary/10 hover:bg-primary/20 text-primary font-bold py-3 rounded-2xl text-xs transition">
+                        + Ajouter & continuer
+                    </button>
+                    <button type="button" onclick="saveCustomChallenge(false)" class="flex-1 bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-2xl text-xs shadow-md transition">
+                        🚀 Lancer & fermer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODALE : BADGE DÉBLOQUÉ (CIRCUIT DE LA RÉCOMPENSE / DOPAMINE)         -->
+    <!-- ===================================================================== -->
+    <div id="badge-unlock-modal" class="fixed inset-0 bg-slate-900/65 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white w-full max-w-xs rounded-3xl p-6 shadow-2xl text-center space-y-4 animate-badge-pop border border-slate-100">
+            <div class="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-br from-amber-50 to-emerald-50 border border-amber-200/70 flex items-center justify-center text-4xl shadow-xs" id="badge-unlock-icon">
+                🏅
+            </div>
+            <div class="space-y-1">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-success bg-success/10 px-2.5 py-0.5 rounded-full">Nouveau badge débloqué</span>
+                <h3 class="font-bold text-slate-900 text-base pt-1" id="badge-unlock-title">Premier Pas</h3>
+                <p class="text-xs text-slate-500 leading-relaxed" id="badge-unlock-desc">Vous avez validé votre premier jour de défi.</p>
+            </div>
+            <button onclick="closeBadgeUnlockModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-2xl text-xs transition">
+                Continuer ✨
+            </button>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODALE : BILAN DU JOUR EN 2 ÉTAPES (AVEC ÉCHELLE DE BRISTOL 1-7)      -->
+    <!-- ===================================================================== -->
+    <div id="checkin-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden no-print">
+        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            
+            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+                <div class="flex items-center space-x-2">
+                    <span class="px-2.5 py-1 rounded-xl bg-primary/10 text-primary font-bold text-xs" id="checkin-step-badge">Étape 1 / 2</span>
+                    <h3 class="font-bold text-slate-900 text-sm" id="checkin-step-title">Bilan du jour — Symptômes & Bristol</h3>
+                </div>
+                <button onclick="closeCheckinModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center text-xs font-bold">✕</button>
+            </div>
+
+            <div class="p-5 overflow-y-auto space-y-5 flex-1 hide-scrollbar">
+                
+                <!-- ÉTAPE 1 : SYMPTÔMES + ÉCHELLE DE BRISTOL VISUELLE (1 à 7) + STRESS -->
+                <div id="step-1" class="space-y-5">
+                    <!-- Douleur 0-10 -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="text-xs font-bold text-slate-700">Douleur abdominale</label>
+                            <span id="pain-display" class="text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-lg">0 / 10</span>
+                        </div>
+                        <input type="range" id="input-pain" min="0" max="10" value="0" oninput="document.getElementById('pain-display').innerText = this.value + ' / 10'" class="w-full accent-primary cursor-pointer h-2 bg-slate-200 rounded-lg">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                            <span>0 (Aucune)</span>
+                            <span>5 (Modérée)</span>
+                            <span>10 (Intense)</span>
+                        </div>
+                    </div>
+
+                    <!-- Ballonnements 0-10 -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="text-xs font-bold text-slate-700">Ballonnements / Distension</label>
+                            <span id="bloating-display" class="text-xs font-bold text-warning bg-warning/10 px-2.5 py-0.5 rounded-lg">0 / 10</span>
+                        </div>
+                        <input type="range" id="input-bloating" min="0" max="10" value="0" oninput="document.getElementById('bloating-display').innerText = this.value + ' / 10'" class="w-full accent-warning cursor-pointer h-2 bg-slate-200 rounded-lg">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                            <span>0 (Ventre plat)</span>
+                            <span>5 (Gêne)</span>
+                            <span>10 (Très tendu)</span>
+                        </div>
+                    </div>
+
+                    <!-- Flatulences / Gaz 0-10 -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="text-xs font-bold text-slate-700">💨 Flatulences / Gaz</label>
+                            <span id="flatulence-display" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-lg">0 / 10</span>
+                        </div>
+                        <input type="range" id="input-flatulence" min="0" max="10" value="0" oninput="document.getElementById('flatulence-display').innerText = this.value + ' / 10'" class="w-full accent-indigo-500 cursor-pointer h-2 bg-slate-200 rounded-lg">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                            <span>0 (Aucun)</span>
+                            <span>5 (Modérés)</span>
+                            <span>10 (Fréquents / gênants)</span>
+                        </div>
+                    </div>
+
+                    <!-- Échelle de Bristol Visuelle (Types 1 à 7) -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-xs font-bold text-slate-700">🚽 Échelle de Bristol (Transit du jour)</label>
+                            <span id="bristol-selected-badge" class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg">Type 4 • Idéal</span>
+                        </div>
+                        <div id="bristol-selector-list" class="space-y-1.5"></div>
+                    </div>
+
+                    <!-- Niveau de stress 1-5 -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="text-xs font-bold text-slate-700">Niveau de stress / Charge mentale</label>
+                            <span id="stress-display" class="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-lg">2 / 5</span>
+                        </div>
+                        <input type="range" id="input-stress" min="1" max="5" value="2" oninput="document.getElementById('stress-display').innerText = this.value + ' / 5'" class="w-full accent-primary cursor-pointer h-2 bg-slate-200 rounded-lg">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                            <span>1 (Très calme)</span>
+                            <span>3 (Modéré)</span>
+                            <span>5 (Très élevé)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ÉTAPE 2 : FACTEURS DÉCLENCHEURS (ESSENTIELS + MANUELS) & PROTECTEURS (ESSENTIELS + MANUELS) -->
+                <div id="step-2" class="space-y-5 hidden">
+                    <!-- Section A : Facteurs déclencheurs potentiels -->
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-800">⚠️ Facteurs déclencheurs / irritants</label>
+                                <p class="text-[10px] text-slate-500">Sélectionnez parmi quelques pistes ou ajoutez les vôtres.</p>
+                            </div>
+                            <button type="button" onclick="openFactorCreatorModal('trigger')" class="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 px-2.5 py-1.5 rounded-xl text-[11px] font-bold shrink-0 transition">
+                                + Ajouter un facteur
+                            </button>
+                        </div>
+
+                        <!-- 4 propositions essentielles de déclencheurs -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="cursor-pointer flex items-center gap-2 p-2.5 rounded-2xl border border-slate-200 text-xs font-medium has-[:checked]:border-warning has-[:checked]:bg-warning/10">
+                                <input type="checkbox" class="std-factor accent-warning" value="Caféine"> ☕ Caféine
+                            </label>
+                            <label class="cursor-pointer flex items-center gap-2 p-2.5 rounded-2xl border border-slate-200 text-xs font-medium has-[:checked]:border-warning has-[:checked]:bg-warning/10">
+                                <input type="checkbox" class="std-factor accent-warning" value="Repas riche / gras"> 🍔 Repas riche/gras
+                            </label>
+                            <label class="cursor-pointer flex items-center gap-2 p-2.5 rounded-2xl border border-slate-200 text-xs font-medium has-[:checked]:border-warning has-[:checked]:bg-warning/10">
+                                <input type="checkbox" class="std-factor accent-warning" value="FODMAPs élevés"> 🧅 FODMAPs élevés
+                            </label>
+                            <label class="cursor-pointer flex items-center gap-2 p-2.5 rounded-2xl border border-slate-200 text-xs font-medium has-[:checked]:border-warning has-[:checked]:bg-warning/10">
+                                <input type="checkbox" class="std-factor accent-warning" value="Charge mentale"> 🤯 Charge mentale
+                            </label>
+                        </div>
+
+                        <!-- Facteurs déclencheurs créés manuellement par l'utilisateur -->
+                        <div id="survey-user-trigger-factors" class="space-y-2"></div>
+                    </div>
+
+                    <hr class="border-slate-100">
+
+                    <!-- Section B : Facteurs protecteurs -->
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-800">💚 Facteurs protecteurs (« Ce qui m'a fait du bien »)</label>
+                                <p class="text-[10px] text-slate-500">Quelques alliés courants ou vos propres habitudes apaisantes.</p>
+                            </div>
+                            <button type="button" onclick="openFactorCreatorModal('protective')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-2.5 py-1.5 rounded-xl text-[11px] font-bold shrink-0 transition">
+                                + Ajouter un facteur
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="cursor-pointer flex items-center gap-2 p-2.5 rounded-2xl border border-slate-200 text-xs font-medium has-[:checked]:border-success has-[:checked]:bg-success/10">
+                                <input type="checkbox" class="protective-factor accent-success" value="Bouillotte"> 🔥 Bouillotte
+                            </label>
+                            <label class="cursor-pointer flex items-center gap-2 p-2.5 rounded-2xl border border-slate-200 text-xs font-medium has-[:checked]:border-success has-[:checked]:bg-success/10">
+                                <input type="checkbox" class="protective-factor accent-success" value="Tisane"> 🍵 Tisane apaisante
+                            </label>
+                            <label class="cursor-pointer flex items-center gap-2 p-2.5 rounded-2xl border border-slate-200 text-xs font-medium has-[:checked]:border-success has-[:checked]:bg-success/10">
+                                <input type="checkbox" class="protective-factor accent-success" value="Marche digestive"> 🚶 Marche
+                            </label>
+                            <label class="cursor-pointer flex items-center gap-2 p-2.5 rounded-2xl border border-slate-200 text-xs font-medium has-[:checked]:border-success has-[:checked]:bg-success/10">
+                                <input type="checkbox" class="protective-factor accent-success" value="Respiration"> 🫁 Respiration
+                            </label>
+                        </div>
+
+                        <!-- Facteurs protecteurs créés manuellement par l'utilisateur -->
+                        <div id="survey-user-protective-factors" class="space-y-2"></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="px-5 py-4 border-t border-slate-100 bg-softGray/60 flex items-center justify-between shrink-0">
+                <button id="btn-prev-step" onclick="changeCheckinStep(-1)" class="px-4 py-2.5 rounded-2xl border border-slate-200 bg-white text-slate-600 text-xs font-semibold invisible">← Précédent</button>
+                <button id="btn-next-step" onclick="changeCheckinStep(1)" class="bg-primary hover:bg-blue-600 text-white px-6 py-2.5 rounded-2xl text-xs font-bold shadow-md shadow-primary/20">Suivant →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODALE : CRÉATEUR INTELLIGENT DE FACTEUR MANUEL                       -->
+    <!-- ===================================================================== -->
+    <div id="factor-creator-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-sm">🧩 Créer un facteur personnalisé</h3>
+                    <p class="text-[11px] text-slate-500">Déclencheur irritant ou facteur protecteur apaisant</p>
+                </div>
+                <button onclick="document.getElementById('factor-creator-modal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 text-xs font-bold">✕</button>
+            </div>
+
+            <!-- Choix Déclencheur vs Protecteur -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1.5">Nature du facteur</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <label class="cursor-pointer border border-slate-200 rounded-2xl p-2.5 flex items-center gap-2 has-[:checked]:border-warning has-[:checked]:bg-warning/10">
+                        <input type="radio" name="fc-role" value="trigger" class="accent-warning" checked onchange="onFactorRoleChange(this.value)">
+                        <div>
+                            <span class="text-xs font-bold text-slate-800 block">⚠️ Déclencheur</span>
+                            <span class="text-[10px] text-slate-500">Suspect / Irritant</span>
+                        </div>
+                    </label>
+                    <label class="cursor-pointer border border-slate-200 rounded-2xl p-2.5 flex items-center gap-2 has-[:checked]:border-success has-[:checked]:bg-success/10">
+                        <input type="radio" name="fc-role" value="protective" class="accent-success" onchange="onFactorRoleChange(this.value)">
+                        <div>
+                            <span class="text-xs font-bold text-slate-800 block">💚 Protecteur</span>
+                            <span class="text-[10px] text-slate-500">Apaise / Fait du bien</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Nom du facteur</label>
+                <input type="text" id="fc-name" oninput="autoClassifyFactorInput(this.value)" placeholder="Ex: Probiotiques, Épices, Tisane menthe, Nutella..." class="w-full bg-softGray border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-primary">
+                <p id="fc-auto-hint" class="text-[10px] text-primary font-medium mt-1 hidden">✨ Catégorie détectée automatiquement</p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2.5">
+                <div class="col-span-2">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Catégorie</label>
+                    <select id="fc-category" class="w-full bg-softGray border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none">
+                        <option value="Alimentation & Écarts">🍫 Alimentation & Écarts</option>
+                        <option value="Émotions & Stress">🧠 Émotions & Stress</option>
+                        <option value="Corps & Mode de vie">🏃‍♂️ Corps & Mode de vie</option>
+                        <option value="Soin & Bien-être">💚 Soin & Bien-être</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Icône</label>
+                    <select id="fc-icon" class="w-full bg-softGray border border-slate-200 rounded-2xl px-3 py-2 text-base text-center focus:outline-none">
+                        <option value="🍫">🍫</option>
+                        <option value="🌶️">🌶️</option>
+                        <option value="🥖">🥖</option>
+                        <option value="🥛">🥛</option>
+                        <option value="💔">💔</option>
+                        <option value="💼">💼</option>
+                        <option value="😰">😰</option>
+                        <option value="💊">💊</option>
+                        <option value="🍵">🍵</option>
+                        <option value="💧">💧</option>
+                        <option value="✈️">✈️</option>
+                        <option value="🧘">🧘</option>
+                        <option value="🌿">🌿</option>
+                        <option value="🔥">🔥</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1.5">Type de mesure souhaité</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <label class="cursor-pointer border border-slate-200 rounded-2xl p-2.5 flex items-center gap-2 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                        <input type="radio" name="fc-type" value="binary" class="accent-primary" checked>
+                        <div>
+                            <span class="text-xs font-bold text-slate-800 block">Oui / Non</span>
+                            <span class="text-[10px] text-slate-400">Bouton rapide</span>
+                        </div>
+                    </label>
+                    <label class="cursor-pointer border border-slate-200 rounded-2xl p-2.5 flex items-center gap-2 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                        <input type="radio" name="fc-type" value="scale" class="accent-primary">
+                        <div>
+                            <span class="text-xs font-bold text-slate-800 block">Échelle 0 à 5</span>
+                            <span class="text-[10px] text-slate-400">Intensité / Dose</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <button onclick="saveNewCustomFactor()" class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-2xl text-xs shadow-md transition">
+                Enregistrer ce facteur
+            </button>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODALE : BOÎTE À OUTILS « URGENCE CRISE » ENRICHIE                    -->
+    <!-- ===================================================================== -->
+    <div id="crisis-modal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden no-print">
+        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[94vh]">
+            
+            <div class="px-5 py-4 bg-gradient-to-r from-rose-50 via-amber-50/60 to-blue-50 border-b border-slate-100 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-9 h-9 rounded-2xl bg-white shadow-xs flex items-center justify-center text-lg">🆘</span>
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-sm">Protocole Urgence Crise & Apaisement</h3>
+                        <p class="text-[11px] text-slate-500">Outils immédiats pour calmer les spasmes et le nerf vague</p>
+                    </div>
+                </div>
+                <button onclick="closeCrisisModal()" class="w-8 h-8 rounded-full bg-white/80 text-slate-600 hover:bg-white flex items-center justify-center text-xs font-bold shadow-xs">✕</button>
+            </div>
+
+            <div class="p-5 overflow-y-auto space-y-5 flex-1 hide-scrollbar">
+
+                <!-- 1. Guide Visuel de Cohérence Cardiaque (5s / 5s) -->
+                <div class="bg-gradient-to-b from-blue-50/70 to-emerald-50/50 border border-blue-100 rounded-3xl p-4 text-center space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-bold text-primary bg-white px-2.5 py-0.5 rounded-full shadow-2xs">🫁 Cohérence Cardiaque (5-5)</span>
+                        <span id="breathing-timer" class="text-xs font-bold text-slate-600">01:00</span>
+                    </div>
+                    <p class="text-[11px] text-slate-600 text-left leading-relaxed">
+                        La respiration lente active le <strong>système nerveux parasympathique</strong> via le nerf vague et réduit la contraction réflexe des muscles lisses de l'intestin.
+                    </p>
+
+                    <div class="relative h-36 flex items-center justify-center">
+                        <div id="breathing-circle" class="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center transition-all">
+                            <div class="w-16 h-16 rounded-full bg-white shadow-md flex flex-col items-center justify-center">
+                                <span id="breathing-phase-label" class="text-xs font-bold text-slate-800">Prêt</span>
+                                <span id="breathing-sub-label" class="text-[9px] text-slate-400">5s / 5s</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="btn-toggle-breathing" onclick="toggleBreathingExercise()" class="bg-primary hover:bg-blue-600 text-white text-xs font-bold px-5 py-2.5 rounded-2xl shadow-sm transition">
+                        ▶️ Démarrer la respiration guidée
+                    </button>
+                </div>
+
+                <!-- 2. Postures de Yoga & Libération des Gaz (avec illustrations SVG) -->
+                <div class="space-y-2.5">
+                    <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider">🧘 Postures Anti-Crampes & Ballonnements</h4>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div class="bg-softGray p-3 rounded-2xl border border-slate-200/70 space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <svg class="w-8 h-8 text-primary" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                                    <path d="M8 38H40"/>
+                                    <circle cx="33" cy="31" r="3.5"/>
+                                    <path d="M12 38C12 31 18 28 24 28C28 28 31 30 33 34"/>
+                                    <path d="M26 34L38 37"/>
+                                </svg>
+                                <span class="text-[10px] font-semibold text-primary bg-white px-2 py-0.5 rounded-lg">2 min</span>
+                            </div>
+                            <h5 class="font-bold text-slate-900 text-xs">Posture de l'Enfant</h5>
+                            <p class="text-[10px] text-slate-600 leading-relaxed">À genoux, fesses sur les talons, front au sol. Relâche les tensions abdominales et le plancher pelvien.</p>
+                        </div>
+
+                        <div class="bg-softGray p-3 rounded-2xl border border-slate-200/70 space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <svg class="w-8 h-8 text-primary" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                                    <path d="M6 38H42"/>
+                                    <circle cx="13" cy="33" r="3.5"/>
+                                    <path d="M17 35H30L25 23L34 25"/>
+                                </svg>
+                                <span class="text-[10px] font-semibold text-primary bg-white px-2 py-0.5 rounded-lg">1-2 min</span>
+                            </div>
+                            <h5 class="font-bold text-slate-900 text-xs">Genoux-Poitrine</h5>
+                            <p class="text-[10px] text-slate-600 leading-relaxed">Sur le dos, ramenez les genoux vers la poitrine en respirant lentement pour évacuer les gaz piégés.</p>
+                        </div>
+
+                        <div class="bg-softGray p-3 rounded-2xl border border-slate-200/70 space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <svg class="w-8 h-8 text-primary" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                                    <path d="M6 38H42"/>
+                                    <circle cx="13" cy="33" r="3.5"/>
+                                    <path d="M17 35H28L34 27L39 35"/>
+                                </svg>
+                                <span class="text-[10px] font-semibold text-primary bg-white px-2 py-0.5 rounded-lg">1 min / côté</span>
+                            </div>
+                            <h5 class="font-bold text-slate-900 text-xs">Torsion Allongée</h5>
+                            <p class="text-[10px] text-slate-600 leading-relaxed">Sur le dos, basculez les genoux pliés d'un côté, épaules au sol. Stimule en douceur la motricité colique.</p>
+                        </div>
+
+                        <div class="bg-softGray p-3 rounded-2xl border border-slate-200/70 space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <svg class="w-8 h-8 text-primary" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                                    <circle cx="35" cy="24" r="3.5"/>
+                                    <path d="M14 38V28C18 22 26 22 30 28V38"/>
+                                    <path d="M14 28L10 35"/>
+                                </svg>
+                                <span class="text-[10px] font-semibold text-primary bg-white px-2 py-0.5 rounded-lg">10 cycles</span>
+                            </div>
+                            <h5 class="font-bold text-slate-900 text-xs">Chat-Vache (Dos)</h5>
+                            <p class="text-[10px] text-slate-600 leading-relaxed">À quatre pattes, alternez inspiration (dos creux) et expiration (dos rond) pour assouplir le diaphragme.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Auto-massage Abdominal en 3 Étapes -->
+                <div class="bg-white border border-slate-200/80 rounded-3xl p-4 space-y-2">
+                    <h4 class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                        <span>🤲</span><span>Protocole d'Auto-Massage Colique (Sens Horaire)</span>
+                    </h4>
+                    <ol class="list-decimal pl-4 space-y-1.5 text-[11px] text-slate-600 leading-relaxed">
+                        <li><strong>Côté droit (côlon ascendant) :</strong> Partez du bas-ventre droit et remontez doucement vers les côtes droites.</li>
+                        <li><strong>Haut du ventre (côlon transverse) :</strong> Glissez vos mains à plat sous les côtes, de la droite vers la gauche.</li>
+                        <li><strong>Côté gauche (côlon descendant) :</strong> Descendez lentement du flanc gauche vers le bas-ventre gauche pour accompagner l'évacuation.</li>
+                    </ol>
+                </div>
+
+                <!-- 4. Check-list Chaleur & Plantes Validées -->
+                <div class="bg-amber-50/70 border border-amber-200/70 rounded-3xl p-4 space-y-2.5">
+                    <h4 class="font-bold text-amber-900 text-xs">☕ Réflexes Chaleur, Hydratation & Phytothérapie</h4>
+                    <label class="flex items-start gap-2.5 text-xs text-slate-700 cursor-pointer">
+                        <input type="checkbox" class="accent-warning w-4 h-4 rounded mt-0.5">
+                        <span><strong>Chaleur locale :</strong> Poser une bouillotte tiède 15-20 min sur l'abdomen pour détendre les fibres musculaires.</span>
+                    </label>
+                    <label class="flex items-start gap-2.5 text-xs text-slate-700 cursor-pointer">
+                        <input type="checkbox" class="accent-warning w-4 h-4 rounded mt-0.5">
+                        <span><strong>Infusion antispasmodique :</strong> Menthe poivrée, fenouil, mélisse ou camomille matricaire (sans sucre ni miel riche en FODMAP).</span>
+                    </label>
+                    <label class="flex items-start gap-2.5 text-xs text-slate-700 cursor-pointer">
+                        <input type="checkbox" class="accent-warning w-4 h-4 rounded mt-0.5">
+                        <span><strong>Hydratation fractionnée :</strong> Boire de l'eau à température ambiante par petites gorgées (éviter l'eau glacée ou gazeuse).</span>
+                    </label>
+                </div>
+
+                <!-- 5. Signaux d'Alerte Médicale -->
+                <div class="bg-rose-50/80 border border-rose-200 rounded-3xl p-4 space-y-1.5">
+                    <h4 class="font-bold text-rose-800 text-xs flex items-center gap-1.5">
+                        <span>⚠️</span><span>Quand consulter un médecin rapidement ?</span>
+                    </h4>
+                    <p class="text-[11px] text-rose-900/90 leading-relaxed">
+                        Ces conseils de confort ne sauraient remplacer un avis médical. Il conviendrait de consulter un médecin sans tarder en cas de signes inhabituels qui pourraient nécessiter un examen approfondi : <strong>fièvre, présence de sang dans les selles, douleurs qui vous réveilleraient la nuit, vomissements persistants ou perte de poids inexpliquée</strong>.
+                    </p>
+                </div>
+
+            </div>
+
+            <div class="px-5 py-3.5 border-t border-slate-100 bg-softGray flex items-center justify-between gap-2 shrink-0">
+                <button onclick="logAcuteCrisisNow()" class="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 rounded-2xl text-xs shadow-md transition flex items-center justify-center gap-2">
+                    <span>⚡</span><span>Consigner une « Crise aiguë » aujourd'hui (1 clic)</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODALE : APERÇU & EXPORT PDF MÉDECIN                                  -->
+    <!-- ===================================================================== -->
+    <div id="medical-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between no-print">
+                <h3 class="font-bold text-slate-900 text-sm">🩺 Aperçu du Rapport Médical</h3>
+                <button onclick="document.getElementById('medical-modal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 text-xs font-bold">✕</button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-4 text-xs text-slate-700" id="medical-report-content">
+                <div class="border-b border-slate-200 pb-3 flex justify-between items-start">
+                    <div>
+                        <h4 class="font-bold text-base text-slate-900">Bilan Clinique SII — Digestiv</h4>
+                        <p class="text-xs font-semibold text-primary mt-0.5 hidden" id="rep-patient-name"></p>
+                        <p class="text-slate-500" id="rep-period-label">Suivi personnel du patient</p>
+                    </div>
+                    <span class="bg-primary/10 text-primary font-bold px-2.5 py-1 rounded-lg">Synthèse</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-softGray p-3 rounded-2xl text-center">
+                    <div>
+                        <span class="text-[10px] text-slate-400 block">Douleur moy.</span>
+                        <strong class="text-sm text-slate-900" id="rep-avg-pain">—</strong>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-400 block">Gaz moy.</span>
+                        <strong class="text-sm text-indigo-600" id="rep-avg-flatulence">—</strong>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-400 block">Paix Digestive</span>
+                        <strong class="text-sm text-emerald-600" id="rep-peace-score">—</strong>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-400 block">Stress moy.</span>
+                        <strong class="text-sm text-slate-900" id="rep-avg-stress">—</strong>
+                    </div>
+                </div>
+                <div>
+                    <h5 class="font-bold text-slate-900 mb-1">Répartition du transit (Échelle de Bristol 1-7) :</h5>
+                    <p id="rep-bristol-summary" class="text-slate-600 bg-softGray/60 p-2.5 rounded-xl">—</p>
+                </div>
+                <div>
+                    <h5 class="font-bold text-slate-900 mb-1.5">Facteurs observés lors des jours symptomatiques :</h5>
+                    <ul id="rep-triggers-list" class="space-y-1.5 list-disc pl-4 text-slate-700"></ul>
+                </div>
+                <div>
+                    <h5 class="font-bold text-slate-900 mb-1.5">Combos déclencheurs identifiés (duos) :</h5>
+                    <ul id="rep-combos-list" class="space-y-1.5 list-disc pl-4 text-slate-700"></ul>
+                </div>
+                <div>
+                    <h5 class="font-bold text-slate-900 mb-1.5">Combos guérisseurs identifiés (duos apaisants) :</h5>
+                    <ul id="rep-healing-combos-list" class="space-y-1.5 list-disc pl-4 text-slate-700"></ul>
+                </div>
+                <p class="text-[10px] text-slate-400 italic pt-2 border-t border-slate-100">
+                    Document généré automatiquement à partir de l'auto-évaluation quotidienne du patient pour faciliter la consultation gastro-entérologique.
+                </p>
+            </div>
+            <div class="px-5 py-4 border-t border-slate-100 bg-softGray flex gap-2 no-print">
+                <button id="btn-download-pdf" onclick="downloadMedicalPdf()" class="flex-1 bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-2xl text-xs shadow-sm transition flex items-center justify-center gap-1.5">
+                    <span>📥</span><span>Télécharger le PDF</span>
+                </button>
+                <button onclick="window.print()" aria-label="Imprimer" title="Imprimer" class="px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-2xl text-xs transition">
+                    🖨️
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODALE : PARTAGER UNE ASTUCE COMMUNAUTAIRE                            -->
+    <!-- ===================================================================== -->
+    <div id="tip-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-slate-900 text-sm">🤝 Partager une astuce à la communauté</h3>
+                <button onclick="document.getElementById('tip-modal').classList.add('hidden')" class="w-7 h-7 rounded-full bg-slate-100 text-xs font-bold">✕</button>
+            </div>
+            <select id="tip-category" class="w-full bg-softGray border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-medium">
+                <option value="Alimentation">🥗 Alimentation & Recettes</option>
+                <option value="Stress">🧘‍♂️ Gestion du Stress</option>
+                <option value="Soulagement">🔥 Soulagement des crises</option>
+            </select>
+            <textarea id="tip-text" rows="3" placeholder="Ex: La bouillotte chaude sur le bas-ventre + respiration cohérence cardiaque calme mes spasmes en 15 min..." class="w-full bg-softGray border border-slate-200 rounded-2xl p-3 text-xs focus:outline-none focus:border-primary"></textarea>
+            <button onclick="submitNewTip()" class="w-full bg-primary text-white font-bold py-3 rounded-2xl text-xs">Publier l'astuce</button>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODALE : CONFIRMATION DE RÉINITIALISATION                             -->
+    <!-- ===================================================================== -->
+    <div id="reset-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4 text-center">
+            <span class="text-3xl block">🗑️</span>
+            <h3 class="font-bold text-slate-900 text-sm">Réinitialiser toutes les données ?</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+                Cette action effacera tous vos bilans, vos facteurs personnalisés créés et réinitialisera la date d'installation à aujourd'hui.
+            </p>
+            <div class="flex gap-2">
+                <button onclick="document.getElementById('reset-modal').classList.add('hidden')" class="flex-1 py-2.5 rounded-2xl bg-softGray text-slate-700 text-xs font-semibold">Annuler</button>
+                <button onclick="confirmFullReset()" class="flex-1 py-2.5 rounded-2xl bg-rose-500 text-white text-xs font-bold">Tout effacer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODALE : PERSONNALISER LE PRÉNOM UTILISATEUR                          -->
+    <!-- ===================================================================== -->
+    <div id="username-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 text-sm">👋 Votre prénom ou nom</h3>
+                <button onclick="document.getElementById('username-modal').classList.add('hidden')" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 text-xs font-bold">✕</button>
+            </div>
+            <p class="text-xs text-slate-500 leading-relaxed">
+                Personnalisez l'accueil de votre application ainsi que l'en-tête de votre rapport PDF médecin.
+            </p>
+            <input type="text" id="input-user-name" maxlength="35" placeholder="Ex : Nicolas, Camille..." onkeydown="if(event.key==='Enter') saveUserName()" class="w-full bg-softGray border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-primary">
+            <div class="flex gap-2">
+                <button onclick="clearUserName()" class="px-3.5 py-2.5 rounded-2xl bg-softGray text-slate-600 text-xs font-semibold hover:bg-slate-200/70 transition">Effacer</button>
+                <button onclick="saveUserName()" class="flex-1 bg-primary hover:bg-blue-600 text-white font-bold py-2.5 rounded-2xl text-xs shadow-sm transition">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODALE : RAPPEL EN FIN DE JOURNÉE (NOTIFICATION & CALENDRIER)         -->
+    <!-- ===================================================================== -->
+    <div id="reminder-modal" class="fixed inset-0 bg-slate-900/65 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white w-full max-w-md rounded-3xl p-5 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">🔔</span>
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-sm">Rappel quotidien du soir</h3>
+                        <p class="text-[11px] text-slate-500">Complétez votre bilan digestif avant de dormir</p>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('reminder-modal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 text-xs font-bold">✕</button>
+            </div>
+
+            <div class="flex items-center justify-between bg-softGray p-3.5 rounded-2xl">
+                <div>
+                    <span class="text-xs font-bold text-slate-800 block">Activer le rappel du soir</span>
+                    <span class="text-[10px] text-slate-500">Notification navigateur + alerte douce dans l'app</span>
+                </div>
+                <input type="checkbox" id="reminder-enabled-toggle" class="w-5 h-5 accent-primary cursor-pointer">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Heure souhaitée en fin de journée</label>
+                <input type="time" id="reminder-time-input" value="20:30" class="w-full bg-softGray border border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm font-bold text-slate-900 focus:outline-none focus:border-primary">
+            </div>
+
+            <div class="bg-blue-50/70 border border-blue-100 rounded-2xl p-3">
+                <p class="text-[11px] text-slate-600 leading-relaxed">
+                    💡 <strong>Astuce :</strong> Autorisez les notifications de votre navigateur pour recevoir votre alerte du soir, ou retrouvez le rappel directement sur l'accueil de l'application dès l'heure choisie.
+                </p>
+            </div>
+
+            <div class="flex gap-2">
+                <button type="button" onclick="testEveningNotification()" class="px-3.5 py-2.5 rounded-2xl bg-softGray hover:bg-slate-200/70 text-slate-700 text-xs font-semibold transition">
+                    Tester 🔔
+                </button>
+                <button type="button" onclick="saveReminderSettings()" class="flex-1 bg-primary hover:bg-blue-600 text-white font-bold py-2.5 rounded-2xl text-xs shadow-md transition">
+                    Enregistrer le rappel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODALE : PUNITION / GAGE LORS D'UN DÉFI MANQUÉ                        -->
+    <!-- ===================================================================== -->
+    <div id="penalty-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4 text-center">
+            <span class="text-4xl block">⚠️</span>
+            <h3 class="font-bold text-slate-900 text-base">Défi manqué aujourd'hui !</h3>
+            <p class="text-xs text-slate-600 leading-relaxed" id="penalty-modal-desc">
+                Vous avez signalé un écart sur votre défi. Une pénalité s'applique pour garder le cap :
+            </p>
+            <div class="bg-rose-50 border border-rose-200 rounded-2xl p-3.5 space-y-1.5 text-left">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-rose-700 block">⚡ Sanction & Gage bien-être</span>
+                <p class="text-xs font-bold text-rose-900" id="penalty-modal-points">-15 pts de discipline • Série du défi remise à 0</p>
+                <p class="text-[11px] text-rose-800" id="penalty-modal-gage">Gage : 5 minutes de cohérence cardiaque ou une grande tasse d'eau/tisane maintenant.</p>
+            </div>
+            <button onclick="document.getElementById('penalty-modal').classList.add('hidden')" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-2xl text-xs transition">
+                J'assume mon gage 💪
+            </button>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODALE : MA SÉRIE QUOTIDIENNE (STYLE DUOLINGO)                        -->
+    <!-- ===================================================================== -->
+    <div id="streak-modal" class="fixed inset-0 bg-slate-900/65 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">🔥</span>
+                    <h3 class="font-bold text-slate-900 text-sm">Ma Série Quotidienne</h3>
+                </div>
+                <button onclick="document.getElementById('streak-modal').classList.add('hidden')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 text-xs font-bold">✕</button>
+            </div>
+
+            <div class="text-center bg-gradient-to-b from-amber-50 to-orange-50/60 border border-amber-200/70 rounded-3xl p-4 space-y-1">
+                <span class="text-4xl block" id="streak-modal-flame">🔥</span>
+                <div class="text-2xl font-extrabold text-slate-900" id="streak-modal-count">0 jour</div>
+                <p class="text-xs text-slate-600" id="streak-modal-msg">Enregistrez votre bilan chaque jour pour faire grandir votre flamme.</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5 text-center">
+                <div class="bg-softGray rounded-2xl p-3">
+                    <span class="text-[10px] text-slate-400 block">Record personnel</span>
+                    <strong class="text-sm text-slate-900" id="streak-modal-best">0 jour</strong>
+                </div>
+                <div class="bg-sky-50 border border-sky-100 rounded-2xl p-3">
+                    <span class="text-[10px] text-sky-700 block">Gels de série</span>
+                    <strong class="text-sm text-sky-900" id="streak-modal-shields">❄️ 0 disponible</strong>
+                </div>
+            </div>
+
+            <div class="bg-softGray/80 rounded-2xl p-3.5 space-y-1.5 text-[11px] text-slate-600 leading-relaxed">
+                <p class="font-bold text-slate-800">Comment fonctionne la série ?</p>
+                <ul class="list-disc pl-4 space-y-1">
+                    <li><strong>1 bilan par jour = +1 jour de série</strong> (bilan complet ou <em>Journée calme en 1 clic</em>).</li>
+                    <li><strong>Gel de série (❄️) :</strong> tous les <strong>7 jours consécutifs</strong>, vous gagnez 1 Gel (max 2). Si vous oubliez un jour, il protège automatiquement votre flamme !</li>
+                </ul>
+            </div>
+
+            <button onclick="document.getElementById('streak-modal').classList.add('hidden')" class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-2.5 rounded-2xl text-xs transition">
+                Continuer mon suivi ✨
+            </button>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODALE : AUTHENTIFICATION SUPABASE (AVEC APERÇU MOT DE PASSE)         -->
+    <!-- ===================================================================== -->
+    <div id="auth-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 text-sm">☁️ Sauvegarde & Compte Cloud</h3>
+                <button onclick="document.getElementById('auth-modal').classList.add('hidden')" class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 text-xs font-bold">✕</button>
+            </div>
+
+            <div id="auth-logged-out-view" class="space-y-3">
+                <p class="text-xs text-slate-500 leading-relaxed">
+                    Connectez-vous ou créez un compte pour sauvegarder et retrouver vos bilans sur tous vos appareils.
+                </p>
+                <button type="button" onclick="handleGoogleSignIn()" class="w-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold py-2.5 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-2xs transition">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24">
+                        <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.6 2.8C6.1 7.2 8.8 5 12 5z"/>
+                        <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.7-.2-2.5H12v4.8h6.5c-.3 1.5-1.1 2.8-2.4 3.6l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/>
+                        <path fill="#FBBC05" d="M5.2 14.8c-.2-.8-.4-1.6-.4-2.5s.2-1.7.4-2.5L1.6 7C.6 9 0 11.4 0 12.3s.6 3.3 1.6 5.3l3.6-2.8z"/>
+                        <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.2 0-5.9-2.2-6.8-5.1l-3.6 2.8C3.5 20.4 7.4 24 12 24z"/>
+                    </svg>
+                    <span>Continuer avec Google</span>
+                </button>
+                <div class="flex items-center gap-2 text-[10px] text-slate-400">
+                    <div class="flex-1 h-px bg-slate-200"></div>
+                    <span>ou par email</span>
+                    <div class="flex-1 h-px bg-slate-200"></div>
+                </div>
+                <input type="email" id="auth-email" placeholder="Votre adresse email" class="w-full bg-softGray border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-primary">
+                <div class="relative">
+                    <input type="password" id="auth-password" placeholder="Mot de passe (min. 6 caractères)" class="w-full bg-softGray border border-slate-200 rounded-2xl pl-3.5 pr-10 py-2.5 text-xs focus:outline-none focus:border-primary">
+                    <button type="button" onclick="toggleAuthPasswordVisibility()" id="toggle-auth-pwd-btn" aria-label="Afficher ou masquer le mot de passe" title="Afficher le mot de passe" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-700 transition">
+                        <svg id="eye-icon-show" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <svg id="eye-icon-hide" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                            <line x1="1" y1="1" x2="23" y2="23"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="flex gap-2 pt-1">
+                    <button onclick="handleSignIn()" class="flex-1 bg-primary hover:bg-blue-600 text-white font-bold py-2.5 rounded-2xl text-xs transition">
+                        Se connecter
+                    </button>
+                    <button onclick="handleSignUp()" class="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-2xl text-xs transition">
+                        Créer un compte
+                    </button>
+                </div>
+            </div>
+
+            <div id="auth-logged-in-view" class="space-y-2.5 hidden text-center">
+                <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-3">
+                    <span class="text-xs font-bold text-emerald-800 block">✅ Synchronisation active</span>
+                    <span id="auth-user-email" class="text-[11px] text-emerald-700"></span>
+                </div>
+                <button onclick="handleSignOut()" class="w-full bg-softGray hover:bg-slate-200/70 text-slate-700 font-bold py-2.5 rounded-2xl text-xs transition">
+                    Se déconnecter
+                </button>
+                <button onclick="handleDeleteCloudAccount()" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-2.5 rounded-2xl text-xs transition">
+                    🗑️ Supprimer mon compte et mes données Cloud
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-2.5 rounded-2xl shadow-xl text-xs font-medium opacity-0 pointer-events-none transition-all duration-300 z-50 whitespace-nowrap no-print">
+        Action effectuée
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'digestiv_user_entries_v4';
+        const TIPS_KEY = 'digestiv_community_tips_v4';
+        const USER_FACTORS_KEY = 'digestiv_user_created_factors_v4';
+        const INSTALL_DATE_KEY = 'digestiv_install_date';
+        const CHALLENGE_KEY = 'digestiv_active_challenge_v4';
+        const CHALLENGES_LIST_KEY = 'digestiv_challenges_v5';
+        const GAMIFICATION_KEY = 'digestiv_gamification_v5';
+        const REMINDER_KEY = 'digestiv_reminder_v5';
+        const USER_NAME_KEY = 'digestiv_user_name_v4';
+        const ONBOARDED_KEY = 'digestiv_onboarded_v4';
+        const MAX_ACTIVE_CHALLENGES = 10;
+
+        // Définition des badges de défis (simple, fluide et motivant)
+        const CHALLENGE_BADGES = [
+            { id: 'first_launch', icon: '🌱', title: 'Premier Élan', desc: 'Vous avez lancé votre tout premier défi personnel.' },
+            { id: 'first_day', icon: '⚡', title: 'Premier Pas', desc: 'Vous avez validé votre première journée de défi.' },
+            { id: 'three_days', icon: '🔥', title: 'Rythme Lancé', desc: '3 jours de défi validés au total.' },
+            { id: 'first_complete', icon: '🏆', title: 'Défi Accompli', desc: 'Vous avez mené un défi complet jusqu’au bout !' },
+            { id: 'multi_tasker', icon: '🎯', title: 'Multi-Objectifs', desc: 'Vous menez au moins 3 défis simultanément.' },
+            { id: 'master_three', icon: '💎', title: 'Maître Régulier', desc: '3 défis complets terminés avec succès.' }
+        ];
+
+        // Échelle de Bristol complète (Types 1 à 7)
+        const bristolScaleData = [
+            { type: 0, icon: '🚫', title: 'Aucune selle aujourd’hui', desc: 'Pas de passage à la selle sur la journée', badge: 'Aucune selle', color: 'border-slate-400 bg-slate-100 text-slate-800' },
+            { type: 1, icon: '🪨', title: 'Type 1 : Petites billes dures', desc: 'Constipation sévère (difficiles à évacuer)', badge: 'Constipation sévère', color: 'border-rose-300 bg-rose-50/70 text-rose-800' },
+            { type: 2, icon: '🍇', title: 'Type 2 : En saucisse bosselée', desc: 'Légère constipation', badge: 'Légère constipation', color: 'border-amber-300 bg-amber-50/70 text-amber-800' },
+            { type: 3, icon: '🥖', title: 'Type 3 : Saucisse craquelée', desc: 'Transit normal', badge: 'Transit normal', color: 'border-emerald-300 bg-emerald-50/60 text-emerald-800' },
+            { type: 4, icon: '🍌', title: 'Type 4 : Saucisse lisse et souple', desc: 'Transit idéal', badge: 'Transit idéal', color: 'border-emerald-400 bg-emerald-50 text-emerald-800' },
+            { type: 5, icon: '☁️', title: 'Type 5 : Morceaux mous à bords nets', desc: 'Tendance molle', badge: 'Tendance molle', color: 'border-amber-300 bg-amber-50/60 text-amber-800' },
+            { type: 6, icon: '🥣', title: 'Type 6 : Morceaux duveteux / pâteux', desc: 'Diarrhée légère', badge: 'Diarrhée légère', color: 'border-orange-300 bg-orange-50/70 text-orange-800' },
+            { type: 7, icon: '💧', title: 'Type 7 : Entièrement liquide', desc: 'Diarrhée', badge: 'Diarrhée', color: 'border-rose-400 bg-rose-50 text-rose-800' }
+        ];
+
+        const scientificResources = [
+            {
+                category: "Recommandations",
+                badgeColor: "bg-blue-50 text-primary border-blue-200",
+                source: "SNFGE — Société Nationale Française de Gastro-Entérologie",
+                year: "Référentiel Clinique",
+                title: "Syndrome de l'Intestin Irritable (SII) : Diagnostic et prise en charge",
+                summary: "Synthèse médicale officielle détaillant les examens utiles, le rôle de la relation médecin-patient et les traitements validés en France.",
+                url: "https://www.snfge.org/content/syndrome-de-lintestin-irritable-sii"
+            },
+            {
+                category: "Nutrition",
+                badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+                source: "Monash University — Département de Gastro-entérologie",
+                year: "Protocole Scientifique",
+                title: "Approche pauvre en FODMAP en 3 phases (Élimination, Réintroduction, Personnalisation)",
+                summary: "Base de données de référence mondiale sur les glucides fermentescibles et l'importance de réintroduire progressivement les aliments tolérés.",
+                url: "https://www.monashfodmap.com/about-fodmap-and-ibs/"
+            },
+            {
+                category: "Neuro-gastro",
+                badgeColor: "bg-amber-50 text-amber-700 border-amber-200",
+                source: "INSERM — Institut National de la Santé et de la Recherche Médicale",
+                year: "Dossier Scientifique",
+                title: "Microbiote intestinal et axe cerveau-intestin : comprendre l'hypersensibilité viscérale",
+                summary: "Exploration des mécanismes biologiques reliant stress émotionnel, perméabilité intestinale et perception de la douleur abdominale.",
+                url: "https://www.inserm.fr/dossier/microbiote-intestinal-flore-intestinale/"
+            },
+            {
+                category: "Recommandations",
+                badgeColor: "bg-blue-50 text-primary border-blue-200",
+                source: "Rome Foundation — Critères de Rome IV",
+                year: "Consensus International",
+                title: "Troubles de l'interaction intestin-cerveau (DGBI) : Critères diagnostiques",
+                summary: "Classification mondiale définissant les sous-types du SII (SII-D, SII-C, SII-M) et validant l'origine neuro-gastro-entérologique.",
+                url: "https://theromefoundation.org/rome-iv/rome-iv-criteria/"
+            },
+            {
+                category: "Recommandations",
+                badgeColor: "bg-blue-50 text-primary border-blue-200",
+                source: "APSSII — Association des Patients Souffrant du SII",
+                year: "Guides Patients",
+                title: "Vivre au quotidien avec le SII : Fiches pratiques et accompagnement",
+                summary: "Ressources validées par un comité scientifique pour préparer sa consultation chez le gastro-entérologue et comprendre ses droits.",
+                url: "https://www.apssii.org/"
+            },
+            {
+                category: "Neuro-gastro",
+                badgeColor: "bg-amber-50 text-amber-700 border-amber-200",
+                source: "Harvard Health Publishing — Harvard Medical School",
+                year: "Revue Médicale",
+                title: "La connexion intestin-cerveau et l'efficacité des thérapies comportementales",
+                summary: "Analyse clinique démontrant comment la cohérence cardiaque, la méditation et l'hypnose digestive réduisent les spasmes.",
+                url: "https://www.health.harvard.edu/diseases-and-conditions/the-gut-brain-connection"
+            },
+            {
+                category: "Recommandations",
+                badgeColor: "bg-blue-50 text-primary border-blue-200",
+                source: "NICE — National Institute for Health and Care Excellence",
+                year: "Guidelines Cliniques",
+                title: "Prise en charge du SII en soins primaires : alimentation, mode de vie et suivi",
+                summary: "Recommandations cliniques britanniques sur la régularité des repas, l'hydratation, l'ajustement des fibres solubles et l'activité physique.",
+                url: "https://www.nice.org.uk/guidance/cg61"
+            },
+            {
+                category: "Nutrition",
+                badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+                source: "CREGG — Club de Réflexion des Cabinets et Groupes d'Hépato-Gastroentérologie",
+                year: "Fiche Diététique",
+                title: "Fibres solubles vs insolubles et conseils hygiéno-diététiques dans le SII",
+                summary: "Distinction pratique entre les fibres douces (psyllium, avoine) et les fibres irritantes selon le profil de transit.",
+                url: "https://www.cregg.org/"
+            },
+            {
+                category: "Thérapies",
+                badgeColor: "bg-purple-50 text-purple-700 border-purple-200",
+                source: "Cochrane Library — Revues Systématiques",
+                year: "Méta-analyse Scientifique",
+                title: "Efficacité de l'huile essentielle de menthe poivrée et des antispasmodiques",
+                summary: "Synthèse des essais cliniques randomisés évaluant les solutions naturelles et pharmacologiques sur les douleurs abdominales du SII.",
+                url: "https://www.cochranelibrary.com/"
+            }
+        ];
+
+        const defaultTips = [
+            { author: 'Claire M.', cat: 'Soulagement', text: 'La respiration abdominale 5-5 (cohérence cardiaque) pendant 5 minutes dès les premiers gargouillis réduit nettement l’intensité de mes crampes.', likes: 42 },
+            { author: 'Thomas R.', cat: 'Alimentation', text: 'Remplacer le pain blanc classique par du pain au levain naturel fermenté lentement a divisé mes ballonnements par deux.', likes: 29 },
+            { author: 'Sophie L.', cat: 'Stress', text: 'Couper les notifications professionnelles après 19h a eu plus d’effet sur mon transit que n’importe quel complément alimentaire.', likes: 51 }
+        ];
+
+        // Helpers de dates ISO locales (YYYY-MM-DD)
+        function getTodayIso() {
+            const now = new Date();
+            const offset = now.getTimezoneOffset();
+            const local = new Date(now.getTime() - (offset * 60 * 1000));
+            return local.toISOString().split('T')[0];
+        }
+
+        function formatIsoShort(isoStr) {
+            const [y, m, d] = isoStr.split('-').map(Number);
+            const dt = new Date(y, m - 1, d);
+            return dt.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+        }
+
+        // Initialisation strictement vierge au démarrage
+        let installDate = localStorage.getItem(INSTALL_DATE_KEY);
+        if (!installDate) {
+            installDate = getTodayIso();
+            localStorage.setItem(INSTALL_DATE_KEY, installDate);
+        }
+
+        function deduplicateEntriesByDay(rawEntries) {
+            const byDay = new Map();
+            (Array.isArray(rawEntries) ? rawEntries : []).forEach(entry => {
+                if (!entry || !entry.isoDate) return;
+                byDay.delete(entry.isoDate);
+                byDay.set(entry.isoDate, entry);
+            });
+            return Array.from(byDay.values());
+        }
+
+        let entries = deduplicateEntriesByDay(JSON.parse(localStorage.getItem(STORAGE_KEY)) || []);
+        let communityTips = JSON.parse(localStorage.getItem(TIPS_KEY)) || defaultTips;
+        let userCreatedFactors = JSON.parse(localStorage.getItem(USER_FACTORS_KEY)) || [];
+        let challenges = JSON.parse(localStorage.getItem(CHALLENGES_LIST_KEY));
+        if (!Array.isArray(challenges)) {
+            const legacyChallenge = JSON.parse(localStorage.getItem(CHALLENGE_KEY));
+            challenges = legacyChallenge ? [{
+                id: 'ch_legacy_' + Date.now(),
+                title: legacyChallenge.title,
+                duration: legacyChallenge.duration,
+                category: legacyChallenge.category,
+                startDate: legacyChallenge.startDate,
+                checkedDates: [],
+                missedDates: [],
+                completed: false
+            }] : [];
+        }
+        let gamification = Object.assign({
+            points: 0,
+            completedChallenges: 0,
+            missedDaysCount: 0,
+            unlockedBadges: [],
+            activeGages: [],
+            rewardedEntryDates: [],
+            rewardedStreakMilestones: [],
+            streakShields: 0,
+            shieldUsedDates: [],
+            bestStreak: 0
+        }, JSON.parse(localStorage.getItem(GAMIFICATION_KEY)) || {});
+        let reminderSettings = JSON.parse(localStorage.getItem(REMINDER_KEY)) || {
+            enabled: false,
+            time: '20:30',
+            lastNotifiedDate: ''
+        };
+        let reminderIntervalId = null;
+        let userName = localStorage.getItem(USER_NAME_KEY) || '';
+        
+        let checkinStep = 1;
+        let selectedBristolType = 4;
+        let selectedLibraryFactors = new Set();
+        let currentUserFactorValues = {};
+        let trendChartInstance = null;
+        let badgeUnlockQueue = [];
+
+        // Variables cohérence cardiaque
+        let breathingInterval = null;
+        let breathingSecondsLeft = 60;
+        let isBreathingActive = false;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            const options = { weekday: 'long', day: 'numeric', month: 'short' };
+            document.getElementById('header-date').innerText = now.toLocaleDateString('fr-FR', options);
+            evaluateGamificationBadges(true);
+            refreshAllViews();
+            startEveningReminderWatcher();
+            checkFirstLaunchOnboarding();
+        });
+
+        // --- POP-UP D'INITIALISATION (1ÈRE OUVERTURE EN 3 ÉTAPES) ---
+        function checkFirstLaunchOnboarding() {
+            const isOnboarded = localStorage.getItem(ONBOARDED_KEY);
+            if (!isOnboarded) {
+                goToWelcomeStep(1);
+                document.getElementById('welcome-onboarding-modal').classList.remove('hidden');
+            }
+        }
+
+        function goToWelcomeStep(stepNum, skippedName = false) {
+            if (skippedName) {
+                document.getElementById('welcome-user-name-input').value = '';
+            }
+            [1, 2, 3].forEach(s => {
+                document.getElementById('welcome-step-' + s).classList.toggle('hidden', s !== stepNum);
+            });
+            const badges = {
+                1: 'Bienvenue • 1 / 3',
+                2: 'Votre profil • 2 / 3',
+                3: 'Avis important • 3 / 3'
+            };
+            document.getElementById('welcome-step-badge').innerText = badges[stepNum] || 'Bienvenue';
+            const skipBtn = document.getElementById('welcome-skip-btn');
+            if (skipBtn) {
+                skipBtn.classList.toggle('hidden', stepNum === 3);
+            }
+            if (stepNum === 2) {
+                setTimeout(() => document.getElementById('welcome-user-name-input').focus(), 50);
+            }
+        }
+
+        function finishWelcomeOnboarding(skipped) {
+            if (!skipped) {
+                const enteredName = document.getElementById('welcome-user-name-input').value.trim();
+                if (enteredName) {
+                    userName = enteredName;
+                    localStorage.setItem(USER_NAME_KEY, userName);
+                    renderUserGreeting();
+                }
+            }
+            localStorage.setItem(ONBOARDED_KEY, 'true');
+            document.getElementById('welcome-onboarding-modal').classList.add('hidden');
+            if (userName) {
+                showToast(`Bienvenue ${userName} sur Digestiv ! 🌿`);
+            }
+        }
+
+        const SUPABASE_URL = 'https://fptktjfibwfrjwhpmoxd.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_jroo2EXdwdCIaisKTd8iHQ_R-zQYywh';
+        const supabaseClient = window.supabase
+            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+            : null;
+
+        let currentUser = null;
+
+        if (supabaseClient) {
+            supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                currentUser = session?.user || null;
+                updateAuthUI();
+                if (currentUser) {
+                    completeOnboardingAfterAuth();
+                    await loadUserDataFromSupabase();
+                }
+            });
+        }
+
+        let cameFromOnboarding = false;
+
+        function openAuthModal() {
+            const pwdInput = document.getElementById('auth-password');
+            if (pwdInput) {
+                pwdInput.type = 'password';
+                document.getElementById('eye-icon-show')?.classList.remove('hidden');
+                document.getElementById('eye-icon-hide')?.classList.add('hidden');
+            }
+            document.getElementById('auth-modal').classList.remove('hidden');
+        }
+
+        function toggleAuthPasswordVisibility() {
+            const pwdInput = document.getElementById('auth-password');
+            const showIcon = document.getElementById('eye-icon-show');
+            const hideIcon = document.getElementById('eye-icon-hide');
+            const toggleBtn = document.getElementById('toggle-auth-pwd-btn');
+            if (!pwdInput) return;
+
+            const isPassword = pwdInput.type === 'password';
+            pwdInput.type = isPassword ? 'text' : 'password';
+            if (showIcon) showIcon.classList.toggle('hidden', isPassword);
+            if (hideIcon) hideIcon.classList.toggle('hidden', !isPassword);
+            if (toggleBtn) toggleBtn.title = isPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe';
+        }
+
+        function openAuthFromOnboarding() {
+            cameFromOnboarding = true;
+            openAuthModal();
+        }
+
+        function completeOnboardingAfterAuth() {
+            if (!localStorage.getItem(ONBOARDED_KEY)) {
+                localStorage.setItem(ONBOARDED_KEY, 'true');
+                document.getElementById('welcome-onboarding-modal').classList.add('hidden');
+            }
+            cameFromOnboarding = false;
+        }
+
+        function updateAuthUI() {
+            const icon = document.getElementById('auth-status-icon');
+            const loggedOutView = document.getElementById('auth-logged-out-view');
+            const loggedInView = document.getElementById('auth-logged-in-view');
+            const profileStatus = document.getElementById('profile-auth-status');
+            const profileBtn = document.getElementById('profile-auth-btn');
+
+            if (currentUser) {
+                if (icon) icon.innerText = '✅';
+                loggedOutView.classList.add('hidden');
+                loggedInView.classList.remove('hidden');
+                document.getElementById('auth-user-email').innerText = currentUser.email;
+                if (profileStatus) profileStatus.innerText = 'Synchronisé : ' + currentUser.email;
+                if (profileBtn) {
+                    profileBtn.innerText = 'Gérer';
+                    profileBtn.className = 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold text-xs px-3.5 py-2.5 rounded-2xl transition shrink-0';
+                }
+                if (cameFromOnboarding) {
+                    completeOnboardingAfterAuth();
+                }
+            } else {
+                if (icon) icon.innerText = '☁️';
+                loggedOutView.classList.remove('hidden');
+                loggedInView.classList.add('hidden');
+                if (profileStatus) profileStatus.innerText = 'Mode local • Connectez-vous pour synchroniser';
+                if (profileBtn) {
+                    profileBtn.innerText = 'Se connecter';
+                    profileBtn.className = 'bg-primary hover:bg-blue-600 text-white font-bold text-xs px-3.5 py-2.5 rounded-2xl shadow-xs transition shrink-0';
+                }
+            }
+        }
+
+        async function handleGoogleSignIn() {
+            if (!supabaseClient) return showToast('⚠️ Connexion Internet requise pour le Cloud');
+            const { error } = await supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin + window.location.pathname
+                }
+            });
+            if (error) showToast('❌ Erreur Google : ' + error.message);
+        }
+
+        async function handleSignUp() {
+            if (!supabaseClient) return showToast('⚠️ Connexion Internet requise pour le Cloud');
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+            if (!email || password.length < 6) {
+                return showToast('⚠️ Email requis et mot de passe de 6 caractères min.');
+            }
+            showToast('Création du compte en cours...');
+            const { data, error } = await supabaseClient.auth.signUp({ email, password });
+
+            if (error) return showToast('❌ ' + error.message);
+            showToast('Compte créé ! Bienvenue 🎉');
+            document.getElementById('auth-modal').classList.add('hidden');
+            if (data.user) {
+                currentUser = data.user;
+                await syncDataToSupabase();
+            }
+        }
+
+        async function handleSignIn() {
+            if (!supabaseClient) return showToast('⚠️ Connexion Internet requise pour le Cloud');
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+            if (!email || !password) {
+                return showToast('⚠️ Renseignez votre email et votre mot de passe');
+            }
+            showToast('Connexion en cours...');
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+            if (error) return showToast('❌ ' + error.message);
+            showToast('Connexion réussie ☁️');
+            document.getElementById('auth-modal').classList.add('hidden');
+        }
+
+        async function handleSignOut() {
+            if (supabaseClient) await supabaseClient.auth.signOut();
+            showToast('Déconnecté');
+            document.getElementById('auth-modal').classList.add('hidden');
+        }
+
+        async function handleDeleteCloudAccount() {
+            if (!supabaseClient || !currentUser) return;
+            if (!confirm('Voulez-vous vraiment supprimer définitivement toutes vos données synchronisées sur le Cloud et vous déconnecter ? Cette action est irréversible.')) {
+                return;
+            }
+            showToast('Suppression des données Cloud...');
+            try {
+                await supabaseClient
+                    .from('user_profiles_data')
+                    .delete()
+                    .eq('user_id', currentUser.id);
+                try {
+                    await supabaseClient.rpc('delete_user');
+                } catch (_) {}
+                await supabaseClient.auth.signOut();
+                currentUser = null;
+                updateAuthUI();
+                document.getElementById('auth-modal').classList.add('hidden');
+                showToast('Données Cloud supprimées et compte déconnecté 🗑️');
+            } catch (err) {
+                showToast('❌ Erreur lors de la suppression : ' + err.message);
+            }
+        }
+
+        async function loadUserDataFromSupabase() {
+            if (!supabaseClient || !currentUser) return;
+            const { data, error } = await supabaseClient
+                .from('user_profiles_data')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .single();
+
+            if (data) {
+                entries = deduplicateEntriesByDay(data.entries || []);
+                userCreatedFactors = data.user_created_factors || [];
+                challenges = data.challenges || [];
+                gamification = Object.assign(gamification, data.gamification || {});
+                reminderSettings = Object.assign(reminderSettings, data.reminder_settings || {});
+                if (data.user_name) userName = data.user_name;
+                if (data.install_date) installDate = data.install_date;
+
+                saveLocalOnly();
+                refreshAllViews();
+            } else if (error && error.code === 'PGRST116') {
+                await syncDataToSupabase();
+            }
+        }
+
+        async function syncDataToSupabase() {
+            if (!supabaseClient || !currentUser) return;
+            await supabaseClient.from('user_profiles_data').upsert({
+                user_id: currentUser.id,
+                user_name: userName,
+                install_date: installDate,
+                entries: entries,
+                user_created_factors: userCreatedFactors,
+                challenges: challenges,
+                gamification: gamification,
+                reminder_settings: reminderSettings,
+                updated_at: new Date().toISOString()
+            });
+        }
+
+        function saveLocalOnly() {
+            entries = deduplicateEntriesByDay(entries);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+            localStorage.setItem(TIPS_KEY, JSON.stringify(communityTips));
+            localStorage.setItem(USER_FACTORS_KEY, JSON.stringify(userCreatedFactors));
+            localStorage.setItem(CHALLENGES_LIST_KEY, JSON.stringify(challenges));
+            localStorage.setItem(GAMIFICATION_KEY, JSON.stringify(gamification));
+            localStorage.setItem(REMINDER_KEY, JSON.stringify(reminderSettings));
+            localStorage.removeItem(CHALLENGE_KEY);
+        }
+
+        function saveState() {
+            saveLocalOnly();
+            syncDataToSupabase();
+        }
+
+        function refreshAllViews() {
+            renderUserGreeting();
+            renderReminderUI();
+            updateStreakAndKPIs();
+            renderIntestinalWeather();
+            renderChallengesUI();
+            renderStatsViews();
+            renderCombosRadar();
+            renderHealingCombosRadar();
+            renderResourcesFeed('all');
+            renderCommunityFeed('all');
+            renderProfileFactorsManager();
+        }
+
+        // --- GESTION DU PRÉNOM UTILISATEUR ---
+        function renderUserGreeting() {
+            const greetingEl = document.getElementById('user-greeting-name');
+            const profileTitleEl = document.getElementById('profile-user-title');
+            if (greetingEl) {
+                greetingEl.innerText = userName ? ' ' + userName : '';
+            }
+            if (profileTitleEl) {
+                profileTitleEl.innerText = userName ? `Espace de ${userName}` : 'Mon Espace Digestiv';
+            }
+        }
+
+        function openUserNameModal() {
+            const input = document.getElementById('input-user-name');
+            input.value = userName;
+            document.getElementById('username-modal').classList.remove('hidden');
+            setTimeout(() => input.focus(), 50);
+        }
+
+        function saveUserName() {
+            const val = document.getElementById('input-user-name').value.trim();
+            userName = val;
+            if (userName) {
+                localStorage.setItem(USER_NAME_KEY, userName);
+            } else {
+                localStorage.removeItem(USER_NAME_KEY);
+                localStorage.removeItem(ONBOARDED_KEY);
+            }
+            renderUserGreeting();
+            document.getElementById('username-modal').classList.add('hidden');
+            showToast(userName ? `Bonjour ${userName} ! 👋` : 'Prénom effacé');
+        }
+
+        function clearUserName() {
+            document.getElementById('input-user-name').value = '';
+            saveUserName();
+        }
+
+        // --- BOUTON « JOURNÉE CALME (TOUT VA BIEN) » EN 1 CLIC ---
+        function logCalmDayOneClick() {
+            const todayIso = getTodayIso();
+            const todayLabel = formatIsoShort(todayIso);
+            const calmEntry = {
+                isoDate: todayIso,
+                date: todayLabel,
+                pain: 0,
+                bloating: 0,
+                flatulence: 0,
+                stress: 1,
+                bristol: 4,
+                factors: [],
+                protectiveFactors: [],
+                note: 'Journée calme enregistrée en 1 clic'
+            };
+
+            const existingIdx = entries.findIndex(e => e.isoDate === todayIso);
+            if (existingIdx !== -1) {
+                entries[existingIdx] = calmEntry;
+            } else {
+                entries.push(calmEntry);
+            }
+
+            const streakRes = recordDailyStreakProgress(todayIso);
+            saveState();
+            refreshAllViews();
+            if (streakRes.earnedFreeze) {
+                showToast(`🔥 ${streakRes.streak} jours de série ! +1 Gel de série gagné ❄️`);
+            } else if (streakRes.isFirstTimeToday) {
+                showToast(`🔥 Série : ${streakRes.streak} jour${streakRes.streak > 1 ? 's' : ''} ! Journée calme enregistrée ✨`);
+            } else {
+                showToast('✨ Journée calme mise à jour !');
+            }
+        }
+
+        // --- CALCUL RÉEL DE LA SÉRIE (AVEC BOUCLIER DE SÉRIE) & DE LA PAIX DIGESTIVE ---
+        function shiftIsoDate(isoStr, deltaDays) {
+            const [y, m, d] = isoStr.split('-').map(Number);
+            const dt = new Date(y, m - 1, d);
+            dt.setDate(dt.getDate() + deltaDays);
+            return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+        }
+
+        function computeRealStreak() {
+            if (entries.length === 0) return 0;
+            const dateSet = new Set(entries.map(e => e.isoDate).filter(Boolean));
+            const shieldSet = new Set(gamification.shieldUsedDates || []);
+            if (dateSet.size === 0) return 0;
+
+            const today = getTodayIso();
+            const yesterday = shiftIsoDate(today, -1);
+            const twoDaysAgo = shiftIsoDate(today, -2);
+
+            if (!dateSet.has(today) && !dateSet.has(yesterday) && dateSet.has(twoDaysAgo) && !shieldSet.has(yesterday) && (gamification.streakShields || 0) > 0) {
+                gamification.streakShields -= 1;
+                gamification.shieldUsedDates = [...shieldSet, yesterday];
+                shieldSet.add(yesterday);
+            }
+
+            let cursor = dateSet.has(today) ? today : (dateSet.has(yesterday) || shieldSet.has(yesterday) ? yesterday : null);
+            if (!cursor) return 0;
+
+            let streak = 0;
+            while (dateSet.has(cursor) || shieldSet.has(cursor)) {
+                if (dateSet.has(cursor)) streak += 1;
+                cursor = shiftIsoDate(cursor, -1);
+            }
+            if (streak > (gamification.bestStreak || 0)) {
+                gamification.bestStreak = streak;
+            }
+            return streak;
+        }
+
+        function recordDailyStreakProgress(isoDate) {
+            gamification.rewardedEntryDates = gamification.rewardedEntryDates || [];
+            const isFirstTimeToday = !gamification.rewardedEntryDates.includes(isoDate);
+            if (isFirstTimeToday) {
+                gamification.rewardedEntryDates.push(isoDate);
+            }
+
+            const streak = computeRealStreak();
+            gamification.rewardedStreakMilestones = gamification.rewardedStreakMilestones || [];
+            let earnedFreeze = false;
+
+            if (streak > 0 && streak % 7 === 0 && !gamification.rewardedStreakMilestones.includes(streak)) {
+                gamification.rewardedStreakMilestones.push(streak);
+                if ((gamification.streakShields || 0) < 2) {
+                    gamification.streakShields = (gamification.streakShields || 0) + 1;
+                    earnedFreeze = true;
+                }
+            }
+
+            return { isFirstTimeToday, streak, earnedFreeze };
+        }
+
+        function openStreakModal() {
+            const streak = computeRealStreak();
+            const shields = gamification.streakShields || 0;
+            const best = Math.max(streak, gamification.bestStreak || 0);
+            const todayDone = entries.some(e => e.isoDate === getTodayIso());
+
+            document.getElementById('streak-modal-flame').innerText = todayDone ? '🔥' : (streak > 0 ? '⏳' : '🕯️');
+            document.getElementById('streak-modal-count').innerText = `${streak} jour${streak > 1 ? 's' : ''}`;
+            document.getElementById('streak-modal-best').innerText = `${best} jour${best > 1 ? 's' : ''}`;
+            document.getElementById('streak-modal-shields').innerText = `❄️ ${shields} / 2`;
+            document.getElementById('streak-modal-msg').innerText = todayDone
+                ? 'Bravo ! Votre bilan du jour est validé, votre flamme est allumée.'
+                : (streak > 0
+                    ? 'Faites votre bilan aujourd’hui pour prolonger votre série !'
+                    : 'Commencez votre série dès aujourd’hui en enregistrant votre bilan.');
+
+            document.getElementById('streak-modal').classList.remove('hidden');
+        }
+
+        function computePeaceDigestivePct() {
+            if (entries.length === 0) return null;
+            const calmDays = entries.filter(e => e.pain <= 3 && (e.bloating ?? 0) <= 3).length;
+            return {
+                pct: Math.round((calmDays / entries.length) * 100),
+                calmDays
+            };
+        }
+
+        function updateStreakAndKPIs() {
+            const streak = computeRealStreak();
+            const todayDone = entries.some(e => e.isoDate === getTodayIso());
+            const streakEl = document.getElementById('streak-badge');
+            streakEl.innerText = `${todayDone ? '🔥' : '🕯️'} ${streak} jour${streak > 1 ? 's' : ''}`;
+
+            const peaceEl = document.getElementById('kpi-peace');
+            const peaceSub = document.getElementById('kpi-peace-subtitle');
+            const peaceTag = document.getElementById('kpi-peace-tag');
+
+            const peaceData = computePeaceDigestivePct();
+            if (!peaceData) {
+                peaceEl.innerText = '—';
+                peaceSub.innerText = 'En attente de votre premier bilan';
+                peaceTag.innerText = 'Jours calmes';
+            } else {
+                peaceEl.innerText = peaceData.pct + '%';
+                peaceSub.innerText = `${peaceData.calmDays} jour(s) calme(s) sur ${entries.length}`;
+                peaceTag.innerText = 'Douleur & ballonnements ≤ 3';
+            }
+
+            document.getElementById('total-entries-badge').innerText = `${entries.length} bilan${entries.length > 1 ? 's' : ''} enregistré${entries.length > 1 ? 's' : ''}`;
+            document.getElementById('profile-first-use-label').innerText = `Actif depuis le ${formatIsoShort(installDate)} • 100% Hors-ligne`;
+        }
+
+        function openPeaceInfoModal() {
+            document.getElementById('peace-info-modal').classList.remove('hidden');
+        }
+
+        // --- MÉTÉO INTESTINALE (UNIQUEMENT À PARTIR DE digestiv_install_date) ---
+        function renderIntestinalWeather() {
+            const grid = document.getElementById('weekly-weather-grid');
+            const sinceLabel = document.getElementById('weather-since-label');
+            sinceLabel.innerText = `Depuis votre début le ${formatIsoShort(installDate)}`;
+
+            const [fy, fm, fd] = installDate.split('-').map(Number);
+            const startObj = new Date(fy, fm - 1, fd);
+            const todayIso = getTodayIso();
+            const [ty, tm, td] = todayIso.split('-').map(Number);
+            const todayObj = new Date(ty, tm - 1, td);
+
+            const daysSinceStart = Math.max(0, Math.round((todayObj - startObj) / (1000 * 60 * 60 * 24)));
+            const countToShow = Math.min(7, daysSinceStart + 1);
+            const slots = [];
+
+            for (let i = countToShow - 1; i >= 0; i--) {
+                const d = new Date(todayObj);
+                d.setDate(todayObj.getDate() - i);
+                const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                const dayNum = d.getDate();
+                const matchingEntries = entries.filter(e => e.isoDate === iso);
+                const latestEntry = matchingEntries.length > 0 ? matchingEntries[matchingEntries.length - 1] : null;
+                slots.push({ iso, dayNum, entry: latestEntry });
+            }
+
+            grid.innerHTML = slots.map(slot => {
+                if (!slot.entry) {
+                    return `
+                        <button onclick="openCheckinModal()" class="flex flex-col items-center focus:outline-none">
+                            <span class="text-[10px] text-slate-400 mb-1">${slot.dayNum}</span>
+                            <div class="w-full h-10 rounded-xl bg-softGray border border-dashed border-slate-300 text-slate-400 flex items-center justify-center font-bold text-xs">
+                                —
+                            </div>
+                        </button>
+                    `;
+                }
+                const e = slot.entry;
+                const maxSymptom = Math.max(e.pain, e.bloating ?? 0);
+                let style = 'bg-success/20 text-success border-success/30';
+                if (maxSymptom >= 4 && maxSymptom <= 6) style = 'bg-warning/20 text-warning border-warning/30';
+                if (maxSymptom >= 7) style = 'bg-rose-100 text-rose-600 border-rose-200';
+                const idx = entries.indexOf(e);
+                return `
+                    <button onclick="showDayDetail(${idx})" class="flex flex-col items-center focus:outline-none">
+                        <span class="text-[10px] text-slate-500 font-medium mb-1">${slot.dayNum}</span>
+                        <div class="w-full h-10 rounded-xl ${style} border flex items-center justify-center font-bold text-xs transition transform active:scale-95">
+                            ${e.pain}/10
+                        </div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function showDayDetail(index) {
+            const e = entries[index];
+            if (!e) return;
+            const banner = document.getElementById('day-detail-banner');
+            banner.classList.remove('hidden');
+            const factorsText = e.factors.length ? e.factors.join(', ') : (e.note || 'Aucun facteur noté');
+            banner.innerHTML = `
+                <div class="flex justify-between font-bold text-slate-800 mb-1">
+                    <span>📅 Bilan du ${e.date} • ${(e.bristol ?? 4) === 0 ? 'Aucune selle' : 'Bristol Type ' + (e.bristol ?? 4)}</span>
+                    <span>Douleur ${e.pain}/10 • Ball. ${e.bloating ?? 0}/10 • Gaz ${e.flatulence ?? 0}/10</span>
+                </div>
+                <p class="text-[11px] text-slate-600">Détails : <span class="font-medium text-slate-800">${factorsText}</span></p>
+            `;
+        }
+
+        // --- NOTIFICATION RÉELLE SUR TÉLÉPHONE (RAPPEL BILAN DU SOIR) ---
+        let exactReminderTimeoutId = null;
+
+        async function dispatchSystemNotification(title, body) {
+            const iconSvg = './icon-192.png';
+            const options = {
+                body,
+                icon: iconSvg,
+                badge: iconSvg,
+                tag: 'digestiv-daily-reminder',
+                renotify: true,
+                vibrate: [200, 100, 200],
+                data: { url: window.location.href }
+            };
+
+            try {
+                if ('serviceWorker' in navigator) {
+                    const reg = await navigator.serviceWorker.ready;
+                    if (reg && typeof reg.showNotification === 'function') {
+                        await reg.showNotification(title, options);
+                        return true;
+                    }
+                }
+            } catch (err) {
+                console.warn('Fallback Notification API :', err);
+            }
+
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(title, options);
+                return true;
+            }
+            return false;
+        }
+
+        function openReminderModal() {
+            document.getElementById('reminder-enabled-toggle').checked = !!reminderSettings.enabled;
+            document.getElementById('reminder-time-input').value = reminderSettings.time || '20:30';
+            document.getElementById('reminder-modal').classList.remove('hidden');
+        }
+
+        async function saveReminderSettings() {
+            const enabled = document.getElementById('reminder-enabled-toggle').checked;
+            const time = document.getElementById('reminder-time-input').value || '20:30';
+
+            if (enabled) {
+                if (!('Notification' in window)) {
+                    showToast('⚠️ Notifications système non supportées sur ce navigateur');
+                } else if (Notification.permission === 'default') {
+                    try {
+                        const perm = await Notification.requestPermission();
+                        if (perm !== 'granted') {
+                            showToast('⚠️ Autorisez les notifications dans les réglages du téléphone');
+                        }
+                    } catch (e) {
+                        console.warn('Permission notification ignorée :', e);
+                    }
+                } else if (Notification.permission === 'denied') {
+                    showToast('⚠️ Notifications bloquées : activez-les dans les paramètres du téléphone');
+                }
+            }
+
+            reminderSettings.enabled = enabled;
+            reminderSettings.time = time;
+            // Permet de déclencher aujourd'hui si l'utilisateur règle une heure future
+            const now = new Date();
+            const [targetH, targetM] = time.split(':').map(Number);
+            if ((now.getHours() * 60 + now.getMinutes()) < (targetH * 60 + targetM)) {
+                reminderSettings.lastNotifiedDate = '';
+            }
+
+            saveState();
+            renderReminderUI();
+            startEveningReminderWatcher();
+            document.getElementById('reminder-modal').classList.add('hidden');
+            showToast(enabled ? `Rappel quotidien activé à ${time} 🔔` : 'Rappel du soir désactivé');
+        }
+
+        async function testEveningNotification() {
+            const title = 'Digestiv — Bilan du soir 🌿';
+            const msg = 'C’est l’heure de votre bilan digestif du soir (30 sec)';
+            if ('Notification' in window) {
+                if (Notification.permission === 'granted') {
+                    await dispatchSystemNotification(title, msg);
+                    showToast('Notification envoyée sur votre téléphone 🔔');
+                    return;
+                } else if (Notification.permission !== 'denied') {
+                    const perm = await Notification.requestPermission();
+                    if (perm === 'granted') {
+                        await dispatchSystemNotification(title, msg);
+                        showToast('Notification envoyée sur votre téléphone 🔔');
+                    } else {
+                        showToast('Notification refusée par le téléphone');
+                    }
+                    return;
+                } else {
+                    showToast('⚠️ Notifications bloquées dans les réglages de votre téléphone');
+                    return;
+                }
+            }
+            showToast('🔔 Aperçu : ' + msg);
+        }
+
+        function scheduleNextExactReminder() {
+            if (exactReminderTimeoutId) clearTimeout(exactReminderTimeoutId);
+            if (!reminderSettings.enabled) return;
+
+            const now = new Date();
+            const [targetH, targetM] = (reminderSettings.time || '20:30').split(':').map(Number);
+            const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), targetH, targetM, 0, 0);
+            if (target <= now) {
+                target.setDate(target.getDate() + 1);
+            }
+            const delayMs = target.getTime() - now.getTime();
+            exactReminderTimeoutId = setTimeout(() => {
+                checkEveningReminderTrigger();
+                scheduleNextExactReminder();
+            }, Math.min(delayMs, 2147483647));
+        }
+
+        function startEveningReminderWatcher() {
+            if (reminderIntervalId) clearInterval(reminderIntervalId);
+            checkEveningReminderTrigger();
+            scheduleNextExactReminder();
+            reminderIntervalId = setInterval(checkEveningReminderTrigger, 20000);
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                checkEveningReminderTrigger();
+            }
+        });
+
+        async function checkEveningReminderTrigger() {
+            renderReminderUI();
+            if (!reminderSettings.enabled) return;
+
+            const todayIso = getTodayIso();
+            const hasEntryToday = entries.some(e => e.isoDate === todayIso);
+            if (hasEntryToday) return;
+
+            const now = new Date();
+            const [targetH, targetM] = (reminderSettings.time || '20:30').split(':').map(Number);
+            const nowMinutes = now.getHours() * 60 + now.getMinutes();
+            const targetMinutes = targetH * 60 + targetM;
+
+            if (nowMinutes >= targetMinutes && reminderSettings.lastNotifiedDate !== todayIso) {
+                reminderSettings.lastNotifiedDate = todayIso;
+                saveState();
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    await dispatchSystemNotification(
+                        'Digestiv — Bilan du soir 🌙',
+                        'Vous n’avez pas encore enregistré votre bilan aujourd’hui. Prenez 30 secondes pour le compléter !'
+                    );
+                }
+            }
+        }
+
+        function renderReminderUI() {
+            const dot = document.getElementById('header-reminder-dot');
+            const statusEl = document.getElementById('profile-reminder-status');
+            const bannerEl = document.getElementById('evening-reminder-banner');
+
+            if (dot) dot.classList.toggle('hidden', !reminderSettings.enabled);
+            if (statusEl) {
+                statusEl.innerText = reminderSettings.enabled
+                    ? `Activé chaque jour à ${reminderSettings.time}`
+                    : 'Désactivé • Ne manquez plus votre bilan';
+            }
+
+            if (!bannerEl) return;
+            const todayIso = getTodayIso();
+            const hasEntryToday = entries.some(e => e.isoDate === todayIso);
+
+            if (!reminderSettings.enabled || hasEntryToday) {
+                bannerEl.classList.add('hidden');
+                return;
+            }
+
+            const now = new Date();
+            const [targetH, targetM] = (reminderSettings.time || '20:30').split(':').map(Number);
+            const isPastReminderTime = (now.getHours() * 60 + now.getMinutes()) >= (targetH * 60 + targetM);
+
+            if (isPastReminderTime) {
+                bannerEl.classList.remove('hidden');
+                bannerEl.innerHTML = `
+                    <div class="bg-amber-50 border border-amber-200 rounded-3xl p-3.5 shadow-sm flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-xl shrink-0">🌙</span>
+                            <div>
+                                <h4 class="text-xs font-bold text-amber-900">Bilan du soir en attente (${reminderSettings.time})</h4>
+                                <p class="text-[11px] text-amber-800/90">Complétez votre journée pour garder votre série intacte.</p>
+                            </div>
+                        </div>
+                        <button onclick="openCheckinModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] px-3 py-2 rounded-2xl shrink-0 transition">
+                            Compléter
+                        </button>
+                    </div>
+                `;
+            } else {
+                bannerEl.classList.add('hidden');
+            }
+        }
+
+        // --- SÉRIE DUOLINGO (7 JOURS DE LA SEMAINE), BADGES & GAGES DÉFIS ---
+        const WELLNESS_PUNISHMENTS = [
+            'Gage : 5 minutes de cohérence cardiaque (5-5) dès maintenant.',
+            'Gage : Boire un grand verre d’eau à température ambiante ou une tisane apaisante.',
+            'Gage : 10 minutes de marche digestive calme après le prochain repas.',
+            'Gage : Auto-massage abdominal dans le sens horaire pendant 3 minutes.',
+            'Gage : Couper les écrans 30 minutes plus tôt ce soir pour apaiser le système nerveux.'
+        ];
+
+        function evaluateGamificationBadges(silent = false) {
+            computeRealStreak();
+            gamification.unlockedBadges = gamification.unlockedBadges || [];
+
+            const totalValidatedDays = challenges.reduce((acc, c) => acc + (c.checkedDates ? c.checkedDates.length : 0), 0);
+            const activeCount = challenges.filter(c => !c.completed).length;
+            const completedCount = Math.max(
+                gamification.completedChallenges || 0,
+                challenges.filter(c => c.completed).length
+            );
+            gamification.completedChallenges = completedCount;
+
+            const conditions = {
+                first_launch: challenges.length >= 1,
+                first_day: totalValidatedDays >= 1,
+                three_days: totalValidatedDays >= 3,
+                first_complete: completedCount >= 1,
+                multi_tasker: activeCount >= 3,
+                master_three: completedCount >= 3
+            };
+
+            const newlyUnlocked = [];
+            CHALLENGE_BADGES.forEach(badge => {
+                if (conditions[badge.id] && !gamification.unlockedBadges.includes(badge.id)) {
+                    gamification.unlockedBadges.push(badge.id);
+                    newlyUnlocked.push(badge);
+                }
+            });
+
+            if (!silent && newlyUnlocked.length > 0) {
+                badgeUnlockQueue.push(...newlyUnlocked);
+                showNextBadgeUnlockModal();
+            }
+        }
+
+        function showNextBadgeUnlockModal() {
+            if (badgeUnlockQueue.length === 0) return;
+            const modal = document.getElementById('badge-unlock-modal');
+            if (!modal || !modal.classList.contains('hidden')) return;
+
+            const badge = badgeUnlockQueue.shift();
+            document.getElementById('badge-unlock-icon').innerText = badge.icon;
+            document.getElementById('badge-unlock-title').innerText = badge.title;
+            document.getElementById('badge-unlock-desc').innerText = badge.desc;
+            modal.classList.remove('hidden');
+        }
+
+        function closeBadgeUnlockModal() {
+            document.getElementById('badge-unlock-modal').classList.add('hidden');
+            if (badgeUnlockQueue.length > 0) {
+                setTimeout(showNextBadgeUnlockModal, 180);
+            }
+        }
+
+        function renderChallengeBadgesStrip() {
+            const strip = document.getElementById('challenge-badges-strip');
+            if (!strip) return;
+
+            const unlocked = new Set(gamification.unlockedBadges || []);
+            const unlockedCount = unlocked.size;
+
+            strip.innerHTML = `
+                <div class="bg-softGray/70 border border-slate-100 rounded-2xl p-2.5 space-y-2">
+                    <div class="flex items-center justify-between px-0.5">
+                        <span class="text-[10px] font-bold text-slate-600 uppercase tracking-wider">🏅 Badges Défis</span>
+                        <span class="text-[10px] font-bold text-slate-500">${unlockedCount} / ${CHALLENGE_BADGES.length}</span>
+                    </div>
+                    <div class="grid grid-cols-6 gap-1.5">
+                        ${CHALLENGE_BADGES.map(b => {
+                            const isUnlocked = unlocked.has(b.id);
+                            return `
+                                <button type="button" onclick="showToast('${b.icon} ${b.title} : ${b.desc.replace(/'/g, "’")}')" title="${b.title} — ${b.desc}" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl border text-center transition active:scale-95 ${isUnlocked ? 'bg-white border-amber-200/80 shadow-2xs' : 'bg-slate-100/70 border-transparent opacity-40 grayscale'}">
+                                    <span class="text-base leading-none">${b.icon}</span>
+                                    <span class="text-[8px] font-bold text-slate-700 mt-1 truncate w-full">${b.title.split(' ')[0]}</span>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderDuolingoStreakCard() {
+            const weekGrid = document.getElementById('duo-week-days');
+            const titleEl = document.getElementById('duo-streak-title');
+            const subEl = document.getElementById('duo-streak-subtitle');
+            const flameBox = document.getElementById('duo-flame-box');
+            const shieldPill = document.getElementById('duo-shield-pill');
+            if (!weekGrid) return;
+
+            const streak = computeRealStreak();
+            const shields = gamification.streakShields || 0;
+            const todayIso = getTodayIso();
+            const todayDone = entries.some(e => e.isoDate === todayIso);
+            const entryDates = new Set(entries.map(e => e.isoDate));
+            const shieldDates = new Set(gamification.shieldUsedDates || []);
+
+            if (titleEl) titleEl.innerText = `${streak} jour${streak > 1 ? 's' : ''} de série`;
+            if (shieldPill) shieldPill.innerText = `❄️ ${shields} gel${shields > 1 ? 's' : ''}`;
+
+            if (flameBox) {
+                flameBox.className = todayDone
+                    ? 'w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center text-xl font-bold shadow-sm transition'
+                    : (streak > 0
+                        ? 'w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 text-amber-500 flex items-center justify-center text-xl font-bold transition'
+                        : 'w-10 h-10 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center text-xl font-bold transition');
+            }
+
+            if (subEl) {
+                if (todayDone) {
+                    subEl.innerText = streak >= 7
+                        ? 'Flamme allumée aujourd’hui ! Continuez sur cette belle lancée.'
+                        : `Bilan du jour validé ! Encore ${7 - (streak % 7)} j avant le prochain Gel ❄️`;
+                } else if (streak > 0) {
+                    subEl.innerText = 'Validez votre bilan aujourd’hui pour ne pas perdre votre flamme !';
+                } else {
+                    subEl.innerText = 'Enregistrez votre bilan aujourd’hui pour allumer votre flamme.';
+                }
+            }
+
+            const now = new Date();
+            const jsDay = now.getDay();
+            const mondayOffset = jsDay === 0 ? -6 : 1 - jsDay;
+            const dayLabels = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+
+            const cells = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(now);
+                d.setDate(now.getDate() + mondayOffset + i);
+                const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                const isDone = entryDates.has(iso);
+                const isFrozen = !isDone && shieldDates.has(iso);
+                const isToday = iso === todayIso;
+                const isFuture = iso > todayIso;
+
+                let circleHtml = '';
+                if (isDone) {
+                    circleHtml = `<div class="w-8 h-8 mx-auto rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center text-xs font-bold shadow-2xs">🔥</div>`;
+                } else if (isFrozen) {
+                    circleHtml = `<div class="w-8 h-8 mx-auto rounded-full bg-sky-100 border border-sky-300 text-sky-700 flex items-center justify-center text-xs font-bold" title="Série protégée par un Gel">❄️</div>`;
+                } else if (isToday) {
+                    circleHtml = `<div class="w-8 h-8 mx-auto rounded-full border-2 border-dashed border-amber-400 bg-amber-50/50 text-amber-600 flex items-center justify-center text-[11px] font-bold">•</div>`;
+                } else if (isFuture) {
+                    circleHtml = `<div class="w-8 h-8 mx-auto rounded-full bg-slate-50 border border-slate-100 text-slate-300 flex items-center justify-center text-[10px]"></div>`;
+                } else {
+                    circleHtml = `<div class="w-8 h-8 mx-auto rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-[10px]">—</div>`;
+                }
+
+                cells.push(`
+                    <div class="flex flex-col items-center gap-1">
+                        <span class="text-[10px] font-bold ${isToday ? 'text-primary' : 'text-slate-400'}">${dayLabels[i]}</span>
+                        ${circleHtml}
+                    </div>
+                `);
+            }
+            weekGrid.innerHTML = cells.join('');
+        }
+
+        // --- DÉFIS PERSONNALISÉS (JUSQU'À 10 SIMULTANÉMENT + BADGES DOPAMINE) ---
+        function renderChallengesUI() {
+            const homeContainer = document.getElementById('home-challenge-container');
+            const statsContainer = document.getElementById('stats-challenge-status');
+            const counterBadge = document.getElementById('active-challenges-counter');
+            const modalCounterBadge = document.getElementById('modal-challenges-counter');
+            const createBtnStats = document.getElementById('btn-create-challenge-stats');
+            const gamificationBar = document.getElementById('gamification-summary-bar');
+
+            renderDuolingoStreakCard();
+            renderChallengeBadgesStrip();
+
+            const activeList = challenges.filter(c => !c.completed);
+            const todayIso = getTodayIso();
+
+            if (counterBadge) counterBadge.innerText = `${activeList.length} / ${MAX_ACTIVE_CHALLENGES}`;
+            if (modalCounterBadge) modalCounterBadge.innerText = `${activeList.length} / ${MAX_ACTIVE_CHALLENGES}`;
+            if (createBtnStats) {
+                createBtnStats.disabled = activeList.length >= MAX_ACTIVE_CHALLENGES;
+                createBtnStats.classList.toggle('opacity-50', activeList.length >= MAX_ACTIVE_CHALLENGES);
+            }
+
+            if (gamificationBar) {
+                const pendingGages = (gamification.activeGages || []);
+                if (pendingGages.length > 0) {
+                    gamificationBar.innerHTML = `
+                        <div class="bg-rose-50 border border-rose-200 rounded-2xl p-3 flex items-center justify-between gap-2 text-xs">
+                            <span class="text-rose-900 leading-snug text-[11px]">⚡ <strong>Gage bien-être :</strong> ${pendingGages[0]}</span>
+                            <button onclick="completeActiveGage()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold px-2.5 py-1.5 rounded-xl text-[11px] shrink-0">Fait ✓</button>
+                        </div>
+                    `;
+                } else {
+                    gamificationBar.innerHTML = '';
+                }
+            }
+
+            const unlockedBadges = CHALLENGE_BADGES.filter(b => (gamification.unlockedBadges || []).includes(b.id));
+            const miniBadgesHtml = unlockedBadges.length > 0
+                ? `<div class="flex items-center gap-1">${unlockedBadges.slice(-4).map(b => `<span title="${b.title}" class="text-xs bg-amber-50 border border-amber-200/70 w-6 h-6 rounded-lg flex items-center justify-center">${b.icon}</span>`).join('')}</div>`
+                : '';
+
+            if (activeList.length === 0) {
+                homeContainer.innerHTML = `
+                    <div class="bg-white border border-slate-200/80 rounded-3xl p-4 shadow-sm flex items-center justify-between gap-3">
+                        <div class="space-y-0.5">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-bold text-primary uppercase tracking-wider">🧪 Défis (0/${MAX_ACTIVE_CHALLENGES})</span>
+                                ${miniBadgesHtml}
+                            </div>
+                            <h4 class="text-xs font-bold text-slate-900">Envie de tester une nouvelle habitude ?</h4>
+                            <p class="text-[11px] text-slate-500">Ajoutez jusqu'à ${MAX_ACTIVE_CHALLENGES} défis en instantané et débloquez vos badges.</p>
+                        </div>
+                        <button onclick="openChallengeCreatorModal()" class="bg-primary/10 hover:bg-primary hover:text-white text-primary font-bold text-xs px-3.5 py-2.5 rounded-2xl transition shrink-0">
+                            + Créer
+                        </button>
+                    </div>
+                `;
+                statsContainer.innerHTML = `
+                    <p class="text-xs text-slate-500 bg-softGray p-3 rounded-2xl">
+                        Aucun défi actif pour le moment. Appuyez sur <strong>« + Créer un défi »</strong> pour en ajouter jusqu'à ${MAX_ACTIVE_CHALLENGES} en instantané.
+                    </p>
+                `;
+                return;
+            }
+
+            const renderSingleChallengeCard = (ch) => {
+                const validatedCount = (ch.checkedDates || []).length;
+                const missedCount = (ch.missedDates || []).length;
+                const pct = Math.min(100, Math.round((validatedCount / ch.duration) * 100));
+                const isDoneToday = (ch.checkedDates || []).includes(todayIso);
+                const isMissedToday = (ch.missedDates || []).includes(todayIso);
+
+                return `
+                    <div class="bg-white border border-primary/20 rounded-2xl p-3.5 shadow-2xs space-y-2.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">🧪 ${ch.category}</span>
+                            <div class="flex items-center gap-1.5">
+                                ${missedCount > 0 ? `<span class="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">⚠️ ${missedCount} écart${missedCount > 1 ? 's' : ''}</span>` : ''}
+                                <span class="text-[11px] text-slate-700 font-bold">${validatedCount} / ${ch.duration} j</span>
+                            </div>
+                        </div>
+                        <h4 class="text-xs font-bold text-slate-900">${ch.title}</h4>
+                        <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                            <div class="bg-success h-full rounded-full transition-all duration-300" style="width: ${pct}%"></div>
+                        </div>
+                        <div class="flex items-center justify-between gap-1.5 pt-0.5">
+                            <div class="flex items-center gap-1.5">
+                                <button onclick="validateChallengeDay('${ch.id}')" ${isDoneToday ? 'disabled' : ''} class="text-[11px] font-bold px-2.5 py-1.5 rounded-xl transition ${isDoneToday ? 'bg-success/15 text-success cursor-default' : 'bg-success hover:bg-emerald-600 text-white shadow-2xs active:scale-95'}">
+                                    ${isDoneToday ? '✓ Validé' : '✓ Réussi aujourd’hui'}
+                                </button>
+                                <button onclick="missChallengeDay('${ch.id}')" ${isMissedToday ? 'disabled' : ''} class="text-[11px] font-bold px-2.5 py-1.5 rounded-xl transition ${isMissedToday ? 'bg-rose-100 text-rose-500 cursor-default' : 'bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200'}">
+                                    ${isMissedToday ? '⚠️ Manqué' : '✕ Écart'}
+                                </button>
+                            </div>
+                            <button onclick="stopChallengeById('${ch.id}')" title="Arrêter ce défi" class="text-[10px] font-semibold text-slate-400 hover:text-rose-500 px-1.5 py-1 transition">
+                                Arrêter
+                            </button>
+                        </div>
+                    </div>
+                `;
+            };
+
+            const cardsHtml = activeList.map(renderSingleChallengeCard).join('');
+
+            homeContainer.innerHTML = `
+                <div class="bg-white border border-slate-200/80 rounded-3xl p-4 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="text-xs font-bold text-slate-900 shrink-0">🧪 Mes Défis</span>
+                            <span class="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full shrink-0">${activeList.length} / ${MAX_ACTIVE_CHALLENGES}</span>
+                            ${miniBadgesHtml}
+                        </div>
+                        ${activeList.length < MAX_ACTIVE_CHALLENGES ? `
+                            <button onclick="openChallengeCreatorModal()" class="text-[11px] font-bold text-primary hover:underline shrink-0">+ Ajouter</button>
+                        ` : `<span class="text-[10px] font-semibold text-amber-600 shrink-0">Max atteint</span>`}
+                    </div>
+                    <div class="space-y-2.5">${cardsHtml}</div>
+                </div>
+            `;
+
+            statsContainer.innerHTML = cardsHtml;
+        }
+
+        function validateChallengeDay(challengeId) {
+            const ch = challenges.find(c => c.id === challengeId);
+            if (!ch) return;
+            const todayIso = getTodayIso();
+            ch.checkedDates = ch.checkedDates || [];
+            ch.missedDates = (ch.missedDates || []).filter(d => d !== todayIso);
+
+            if (!ch.checkedDates.includes(todayIso)) {
+                ch.checkedDates.push(todayIso);
+                gamification.points += 10;
+            }
+
+            if (ch.checkedDates.length >= ch.duration) {
+                ch.completed = true;
+                gamification.completedChallenges += 1;
+                gamification.points += 50;
+                evaluateGamificationBadges(false);
+                saveState();
+                renderChallengesUI();
+                showToast(`🏆 Défi « ${ch.title} » accompli !`);
+                return;
+            }
+
+            evaluateGamificationBadges(false);
+            saveState();
+            renderChallengesUI();
+            showToast(`Bravo ! Jour validé 🌟`);
+        }
+
+        function missChallengeDay(challengeId) {
+            const ch = challenges.find(c => c.id === challengeId);
+            if (!ch) return;
+            const todayIso = getTodayIso();
+            ch.missedDates = ch.missedDates || [];
+            ch.checkedDates = (ch.checkedDates || []).filter(d => d !== todayIso);
+
+            if (!ch.missedDates.includes(todayIso)) {
+                ch.missedDates.push(todayIso);
+                const penaltyPts = 15;
+                gamification.points = Math.max(0, gamification.points - penaltyPts);
+                gamification.missedDaysCount += 1;
+                ch.checkedDates = [];
+
+                const gage = WELLNESS_PUNISHMENTS[Math.floor(Math.random() * WELLNESS_PUNISHMENTS.length)];
+                gamification.activeGages = gamification.activeGages || [];
+                gamification.activeGages.unshift(gage);
+
+                document.getElementById('penalty-modal-desc').innerText = `Écart enregistré sur le défi « ${ch.title} ». Pour vous aider à garder le cap :`;
+                document.getElementById('penalty-modal-points').innerText = `Progression du défi remise à 0 / ${ch.duration} j`;
+                document.getElementById('penalty-modal-gage').innerText = gage;
+                document.getElementById('penalty-modal').classList.remove('hidden');
+            }
+
+            saveState();
+            renderChallengesUI();
+        }
+
+        function completeActiveGage() {
+            if (gamification.activeGages && gamification.activeGages.length > 0) {
+                gamification.activeGages.shift();
+                gamification.points += 5;
+                saveState();
+                renderChallengesUI();
+                showToast('Gage bien-être accompli 💪');
+            }
+        }
+
+        function openChallengeCreatorModal() {
+            const activeCount = challenges.filter(c => !c.completed).length;
+            if (activeCount >= MAX_ACTIVE_CHALLENGES) {
+                showToast(`Limite atteinte : ${MAX_ACTIVE_CHALLENGES} défis actifs maximum`);
+                return;
+            }
+            document.getElementById('custom-challenge-title').value = '';
+            const modalCounter = document.getElementById('modal-challenges-counter');
+            if (modalCounter) modalCounter.innerText = `${activeCount} / ${MAX_ACTIVE_CHALLENGES}`;
+            document.getElementById('challenge-creator-modal').classList.remove('hidden');
+        }
+
+        function selectChallengeProposal(title) {
+            const titleInput = document.getElementById('custom-challenge-title');
+            if (!titleInput) return;
+            titleInput.value = title;
+            titleInput.focus();
+            showToast('Défi sélectionné : choisissez sa durée et sa thématique 👇');
+        }
+
+        function saveCustomChallenge(keepOpen = false) {
+            const activeCount = challenges.filter(c => !c.completed).length;
+            if (activeCount >= MAX_ACTIVE_CHALLENGES) {
+                showToast(`Vous avez déjà ${MAX_ACTIVE_CHALLENGES} défis en cours`);
+                return;
+            }
+            const title = document.getElementById('custom-challenge-title').value.trim();
+            if (!title) {
+                showToast('Indiquez un titre pour votre défi');
+                return;
+            }
+            const duration = parseInt(document.getElementById('custom-challenge-duration').value, 10);
+            const category = document.getElementById('custom-challenge-cat').value;
+
+            challenges.push({
+                id: 'ch_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+                title,
+                duration,
+                category,
+                startDate: getTodayIso(),
+                checkedDates: [],
+                missedDates: [],
+                completed: false
+            });
+            evaluateGamificationBadges(false);
+            saveState();
+            document.getElementById('custom-challenge-title').value = '';
+            const newCount = activeCount + 1;
+            if (!keepOpen || newCount >= MAX_ACTIVE_CHALLENGES) {
+                document.getElementById('challenge-creator-modal').classList.add('hidden');
+            } else {
+                document.getElementById('custom-challenge-title').focus();
+            }
+            renderChallengesUI();
+            showToast(`Défi « ${title} » ajouté (${newCount}/${MAX_ACTIVE_CHALLENGES}) 🚀`);
+        }
+
+        function stopChallengeById(challengeId) {
+            challenges = challenges.filter(c => c.id !== challengeId);
+            saveState();
+            renderChallengesUI();
+            showToast('Défi retiré');
+        }
+
+        // --- RADAR DES COMBOS DÉCLENCHEURS (EFFET CUMULATIF) ---
+        function computeTriggerCombos() {
+            const crisisEntries = entries.filter(e => e.pain >= 4 || (e.bloating ?? 0) >= 4);
+            if (crisisEntries.length < 2) return [];
+
+            const pairCounts = {};
+            crisisEntries.forEach(entry => {
+                const normalized = [...new Set(
+                    (entry.factors || []).map(f => f.replace(/\s*\(\d+\/5\)$/, '').trim()).filter(Boolean)
+                )].sort();
+
+                if (normalized.length < 2) return;
+
+                for (let i = 0; i < normalized.length; i++) {
+                    for (let j = i + 1; j < normalized.length; j++) {
+                        const key = `${normalized[i]}|||${normalized[j]}`;
+                        pairCounts[key] = (pairCounts[key] || 0) + 1;
+                    }
+                }
+            });
+
+            return Object.entries(pairCounts)
+                .filter(([, count]) => count >= 2)
+                .map(([key, count]) => {
+                    const [factorA, factorB] = key.split('|||');
+                    const pctOfCrises = Math.round((count / crisisEntries.length) * 100);
+                    return { factorA, factorB, count, pctOfCrises, totalCrises: crisisEntries.length };
+                })
+                .sort((a, b) => b.count - a.count);
+        }
+
+        function openRadarInfoModal(type) {
+            const iconEl = document.getElementById('radar-info-icon');
+            const titleEl = document.getElementById('radar-info-title');
+            const bodyEl = document.getElementById('radar-info-body');
+
+            if (type === 'trigger') {
+                iconEl.innerText = '📡';
+                titleEl.innerText = 'Combos Déclencheurs (Effet cumulatif)';
+                bodyEl.innerHTML = `
+                    <p>Ce radar détecte les <strong>associations de 2 facteurs</strong> présents le même jour lors d'une crise (douleur ≥ 4 ou ballonnement ≥ 4).</p>
+                    <div class="bg-amber-50/80 border border-amber-200/70 rounded-2xl p-3.5 space-y-1 text-[11px] text-slate-700">
+                        <p class="font-bold text-amber-900">Condition d'activation :</p>
+                        <p>Les duos s'affichent automatiquement dès que plusieurs associations récurrentes ont été détectées sur au moins <strong>2 jours de crise</strong> dans vos bilans.</p>
+                    </div>
+                `;
+            } else {
+                iconEl.innerText = '💚';
+                titleEl.innerText = 'Combos Guérisseurs (Synergie apaisante)';
+                bodyEl.innerHTML = `
+                    <p>Ce radar repère les <strong>associations de 2 habitudes ou facteurs protecteurs</strong> présents ensemble lors de vos journées calmes (douleur ≤ 3 et ballonnements ≤ 3).</p>
+                    <div class="bg-emerald-50/80 border border-emerald-200/70 rounded-2xl p-3.5 space-y-1 text-[11px] text-slate-700">
+                        <p class="font-bold text-emerald-900">Condition d'activation :</p>
+                        <p>Dès qu'un duo apaisant (ex. Tisane + Marche) est observé sur au moins <strong>2 journées calmes</strong>, il apparaît ici avec son taux de réussite.</p>
+                    </div>
+                `;
+            }
+            document.getElementById('radar-info-modal').classList.remove('hidden');
+        }
+
+        function renderCombosRadar() {
+            const container = document.getElementById('combos-radar-container');
+            if (!container) return;
+
+            const combos = computeTriggerCombos();
+            if (combos.length < 2) {
+                container.innerHTML = `
+                    <div class="bg-softGray/80 rounded-2xl px-3.5 py-2.5 flex items-center justify-between text-xs text-slate-500">
+                        <span>🔍 En veille (min. 2 crises avec duos)</span>
+                        <span class="text-[10px] font-semibold text-slate-400">En attente</span>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="space-y-2">
+                    ${combos.slice(0, 5).map(c => `
+                        <div class="px-3 py-2.5 rounded-2xl bg-amber-50/70 border border-amber-200/80 flex items-center justify-between gap-2">
+                            <span class="text-xs font-bold text-slate-900 truncate">⚡ ${c.factorA} + ${c.factorB}</span>
+                            <span class="text-[10px] font-bold bg-white text-amber-800 px-2 py-0.5 rounded-lg border border-amber-200 shrink-0">
+                                ${c.count}× (${c.pctOfCrises}%)
+                            </span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // --- RADAR DES COMBOS GUÉRISSEURS (SYNERGIE APAISANTE) ---
+        function computeHealingCombos() {
+            const calmEntries = entries.filter(e => e.pain <= 3 && (e.bloating ?? 0) <= 3);
+            if (calmEntries.length < 2) return [];
+
+            const pairCounts = {};
+            calmEntries.forEach(entry => {
+                const protective = (entry.protectiveFactors || []).map(f => f.replace(/\s*\(\d+\/5\)$/, '').trim()).filter(Boolean);
+                const otherFactors = (entry.factors || [])
+                    .map(f => f.replace(/\s*\(\d+\/5\)$/, '').trim())
+                    .filter(f => f && !f.includes('Crise aiguë'));
+
+                const combined = [...new Set([...protective, ...otherFactors])].sort();
+                if (combined.length < 2) return;
+
+                for (let i = 0; i < combined.length; i++) {
+                    for (let j = i + 1; j < combined.length; j++) {
+                        const key = `${combined[i]}|||${combined[j]}`;
+                        pairCounts[key] = (pairCounts[key] || 0) + 1;
+                    }
+                }
+            });
+
+            return Object.entries(pairCounts)
+                .filter(([, count]) => count >= 2)
+                .map(([key, count]) => {
+                    const [factorA, factorB] = key.split('|||');
+                    const pctOfCalm = Math.round((count / calmEntries.length) * 100);
+                    return { factorA, factorB, count, pctOfCalm, totalCalm: calmEntries.length };
+                })
+                .sort((a, b) => b.count - a.count);
+        }
+
+        function renderHealingCombosRadar() {
+            const container = document.getElementById('healing-combos-radar-container');
+            if (!container) return;
+
+            const combos = computeHealingCombos();
+            if (combos.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-softGray/80 rounded-2xl px-3.5 py-2.5 flex items-center justify-between text-xs text-slate-500">
+                        <span>🌱 En veille (min. 2 jours calmes avec duos)</span>
+                        <span class="text-[10px] font-semibold text-slate-400">En attente</span>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="space-y-2">
+                    ${combos.slice(0, 5).map(c => `
+                        <div class="px-3 py-2.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between gap-2">
+                            <span class="text-xs font-bold text-slate-900 truncate">✨ ${c.factorA} + ${c.factorB}</span>
+                            <span class="text-[10px] font-bold bg-white text-emerald-800 px-2 py-0.5 rounded-lg border border-emerald-200 shrink-0">
+                                ${c.count}× (${c.pctOfCalm}%)
+                            </span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // --- ONGLET ANALYSES ADAPTÉ AUX DÉBUTANTS (< 5 BILANS) ---
+        function renderStatsViews() {
+            const count = entries.length;
+            const minRequired = 5;
+            const onboardingView = document.getElementById('stats-onboarding-view');
+            const fullView = document.getElementById('stats-full-view');
+
+            if (count < minRequired) {
+                onboardingView.classList.remove('hidden');
+                fullView.classList.add('hidden');
+
+                document.getElementById('onboarding-days-counter').innerText = `${count} / ${minRequired} bilans`;
+                const pct = Math.min(100, Math.round((count / minRequired) * 100));
+                document.getElementById('onboarding-progress-bar').style.width = pct + '%';
+                const remaining = minRequired - count;
+                document.getElementById('onboarding-remaining-text').innerText = `Encore ${remaining} bilan${remaining > 1 ? 's' : ''} pour débloquer l'analyse complète`;
+            } else {
+                onboardingView.classList.add('hidden');
+                fullView.classList.remove('hidden');
+                renderBristolDistribution();
+                calculateCorrelations();
+                renderHistoryHeatmap();
+                if (!document.getElementById('tab-stats').classList.contains('hidden')) {
+                    setTimeout(renderTrendChart, 50);
+                }
+            }
+        }
+
+        function renderBristolDistribution() {
+            const container = document.getElementById('bristol-distribution-list');
+            const totalLabel = document.getElementById('bristol-total-label');
+            if (!container) return;
+
+            totalLabel.innerText = `${entries.length} bilan${entries.length > 1 ? 's' : ''}`;
+            const counts = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0 };
+            entries.forEach(e => {
+                const t = e.bristol !== undefined && e.bristol !== null ? Number(e.bristol) : 4;
+                if (counts[t] !== undefined) counts[t] += 1;
+            });
+
+            container.innerHTML = bristolScaleData.map(item => {
+                const c = counts[item.type];
+                const pct = entries.length > 0 ? Math.round((c / entries.length) * 100) : 0;
+                const barCls = item.type === 0 ? 'bg-slate-400' : ((item.type === 3 || item.type === 4) ? 'bg-success' : ((item.type === 1 || item.type === 7) ? 'bg-rose-400' : 'bg-warning'));
+                const labelTxt = item.type === 0 ? 'Aucune selle' : `Type ${item.type} <span class="text-slate-400">(${item.badge})</span>`;
+                return `
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-[11px]">
+                            <span class="font-medium text-slate-700">${item.icon} ${labelTxt}</span>
+                            <span class="font-bold text-slate-800">${c}x (${pct}%)</span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                            <div class="${barCls} h-full rounded-full" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderHistoryHeatmap() {
+            const container = document.getElementById('monthly-heatmap');
+            container.innerHTML = entries.map(entry => {
+                const maxSym = Math.max(entry.pain, entry.bloating ?? 0);
+                let cls = 'bg-success/25 text-success';
+                if (maxSym >= 4 && maxSym <= 6) cls = 'bg-warning/30 text-warning';
+                if (maxSym >= 7) cls = 'bg-rose-200 text-rose-700';
+                return `<div class="h-9 rounded-xl ${cls} flex flex-col items-center justify-center text-[10px] font-bold leading-tight">
+                    <span>${entry.date.split(' ')[0]}</span>
+                    <span class="text-[9px] opacity-80">${entry.pain}/10</span>
+                </div>`;
+            }).join('');
+        }
+
+        function computeRealImpactScores() {
+            const factorStats = {};
+            const totalEntries = entries.length;
+
+            entries.forEach(entry => {
+                const isSymptomatic = entry.pain >= 4 || (entry.bloating ?? 0) >= 4;
+                const uniqueFactors = [...new Set((entry.factors || []).map(f => f.replace(/\s*\(\d+\/5\)$/, '').trim()).filter(Boolean))];
+                uniqueFactors.forEach(cleanName => {
+                    if (!factorStats[cleanName]) factorStats[cleanName] = { withTotal: 0, withCrisis: 0 };
+                    factorStats[cleanName].withTotal += 1;
+                    if (isSymptomatic) factorStats[cleanName].withCrisis += 1;
+                });
+            });
+
+            const totalCrises = entries.filter(e => e.pain >= 4 || (e.bloating ?? 0) >= 4).length;
+
+            return Object.keys(factorStats).map(name => {
+                const s = factorStats[name];
+                const withoutTotal = totalEntries - s.withTotal;
+                const withoutCrisis = totalCrises - s.withCrisis;
+
+                const rateWith = s.withTotal > 0 ? Math.round((s.withCrisis / s.withTotal) * 100) : 0;
+                const rateWithout = withoutTotal > 0 ? Math.round((withoutCrisis / withoutTotal) * 100) : 0;
+                const realImpact = rateWith - rateWithout;
+
+                let verdict = 'Neutre';
+                let badgeClass = 'bg-slate-100 text-slate-600';
+                if (realImpact >= 25) {
+                    verdict = 'Fort déclencheur';
+                    badgeClass = 'bg-rose-100 text-rose-700';
+                } else if (realImpact >= 10) {
+                    verdict = 'Suspect modéré';
+                    badgeClass = 'bg-amber-100 text-amber-800';
+                } else if (realImpact <= -10) {
+                    verdict = 'Plutôt bien toléré';
+                    badgeClass = 'bg-emerald-100 text-emerald-700';
+                }
+
+                const stars = s.withTotal >= 5 ? '⭐️⭐️⭐️⭐️⭐️' : (s.withTotal >= 3 ? '⭐️⭐️⭐️' : '⭐️ (En cours)');
+                return {
+                    name,
+                    rateWith,
+                    rateWithout,
+                    realImpact,
+                    verdict,
+                    badgeClass,
+                    total: s.withTotal,
+                    stars
+                };
+            }).sort((a, b) => b.realImpact - a.realImpact || b.rateWith - a.rateWith);
+        }
+
+        function calculateCorrelations() {
+            const sorted = computeRealImpactScores();
+            const container = document.getElementById('correlations-list');
+            if (sorted.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400">Continuez à noter vos facteurs pour afficher leur score d’impact réel.</p>';
+                return;
+            }
+
+            container.innerHTML = sorted.slice(0, 6).map(item => {
+                const barColor = item.realImpact >= 25 ? 'bg-rose-500' : (item.realImpact >= 10 ? 'bg-warning' : (item.realImpact <= -10 ? 'bg-success' : 'bg-primary'));
+                const impactLabel = item.realImpact > 0 ? `+${item.realImpact} pts` : `${item.realImpact} pts`;
+                return `
+                    <div class="p-3 rounded-2xl bg-softGray/60 border border-slate-100 space-y-1.5">
+                        <div class="flex justify-between items-center gap-2 text-xs font-semibold text-slate-800">
+                            <span class="truncate">${item.name}</span>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${item.badgeClass}">${item.verdict}</span>
+                                <span class="font-bold text-slate-900">${impactLabel}</span>
+                            </div>
+                        </div>
+                        <div class="w-full bg-slate-200/70 h-2 rounded-full overflow-hidden">
+                            <div class="${barColor} h-full rounded-full" style="width: ${item.rateWith}%"></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-slate-500">
+                            <span>Avec : <strong>${item.rateWith}%</strong> crise • Sans : <strong>${item.rateWithout}%</strong></span>
+                            <span>${item.stars} (${item.total}x)</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderTrendChart() {
+            const ctx = document.getElementById('trendChart');
+            if (!ctx || entries.length < 5) return;
+            if (trendChartInstance) trendChartInstance.destroy();
+            const recent = entries.slice(-7);
+            trendChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: recent.map(e => e.date),
+                    datasets: [
+                        {
+                            label: 'Douleur',
+                            data: recent.map(e => e.pain),
+                            borderColor: '#3B82F6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.12)',
+                            tension: 0.35,
+                            fill: true
+                        },
+                        {
+                            label: 'Ballonnements',
+                            data: recent.map(e => e.bloating ?? 0),
+                            borderColor: '#F59E0B',
+                            backgroundColor: 'transparent',
+                            borderDash: [4, 4],
+                            tension: 0.35
+                        },
+                        {
+                            label: 'Flatulences',
+                            data: recent.map(e => e.flatulence ?? 0),
+                            borderColor: '#6366F1',
+                            backgroundColor: 'transparent',
+                            borderDash: [2, 3],
+                            tension: 0.35
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } },
+                    scales: { y: { min: 0, max: 10, ticks: { stepSize: 2 } } }
+                }
+            });
+        }
+
+        // --- NAVIGATION ---
+        function switchTab(tabId) {
+            ['home', 'stats', 'community', 'profile'].forEach(t => {
+                document.getElementById('tab-' + t).classList.toggle('hidden', t !== tabId);
+                const navBtn = document.getElementById('nav-' + t);
+                navBtn.classList.toggle('text-primary', t === tabId);
+                navBtn.classList.toggle('text-slate-400', t !== tabId);
+            });
+            if (tabId === 'stats') {
+                renderStatsViews();
+                renderCombosRadar();
+                renderHealingCombosRadar();
+            }
+            document.getElementById('main-container').scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- ÉCHELLE DE BRISTOL INTERACTIVE DANS LE BILAN ---
+        function renderBristolSelector() {
+            const container = document.getElementById('bristol-selector-list');
+            const badge = document.getElementById('bristol-selected-badge');
+            const activeItem = bristolScaleData.find(b => b.type === selectedBristolType) || bristolScaleData.find(b => b.type === 4);
+            badge.innerText = activeItem.type === 0 ? activeItem.badge : `Type ${activeItem.type} • ${activeItem.badge}`;
+
+            container.innerHTML = bristolScaleData.map(item => {
+                const isSelected = item.type === selectedBristolType;
+                const pillTag = item.type === 0 ? 'Aucune' : 'T' + item.type;
+                return `
+                    <button type="button" onclick="selectBristolType(${item.type})" class="w-full p-2.5 rounded-2xl border text-left flex items-center justify-between transition ${isSelected ? item.color + ' ring-1 ring-primary/40 font-semibold' : 'border-slate-200 bg-white text-slate-700 hover:bg-softGray/60'}">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <span class="text-base shrink-0">${item.icon}</span>
+                            <div class="truncate">
+                                <span class="text-xs font-bold block truncate">${item.title}</span>
+                                <span class="text-[10px] opacity-80 block truncate">${item.desc}</span>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg shrink-0 ml-2 ${isSelected ? 'bg-white/90 text-slate-900 shadow-2xs' : 'bg-slate-100 text-slate-400'}">
+                            ${isSelected ? 'Choisi ✓' : pillTag}
+                        </span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function selectBristolType(typeNum) {
+            selectedBristolType = typeNum;
+            renderBristolSelector();
+        }
+
+        // --- GESTION DES FACTEURS PERSONNALISÉS (DÉCLENCHEURS & PROTECTEURS) ---
+        function openFactorCreatorModal(defaultRole = 'trigger') {
+            document.getElementById('fc-name').value = '';
+            document.getElementById('fc-auto-hint').classList.add('hidden');
+            const roleRadio = document.querySelector(`input[name="fc-role"][value="${defaultRole}"]`);
+            if (roleRadio) {
+                roleRadio.checked = true;
+                onFactorRoleChange(defaultRole);
+            }
+            document.getElementById('factor-creator-modal').classList.remove('hidden');
+        }
+
+        function onFactorRoleChange(role) {
+            const catSelect = document.getElementById('fc-category');
+            const iconSelect = document.getElementById('fc-icon');
+            if (role === 'protective') {
+                catSelect.value = 'Soin & Bien-être';
+                iconSelect.value = '🌿';
+            } else {
+                catSelect.value = 'Alimentation & Écarts';
+                iconSelect.value = '🍫';
+            }
+        }
+
+        function autoClassifyFactorInput(text) {
+            const val = text.toLowerCase().trim();
+            const catSelect = document.getElementById('fc-category');
+            const iconSelect = document.getElementById('fc-icon');
+            const hint = document.getElementById('fc-auto-hint');
+            const currentRole = document.querySelector('input[name="fc-role"]:checked')?.value || 'trigger';
+
+            if (!val) {
+                hint.classList.add('hidden');
+                return;
+            }
+
+            let detected = false;
+            if (/tisane|bouillotte|probiotique|psyllium|menthe|camomille|fenouil|yoga|méditation|respiration|marche|repos|sieste/.test(val)) {
+                catSelect.value = 'Soin & Bien-être';
+                iconSelect.value = /tisane|menthe|camomille|fenouil/.test(val) ? '🍵' : (/probiotique|psyllium/.test(val) ? '💊' : '🌿');
+                if (currentRole === 'trigger') {
+                    const protRadio = document.querySelector('input[name="fc-role"][value="protective"]');
+                    if (protRadio) protRadio.checked = true;
+                }
+                detected = true;
+            } else if (/nutella|chocolat|sucre|pain|gluten|lait|fromage|lactose|épice|piment|gras|burger|pizza|café|alcool|repas|oignon|ail|soda/.test(val)) {
+                catSelect.value = 'Alimentation & Écarts';
+                iconSelect.value = /épice|piment/.test(val) ? '🌶️' : (/lait|fromage|lactose/.test(val) ? '🥛' : '🍫');
+                detected = true;
+            } else if (/ex|stress|employeur|boulot|travail|conflit|anxiété|colère|triste|dispute|famille|émotion|insomnie/.test(val)) {
+                catSelect.value = 'Émotions & Stress';
+                iconSelect.value = /ex|dispute|conflit/.test(val) ? '💔' : '💼';
+                detected = true;
+            } else if (/eau|hydratation|sommeil|sport|voyage|avion|train|fatigue|règles|cycle|médicament/.test(val)) {
+                catSelect.value = 'Corps & Mode de vie';
+                iconSelect.value = /médicament/.test(val) ? '💊' : (/voyage|avion/.test(val) ? '✈️' : '💧');
+                detected = true;
+            }
+
+            hint.classList.toggle('hidden', !detected);
+        }
+
+        function saveNewCustomFactor() {
+            const name = document.getElementById('fc-name').value.trim();
+            if (!name) {
+                showToast('Veuillez saisir un nom de facteur');
+                return;
+            }
+            const role = document.querySelector('input[name="fc-role"]:checked')?.value || 'trigger';
+            const category = document.getElementById('fc-category').value;
+            const icon = document.getElementById('fc-icon').value;
+            const type = document.querySelector('input[name="fc-type"]:checked').value;
+
+            const newFactor = {
+                id: 'uf_' + Date.now(),
+                name,
+                role,
+                category,
+                icon,
+                type,
+                archived: false
+            };
+
+            userCreatedFactors.unshift(newFactor);
+            saveState();
+
+            if (!document.getElementById('checkin-modal').classList.contains('hidden')) {
+                currentUserFactorValues[newFactor.id] = type === 'scale' ? 3 : true;
+                renderStep2Factors();
+            }
+
+            renderProfileFactorsManager();
+            document.getElementById('factor-creator-modal').classList.add('hidden');
+            showToast(`${role === 'protective' ? 'Protecteur' : 'Facteur'} « ${name} » créé ✨`);
+        }
+
+        function toggleArchiveUserFactor(id) {
+            const f = userCreatedFactors.find(item => item.id === id);
+            if (!f) return;
+            f.archived = !f.archived;
+            saveState();
+            renderProfileFactorsManager();
+            if (!document.getElementById('checkin-modal').classList.contains('hidden')) {
+                renderStep2Factors();
+            }
+            showToast(f.archived ? 'Facteur archivé' : 'Facteur réactivé');
+        }
+
+        function deleteUserFactor(id) {
+            userCreatedFactors = userCreatedFactors.filter(item => item.id !== id);
+            delete currentUserFactorValues[id];
+            saveState();
+            renderProfileFactorsManager();
+            if (!document.getElementById('checkin-modal').classList.contains('hidden')) {
+                renderStep2Factors();
+            }
+            showToast('Facteur personnalisé supprimé');
+        }
+
+        function renderProfileFactorsManager() {
+            const container = document.getElementById('profile-factors-manager');
+            if (!container) return;
+
+            if (userCreatedFactors.length === 0) {
+                container.innerHTML = `
+                    <div class="p-4 rounded-2xl bg-softGray/80 border border-dashed border-slate-200 text-center space-y-1">
+                        <p class="text-xs font-medium text-slate-600">Aucun facteur personnalisé créé pour le moment.</p>
+                        <p class="text-[11px] text-slate-400">Appuyez sur <strong>« + Créer »</strong> pour ajouter vos propres déclencheurs ou protecteurs.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = userCreatedFactors.map(f => {
+                const isProtective = f.role === 'protective';
+                const roleBadge = isProtective
+                    ? '<span class="text-[9px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-md">Protecteur</span>'
+                    : '<span class="text-[9px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-md">Déclencheur</span>';
+                return `
+                    <div class="flex items-center justify-between p-2.5 rounded-2xl border ${f.archived ? 'bg-slate-50 border-slate-100 opacity-60' : 'bg-softGray/70 border-slate-200/70'}">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <span class="text-base shrink-0">${f.icon}</span>
+                            <div class="truncate">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-xs font-bold text-slate-800 truncate">${f.name}</span>
+                                    ${roleBadge}
+                                </div>
+                                <span class="text-[10px] text-slate-500">${f.category} • ${f.type === 'scale' ? 'Échelle 0-5' : 'Oui / Non'}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1 shrink-0 ml-2">
+                            <button onclick="toggleArchiveUserFactor('${f.id}')" class="text-[10px] font-bold px-2 py-1 rounded-xl border bg-white text-slate-600 border-slate-200 hover:text-primary">
+                                ${f.archived ? 'Activer' : 'Archiver'}
+                            </button>
+                            <button onclick="deleteUserFactor('${f.id}')" aria-label="Supprimer" class="text-[10px] font-bold px-2 py-1 rounded-xl border bg-white text-rose-500 border-rose-200 hover:bg-rose-50">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderCustomUserFactorCard(f, accentType) {
+            const val = currentUserFactorValues[f.id];
+            const isProt = accentType === 'protective';
+            const activeBorder = isProt ? 'border-success bg-success/10' : 'border-primary bg-primary/10';
+            const activePill = isProt ? 'bg-success text-white' : 'bg-primary text-white';
+
+            if (f.type === 'binary') {
+                const isChecked = !!val;
+                return `
+                    <button type="button" onclick="toggleBinaryUserFactor('${f.id}')" class="w-full flex items-center justify-between p-2.5 rounded-2xl border text-left transition ${isChecked ? activeBorder + ' text-slate-900' : 'border-slate-200 bg-white text-slate-700'}">
+                        <span class="text-xs font-medium flex items-center gap-2"><span>${f.icon}</span><span>${f.name}</span></span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg ${isChecked ? activePill : 'bg-slate-100 text-slate-400'}">${isChecked ? 'Oui ✓' : 'Non'}</span>
+                    </button>
+                `;
+            } else {
+                const numVal = typeof val === 'number' ? val : 0;
+                const scaleBorder = numVal > 0 ? (isProt ? 'border-success bg-success/5' : 'border-warning bg-warning/5') : 'border-slate-200 bg-white';
+                const scaleText = numVal > 0 ? (isProt ? 'text-success' : 'text-warning') : 'text-slate-400';
+                const scaleAccent = isProt ? 'accent-success' : 'accent-warning';
+                return `
+                    <div class="p-3 rounded-2xl border ${scaleBorder} space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-slate-800 flex items-center gap-2"><span>${f.icon}</span><span>${f.name}</span></span>
+                            <span class="text-[11px] font-bold ${scaleText}">${numVal} / 5</span>
+                        </div>
+                        <input type="range" min="0" max="5" value="${numVal}" oninput="setScaleUserFactor('${f.id}', this.value)" class="w-full ${scaleAccent} h-1.5 bg-slate-200 rounded-lg cursor-pointer">
+                    </div>
+                `;
+            }
+        }
+
+        function renderStep2Factors() {
+            const triggerCustomContainer = document.getElementById('survey-user-trigger-factors');
+            const protectiveCustomContainer = document.getElementById('survey-user-protective-factors');
+
+            const activeTriggers = userCreatedFactors.filter(f => !f.archived && f.role !== 'protective');
+            const activeProtectives = userCreatedFactors.filter(f => !f.archived && f.role === 'protective');
+
+            if (triggerCustomContainer) {
+                triggerCustomContainer.innerHTML = activeTriggers.length === 0 ? '' : `
+                    <div class="space-y-1.5">
+                        <span class="text-[10px] font-bold text-amber-700 uppercase tracking-wider block">✨ Vos déclencheurs personnalisés</span>
+                        <div class="space-y-2">
+                            ${activeTriggers.map(f => renderCustomUserFactorCard(f, 'trigger')).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (protectiveCustomContainer) {
+                protectiveCustomContainer.innerHTML = activeProtectives.length === 0 ? '' : `
+                    <div class="space-y-1.5">
+                        <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">✨ Vos protecteurs personnalisés</span>
+                        <div class="space-y-2">
+                            ${activeProtectives.map(f => renderCustomUserFactorCard(f, 'protective')).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function toggleBinaryUserFactor(id) {
+            if (currentUserFactorValues[id]) delete currentUserFactorValues[id];
+            else currentUserFactorValues[id] = true;
+            renderStep2Factors();
+        }
+
+        function setScaleUserFactor(id, val) {
+            const num = parseInt(val, 10);
+            if (num === 0) delete currentUserFactorValues[id];
+            else currentUserFactorValues[id] = num;
+            renderStep2Factors();
+        }
+
+        // --- BOÎTE À OUTILS URGENCE CRISE & COHÉRENCE CARDIAQUE ---
+        function openCrisisModal() {
+            resetBreathingUI();
+            document.getElementById('crisis-modal').classList.remove('hidden');
+        }
+
+        function closeCrisisModal() {
+            stopBreathingExercise();
+            document.getElementById('crisis-modal').classList.add('hidden');
+        }
+
+        function toggleBreathingExercise() {
+            if (isBreathingActive) stopBreathingExercise();
+            else startBreathingExercise();
+        }
+
+        function startBreathingExercise() {
+            isBreathingActive = true;
+            breathingSecondsLeft = 60;
+            const circle = document.getElementById('breathing-circle');
+            const btn = document.getElementById('btn-toggle-breathing');
+            const phaseLabel = document.getElementById('breathing-phase-label');
+            const subLabel = document.getElementById('breathing-sub-label');
+
+            circle.classList.add('breathing-circle-active');
+            btn.innerText = '⏸️ Arrêter l’exercice';
+            btn.classList.replace('bg-primary', 'bg-slate-800');
+
+            let cycleSec = 0;
+            phaseLabel.innerText = 'Inspirez...';
+            subLabel.innerText = 'Par le nez (5s)';
+
+            breathingInterval = setInterval(() => {
+                breathingSecondsLeft -= 1;
+                cycleSec = (cycleSec + 1) % 10;
+
+                const mins = String(Math.floor(breathingSecondsLeft / 60)).padStart(2, '0');
+                const secs = String(breathingSecondsLeft % 60).padStart(2, '0');
+                document.getElementById('breathing-timer').innerText = `${mins}:${secs}`;
+
+                if (cycleSec < 5) {
+                    phaseLabel.innerText = 'Inspirez...';
+                    subLabel.innerText = 'Doucement (5s)';
+                } else {
+                    phaseLabel.innerText = 'Expirez...';
+                    subLabel.innerText = 'Relâchez le ventre';
+                }
+
+                if (breathingSecondsLeft <= 0) {
+                    stopBreathingExercise();
+                    showToast('Cycle d’apaisement terminé 💚');
+                }
+            }, 1000);
+        }
+
+        function stopBreathingExercise() {
+            isBreathingActive = false;
+            if (breathingInterval) clearInterval(breathingInterval);
+            breathingInterval = null;
+            resetBreathingUI();
+        }
+
+        function resetBreathingUI() {
+            const circle = document.getElementById('breathing-circle');
+            const btn = document.getElementById('btn-toggle-breathing');
+            if (circle) circle.classList.remove('breathing-circle-active');
+            if (btn) {
+                btn.innerText = '▶️ Démarrer la respiration guidée';
+                btn.classList.remove('bg-slate-800');
+                btn.classList.add('bg-primary');
+            }
+            document.getElementById('breathing-timer').innerText = '01:00';
+            document.getElementById('breathing-phase-label').innerText = 'Prêt';
+            document.getElementById('breathing-sub-label').innerText = '5s / 5s';
+        }
+
+        function logAcuteCrisisNow() {
+            const todayIso = getTodayIso();
+            const todayLabel = formatIsoShort(todayIso);
+            const crisisEntry = {
+                isoDate: todayIso,
+                date: todayLabel,
+                pain: 8,
+                bloating: 7,
+                flatulence: 6,
+                stress: 4,
+                bristol: 6,
+                factors: ['🆘 Crise aiguë signalée'],
+                protectiveFactors: []
+            };
+            const existingIdx = entries.findIndex(e => e.isoDate === todayIso);
+            if (existingIdx !== -1) {
+                entries[existingIdx] = crisisEntry;
+            } else {
+                entries.push(crisisEntry);
+            }
+            saveState();
+            closeCrisisModal();
+            refreshAllViews();
+            showToast('Crise aiguë consignée (bilan du jour mis à jour) 🩺');
+        }
+
+        // --- RESSOURCES SCIENTIFIQUES & COMMUNAUTÉ ---
+        function switchCommunitySubTab(subId) {
+            const isResources = subId === 'resources';
+            document.getElementById('subtab-resources').classList.toggle('hidden', !isResources);
+            document.getElementById('subtab-tips').classList.toggle('hidden', isResources);
+
+            document.getElementById('subtab-btn-resources').className = isResources
+                ? 'py-2 px-3 rounded-xl text-xs font-bold bg-white text-primary shadow-sm transition'
+                : 'py-2 px-3 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 transition';
+
+            document.getElementById('subtab-btn-tips').className = !isResources
+                ? 'py-2 px-3 rounded-xl text-xs font-bold bg-white text-primary shadow-sm transition'
+                : 'py-2 px-3 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 transition';
+        }
+
+        function renderResourcesFeed(cat) {
+            const container = document.getElementById('resources-feed');
+            const list = cat === 'all' ? scientificResources : scientificResources.filter(r => r.category === cat);
+            container.innerHTML = list.map(res => `
+                <article class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-2.5">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${res.badgeColor}">${res.category}</span>
+                        <span class="text-[10px] font-medium text-slate-400">${res.year}</span>
+                    </div>
+                    <h3 class="font-bold text-slate-900 text-xs leading-snug">${res.title}</h3>
+                    <p class="text-[11px] font-semibold text-primary">${res.source}</p>
+                    <p class="text-xs text-slate-600 leading-relaxed">${res.summary}</p>
+                    <div class="pt-1.5 border-t border-slate-50 flex justify-end">
+                        <a href="${res.url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 bg-softGray hover:bg-primary hover:text-white text-slate-800 text-[11px] font-bold px-3.5 py-2 rounded-xl transition">
+                            Consulter la publication ↗
+                        </a>
+                    </div>
+                </article>
+            `).join('');
+        }
+
+        function filterResources(cat) {
+            document.querySelectorAll('.res-filter').forEach(btn => {
+                const isMatch = (cat === 'all' && btn.innerText.includes('Toutes')) || btn.innerText.includes(cat);
+                btn.className = isMatch
+                    ? 'res-filter bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded-xl shrink-0'
+                    : 'res-filter bg-white border border-slate-200 text-slate-600 text-xs font-medium px-3 py-1.5 rounded-xl shrink-0';
+            });
+            renderResourcesFeed(cat);
+        }
+
+        // --- NAVIGATION DANS LE BILAN DU JOUR (2 ÉTAPES UNIFIÉES) ---
+        function openCheckinModal() {
+            checkinStep = 1;
+            selectedBristolType = 4;
+            selectedLibraryFactors = new Set();
+            currentUserFactorValues = {};
+
+            document.getElementById('input-pain').value = 0;
+            document.getElementById('pain-display').innerText = '0 / 10';
+            document.getElementById('input-bloating').value = 0;
+            document.getElementById('bloating-display').innerText = '0 / 10';
+            document.getElementById('input-flatulence').value = 0;
+            document.getElementById('flatulence-display').innerText = '0 / 10';
+            document.getElementById('input-stress').value = 2;
+            document.getElementById('stress-display').innerText = '2 / 5';
+
+            document.querySelectorAll('.std-factor, .protective-factor').forEach(cb => cb.checked = false);
+            renderBristolSelector();
+            renderStep2Factors();
+            updateCheckinModalUI();
+            document.getElementById('checkin-modal').classList.remove('hidden');
+        }
+
+        function closeCheckinModal() {
+            document.getElementById('checkin-modal').classList.add('hidden');
+        }
+
+        function updateCheckinModalUI() {
+            [1, 2].forEach(s => document.getElementById('step-' + s).classList.toggle('hidden', s !== checkinStep));
+            document.getElementById('checkin-step-badge').innerText = `Étape ${checkinStep} / 2`;
+            const titles = ['Bilan du jour — Symptômes & Bristol', 'Facteurs Déclencheurs & Protecteurs'];
+            document.getElementById('checkin-step-title').innerText = titles[checkinStep - 1];
+            document.getElementById('btn-prev-step').classList.toggle('invisible', checkinStep === 1);
+            document.getElementById('btn-next-step').innerText = checkinStep === 2 ? 'Valider mon bilan ✨' : 'Suivant →';
+        }
+
+        function changeCheckinStep(delta) {
+            if (checkinStep + delta >= 1 && checkinStep + delta <= 2) {
+                checkinStep += delta;
+                updateCheckinModalUI();
+            } else if (checkinStep + delta > 2) {
+                submitDailyCheckin();
+            }
+        }
+
+        function submitDailyCheckin() {
+            const pain = parseInt(document.getElementById('input-pain').value, 10);
+            const bloating = parseInt(document.getElementById('input-bloating').value, 10);
+            const flatulence = parseInt(document.getElementById('input-flatulence').value, 10);
+            const stress = parseInt(document.getElementById('input-stress').value, 10);
+            const stdFactors = Array.from(document.querySelectorAll('.std-factor:checked')).map(cb => cb.value);
+            const stdProtectiveFactors = Array.from(document.querySelectorAll('.protective-factor:checked')).map(cb => cb.value);
+
+            const customTriggersCollected = [];
+            const customProtectiveCollected = [];
+
+            Object.entries(currentUserFactorValues).forEach(([id, val]) => {
+                const def = userCreatedFactors.find(f => f.id === id);
+                if (!def) return;
+                let formatted = null;
+                if (def.type === 'binary' && val === true) {
+                    formatted = def.name;
+                } else if (def.type === 'scale' && val > 0) {
+                    formatted = `${def.name} (${val}/5)`;
+                }
+                if (formatted) {
+                    if (def.role === 'protective') customProtectiveCollected.push(formatted);
+                    else customTriggersCollected.push(formatted);
+                }
+            });
+
+            const allTriggerFactors = [...new Set([...stdFactors, ...Array.from(selectedLibraryFactors), ...customTriggersCollected])];
+            const allProtectiveFactors = [...new Set([...stdProtectiveFactors, ...customProtectiveCollected])];
+            const todayIso = getTodayIso();
+            const todayLabel = formatIsoShort(todayIso);
+
+            const newEntry = {
+                isoDate: todayIso,
+                date: todayLabel,
+                pain,
+                bloating,
+                flatulence,
+                stress,
+                bristol: selectedBristolType,
+                factors: allTriggerFactors,
+                protectiveFactors: allProtectiveFactors
+            };
+
+            const existingIdx = entries.findIndex(e => e.isoDate === todayIso);
+            const isUpdate = existingIdx !== -1;
+            if (isUpdate) {
+                entries[existingIdx] = newEntry;
+            } else {
+                entries.push(newEntry);
+            }
+            
+            const streakRes = recordDailyStreakProgress(todayIso);
+            saveState();
+            closeCheckinModal();
+            refreshAllViews();
+            if (streakRes.earnedFreeze) {
+                showToast(`🔥 ${streakRes.streak} jours de série ! +1 Gel de série gagné ❄️`);
+            } else if (streakRes.isFirstTimeToday) {
+                showToast(`🔥 Série : ${streakRes.streak} jour${streakRes.streak > 1 ? 's' : ''} ! Bilan validé 🎉`);
+            } else {
+                showToast(isUpdate ? 'Bilan du jour mis à jour ! ✨' : 'Bilan du jour enregistré ! 🎉');
+            }
+        }
+
+        function renderCommunityFeed(filter) {
+            const feed = document.getElementById('community-feed');
+            const list = filter === 'all' ? communityTips : communityTips.filter(t => t.cat === filter);
+            feed.innerHTML = list.map((tip, idx) => `
+                <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-900">👤 ${tip.author}</span>
+                        <span class="text-[10px] font-semibold bg-primary/10 text-primary px-2.5 py-0.5 rounded-full">${tip.cat}</span>
+                    </div>
+                    <p class="text-xs text-slate-700 leading-relaxed">${tip.text}</p>
+                    <div class="pt-1 border-t border-slate-50 flex justify-between items-center">
+                        <button onclick="likeCommunityTip(${idx})" class="text-xs font-semibold text-slate-500 hover:text-rose-500 transition">
+                            ❤️ Utile (${tip.likes})
+                        </button>
+                        <span class="text-[10px] text-slate-400">Communauté SII</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterTips(cat) {
+            document.querySelectorAll('.tip-filter').forEach(btn => {
+                const isMatch = (cat === 'all' && btn.innerText.includes('Tout')) || btn.innerText.includes(cat);
+                btn.className = isMatch
+                    ? 'tip-filter bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded-xl shrink-0'
+                    : 'tip-filter bg-white border border-slate-200 text-slate-600 text-xs font-medium px-3 py-1.5 rounded-xl shrink-0';
+            });
+            renderCommunityFeed(cat);
+        }
+
+        function likeCommunityTip(idx) {
+            communityTips[idx].likes += 1;
+            saveState();
+            renderCommunityFeed('all');
+        }
+
+        function openTipModal() {
+            document.getElementById('tip-modal').classList.remove('hidden');
+        }
+
+        function submitNewTip() {
+            const cat = document.getElementById('tip-category').value;
+            const text = document.getElementById('tip-text').value.trim();
+            if (!text) return;
+            communityTips.unshift({ author: 'Membre Digestiv', cat, text, likes: 1 });
+            saveState();
+            document.getElementById('tip-text').value = '';
+            document.getElementById('tip-modal').classList.add('hidden');
+            renderCommunityFeed('all');
+            showToast('Astuce partagée avec la communauté 💚');
+        }
+
+        // --- RAPPORT PDF MÉDECIN ---
+        function openMedicalReportModal() {
+            const patientNameEl = document.getElementById('rep-patient-name');
+            if (patientNameEl) {
+                if (userName) {
+                    patientNameEl.innerText = `Patient : ${userName}`;
+                    patientNameEl.classList.remove('hidden');
+                } else {
+                    patientNameEl.classList.add('hidden');
+                }
+            }
+            document.getElementById('rep-period-label').innerText = `Suivi depuis le ${formatIsoShort(installDate)} (${entries.length} bilan${entries.length > 1 ? 's' : ''})`;
+            const peaceData = computePeaceDigestivePct();
+
+            if (entries.length === 0) {
+                document.getElementById('rep-avg-pain').innerText = '—';
+                document.getElementById('rep-avg-flatulence').innerText = '—';
+                document.getElementById('rep-peace-score').innerText = '—';
+                document.getElementById('rep-avg-stress').innerText = '—';
+                document.getElementById('rep-bristol-summary').innerText = 'Aucun bilan enregistré pour le moment.';
+                document.getElementById('rep-triggers-list').innerHTML = '<li>Enregistrez quelques bilans quotidiens pour générer votre synthèse clinique.</li>';
+                document.getElementById('rep-combos-list').innerHTML = '<li>Aucun combo détecté pour le moment.</li>';
+                document.getElementById('rep-healing-combos-list').innerHTML = '<li>Aucun combo guérisseur détecté pour le moment.</li>';
+            } else {
+                const avgPain = (entries.reduce((acc, e) => acc + e.pain, 0) / entries.length).toFixed(1);
+                const avgFlatulence = (entries.reduce((acc, e) => acc + (e.flatulence ?? 0), 0) / entries.length).toFixed(1);
+                const avgStress = (entries.reduce((acc, e) => acc + e.stress, 0) / entries.length).toFixed(1);
+                document.getElementById('rep-avg-pain').innerText = avgPain + ' / 10';
+                document.getElementById('rep-avg-flatulence').innerText = avgFlatulence + ' / 10';
+                document.getElementById('rep-peace-score').innerText = peaceData ? peaceData.pct + '%' : '—';
+                document.getElementById('rep-avg-stress').innerText = avgStress + ' / 5';
+
+                const bCounts = {};
+                entries.forEach(e => {
+                    const t = e.bristol !== undefined && e.bristol !== null ? e.bristol : 4;
+                    bCounts[t] = (bCounts[t] || 0) + 1;
+                });
+                const bSummary = Object.entries(bCounts)
+                    .sort((a, b) => Number(a[0]) - Number(b[0]))
+                    .map(([t, c]) => Number(t) === 0 ? `Aucune selle (${c}x)` : `Type ${t} (${c}x)`)
+                    .join(' • ');
+                document.getElementById('rep-bristol-summary').innerText = bSummary || '—';
+
+                const realScores = computeRealImpactScores();
+                const triggersHtml = realScores.length > 0
+                    ? realScores.slice(0, 6).map(item => {
+                        const sign = item.realImpact > 0 ? `+${item.realImpact}` : `${item.realImpact}`;
+                        return `<li><strong>${item.name}</strong> (${item.verdict}, impact ${sign} pts) : crise dans ${item.rateWith}% des cas avec vs ${item.rateWithout}% sans (${item.total}x noté)</li>`;
+                    }).join('')
+                    : '<li>Aucun facteur particulier noté sur la période.</li>';
+                document.getElementById('rep-triggers-list').innerHTML = triggersHtml;
+
+                const combos = computeTriggerCombos();
+                const combosHtml = combos.length > 0
+                    ? combos.slice(0, 5).map(c => `<li><strong>${c.factorA} + ${c.factorB}</strong> : associés ${c.count} fois lors d'un jour de crise (${c.pctOfCrises}%)</li>`).join('')
+                    : '<li>Pas encore assez d’occurrences cumulées pour isoler un duo déclencheur.</li>';
+                document.getElementById('rep-combos-list').innerHTML = combosHtml;
+
+                const healingCombos = computeHealingCombos();
+                const healingCombosHtml = healingCombos.length > 0
+                    ? healingCombos.slice(0, 5).map(c => `<li><strong>${c.factorA} + ${c.factorB}</strong> : associés ${c.count} fois lors d'une journée calme (${c.pctOfCalm}%)</li>`).join('')
+                    : '<li>Pas encore assez d’occurrences cumulées pour isoler un duo apaisant.</li>';
+                document.getElementById('rep-healing-combos-list').innerHTML = healingCombosHtml;
+            }
+            document.getElementById('medical-modal').classList.remove('hidden');
+        }
+
+        async function downloadMedicalPdf() {
+            const element = document.getElementById('medical-report-content');
+            const btn = document.getElementById('btn-download-pdf');
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span>⏳</span><span>Génération du PDF...</span>';
+
+            const safeName = userName
+                ? '_' + userName.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '_')
+                : '';
+            const filename = `Bilan_Digestiv${safeName}_${getTodayIso()}.pdf`;
+
+            try {
+                if (typeof html2pdf !== 'undefined') {
+                    const opt = {
+                        margin: [12, 12, 12, 12],
+                        filename: filename,
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                    };
+                    await html2pdf().set(opt).from(element).save();
+                    showToast('Rapport PDF téléchargé 📄');
+                } else {
+                    window.print();
+                }
+            } catch (err) {
+                console.error('Erreur génération PDF :', err);
+                window.print();
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
+
+        function exportJsonBackup() {
+            const payload = { userName, installDate, entries, userCreatedFactors, challenges, gamification, reminderSettings };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
+            const a = document.createElement('a');
+            a.setAttribute("href", dataStr);
+            a.setAttribute("download", "digestiv_sauvegarde.json");
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            showToast('Sauvegarde téléchargée 💾');
+        }
+
+        function openResetConfirmModal() {
+            document.getElementById('reset-modal').classList.remove('hidden');
+        }
+
+        function confirmFullReset() {
+            entries = [];
+            userCreatedFactors = [];
+            challenges = [];
+            gamification = { points: 0, completedChallenges: 0, missedDaysCount: 0, unlockedBadges: [], activeGages: [], rewardedEntryDates: [], rewardedStreakMilestones: [], streakShields: 0, shieldUsedDates: [], bestStreak: 0 };
+            reminderSettings = { enabled: false, time: '20:30', lastNotifiedDate: '' };
+            userName = '';
+            localStorage.removeItem(USER_NAME_KEY);
+            installDate = getTodayIso();
+            localStorage.setItem(INSTALL_DATE_KEY, installDate);
+            saveState();
+            document.getElementById('reset-modal').classList.add('hidden');
+            refreshAllViews();
+            showToast('Application réinitialisée à zéro 🌱');
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.classList.remove('opacity-0');
+            setTimeout(() => t.classList.add('opacity-0'), 2800);
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .catch(err => console.warn('Erreur Service Worker:', err));
+            });
+        }
+    </script>
+</body>
+</html>
