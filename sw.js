@@ -1,8 +1,9 @@
-const CACHE_NAME = 'digestiv-v5';
+const CACHE_NAME = 'digestiv-v4';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/privacy.html',
   '/icon-192.png',
   '/icon-512.png',
   'https://cdn.tailwindcss.com',
